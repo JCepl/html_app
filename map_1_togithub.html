@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Central Europe Click Map</title>
+
+  <!-- Leaflet style sheet: required so the map displays correctly -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+
+  <style>
+    /* Basic page setup */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Two-column layout: left panel + map */
+    #app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Left info panel */
+    #panel {
+      width: 300px;
+      box-sizing: border-box;
+      padding: 16px;
+      border-right: 1px solid #ccc;
+      background: #f7f7f7;
+    }
+
+    /* Map fills the remaining width */
+    #map {
+      flex: 1;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 14px;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="panel">
+      <h2>Clicked place</h2>
+
+      <div class="label">Country</div>
+      <div id="country" class="value">—</div>
+
+      <div class="label">Latitude</div>
+      <div id="lat" class="value">—</div>
+
+      <div class="label">Longitude</div>
+      <div id="lon" class="value">—</div>
+
+      <div class="label">Status</div>
+      <div id="status" class="value">Click map or country.</div>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <!-- Leaflet JavaScript library -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+
+  <script>
+    // =========================================================
+    // 1) SIMPLE SETTINGS
+    // =========================================================
+    // Keep important values in one place, so later changes are easy.
+    const CONFIG = {
+      // Central Europe / Mitteleuropa view
+      center: [50.2, 12.5],
+      zoom: 4.7,
+
+      // Limit how far the user can pan away
+      maxBounds: [
+        [44.0, 2.0],   // southwest
+        [56.5, 23.5]   // northeast
+      ],
+
+      // Tile map background
+      tileUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+      // Optional country borders GeoJSON
+      // This is used only by the optional border module below.
+      countryGeoJsonUrl: "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+    };
+
+    // =========================================================
+    // 2) STORE IMPORTANT OBJECTS HERE
+    // =========================================================
+    // This keeps the code expandable without making it complicated.
+    const APP = {
+      map: null,
+      clickMarker: null,
+      countryLayer: null,
+      selectedCountryLayer: null
+    };
+
+    // =========================================================
+    // 3) GET THE LEFT PANEL HTML ELEMENTS ONCE
+    // =========================================================
+    // Later we update these values when user clicks.
+    const DOM = {
+      country: document.getElementById("country"),
+      lat: document.getElementById("lat"),
+      lon: document.getElementById("lon"),
+      status: document.getElementById("status")
+    };
+
+    // =========================================================
+    // 4) SMALL HELPER TO UPDATE STATUS TEXT
+    // =========================================================
+    function setStatus(text) {
+      DOM.status.textContent = text;
+    }
+
+    // =========================================================
+    // 5) CREATE THE MAP
+    // =========================================================
+    // This is the core setup:
+    // - create Leaflet map
+    // - set starting view
+    // - add OSM tiles
+    // - attach normal map click behavior
+    function initMap() {
+      APP.map = L.map("map", {
+        center: CONFIG.center,
+        zoom: CONFIG.zoom,
+        maxBounds: CONFIG.maxBounds,
+        maxBoundsViscosity: 1.0
+      });
+
+      L.tileLayer(CONFIG.tileUrl, {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(APP.map);
+
+      APP.map.on("click", onMapClick);
+
+      // OPTIONAL MODULE:
+      // load country borders and make them clickable
+      loadCountryBorders();
+    }
+
+    // =========================================================
+    // 6) WHAT HAPPENS WHEN USER CLICKS THE MAP
+    // =========================================================
+    // This works everywhere, even without country polygons.
+    function onMapClick(e) {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+
+      // Update coordinates in left panel
+      DOM.lat.textContent = lat.toFixed(5);
+      DOM.lon.textContent = lon.toFixed(5);
+
+      // If user clicked plain map, we do not know country here,
+      // so leave country unchanged.
+      setStatus("Map clicked");
+
+      // Move existing marker, or create it if it does not exist yet
+      if (APP.clickMarker) {
+        APP.clickMarker.setLatLng(e.latlng);
+      } else {
+        APP.clickMarker = L.circleMarker(e.latlng, {
+          radius: 7,
+          color: "#c2185b",
+          weight: 2,
+          fillColor: "#e91e63",
+          fillOpacity: 0.85
+        }).addTo(APP.map);
+      }
+    }
+
+    // =========================================================
+    // 7) OPTIONAL MODULE: COUNTRY BORDERS
+    // =========================================================
+    // This whole function can be commented out later if you want.
+    //
+    // What it does:
+    // - downloads world country polygons
+    // - keeps them as a layer on the map
+    // - draws simple borders
+    // - when country is clicked:
+    //     * writes country name to panel
+    //     * highlights that country
+    //     * also places the click marker
+    async function loadCountryBorders() {
+      try {
+        const response = await fetch(CONFIG.countryGeoJsonUrl);
+        const geojson = await response.json();
+
+        APP.countryLayer = L.geoJSON(geojson, {
+          style: function () {
+            return {
+              color: "#555",
+              weight: 1,
+              fillOpacity: 0
+            };
+          },
+
+          onEachFeature: function (feature, layer) {
+            layer.on("click", function (e) {
+              // Stop the click from also being handled by the base map below
+              L.DomEvent.stopPropagation(e);
+
+              // Country name from GeoJSON properties
+              const countryName =
+                feature.properties.name || "Unknown";
+
+              // Show country in panel
+              DOM.country.textContent = countryName;
+
+              // Also show click coordinates
+              DOM.lat.textContent = e.latlng.lat.toFixed(5);
+              DOM.lon.textContent = e.latlng.lng.toFixed(5);
+
+              setStatus("Country clicked");
+
+              // Move/create the same click marker
+              if (APP.clickMarker) {
+                APP.clickMarker.setLatLng(e.latlng);
+              } else {
+                APP.clickMarker = L.circleMarker(e.latlng, {
+                  radius: 7,
+                  color: "#c2185b",
+                  weight: 2,
+                  fillColor: "#e91e63",
+                  fillOpacity: 0.85
+                }).addTo(APP.map);
+              }
+
+              // Remove old selected-country highlight if it exists
+              if (APP.selectedCountryLayer) {
+                APP.countryLayer.resetStyle(APP.selectedCountryLayer);
+              }
+
+              // Highlight the clicked country polygon
+              layer.setStyle({
+                color: "#c2185b",
+                weight: 2.5,
+                fillOpacity: 0.08
+              });
+
+              // Store which one is currently highlighted
+              APP.selectedCountryLayer = layer;
+            });
+          }
+        }).addTo(APP.map);
+
+      } catch (error) {
+        setStatus("Country borders could not be loaded");
+      }
+    }
+
+    // =========================================================
+    // 8) START THE MAP
+    // =========================================================
+    initMap();
+  </script>
+</body>
+</html>
