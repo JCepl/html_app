@@ -297,12 +297,16 @@
 
     function baseHexStyle(feature) {
       const value = Number(feature.properties.mean);
+      const fillOpacity = Number(DOM.opacitySlider.value);
+      // Border opacity fades with fill but stays more visible (minimum 0.3, scales with fill)
+      const borderOpacity = Math.max(0.3, fillOpacity * 0.8);
+
       return {
         color: "#222222",
         weight: 0.9,
-        opacity: 0.4,  // Made borders more transparent
+        opacity: borderOpacity,
         fillColor: getColor(value),
-        fillOpacity: Number(DOM.opacitySlider.value)
+        fillOpacity: fillOpacity
       };
     }
 
