@@ -298,8 +298,8 @@
     function baseHexStyle(feature) {
       const value = Number(feature.properties.mean);
       const fillOpacity = Number(DOM.opacitySlider.value);
-      // Border opacity fades with fill but stays more visible (minimum 0.3, scales with fill)
-      const borderOpacity = Math.max(0.3, fillOpacity * 0.8);
+      // Fade borders slower than fill, but allow them to fade out when fill is zero
+      const borderOpacity = Math.max(0.1, fillOpacity * 0.5);
 
       return {
         color: "#222222",
