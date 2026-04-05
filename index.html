@@ -217,6 +217,8 @@
       clickMarker: null,
       hexLayer: null,
       selectedHexLayer: null,
+      countryLayer: null,
+      selectedCountryLayer: null,
       currentYear: null,
       currentRcp: "rcp26",  // Fixed: Added back currentRcp for file path construction
       overlayVisible: true,
@@ -287,7 +289,7 @@
       return {
         color: "#222222",
         weight: 0.9,
-        opacity: 0.7,
+        opacity: 0.4,  // Made borders more transparent
         fillColor: getColor(value),
         fillOpacity: Number(DOM.opacitySlider.value)
       };
@@ -314,16 +316,38 @@
       }
     }
 
+    // Highlight selected country
+    function highlightCountry(layer) {
+      layer.setStyle({
+        color: "#ff4444",
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.1
+      });
+
+      if (layer.bringToFront) {
+        layer.bringToFront();
+      }
+    }
+
+    // Reset selected country to base style
+    function resetSelectedCountry() {
+      if (APP.selectedCountryLayer && APP.countryLayer) {
+        APP.countryLayer.resetStyle(APP.selectedCountryLayer);
+        APP.selectedCountryLayer = null;
+      }
+    }
+
     function updateMarker(latlng) {
       if (APP.clickMarker) {
         APP.clickMarker.setLatLng(latlng);
       } else {
         APP.clickMarker = L.circleMarker(latlng, {
-          radius: 8,
-          color: "#c2185b",
-          weight: 2,
-          fillColor: "#e91e63",
-          fillOpacity: 0.9
+          radius: 5,
+          color: "#666666",
+          weight: 1,
+          fillColor: "#ffffff",
+          fillOpacity: 0.7
         }).addTo(APP.map);
       }
     }
@@ -375,6 +399,21 @@
       return foundLayer;
     }
 
+    // Find Leaflet layer for a given country GeoJSON feature
+    function findCountryLayerForFeature(targetFeature) {
+      if (!APP.countryLayer || !targetFeature) return null;
+
+      let foundLayer = null;
+
+      APP.countryLayer.eachLayer(function(layer) {
+        if (layer.feature === targetFeature) {
+          foundLayer = layer;
+        }
+      });
+
+      return foundLayer;
+    }
+
     function updatePanelFromClick(latlng) {
       DOM.lat.textContent = latlng.lat.toFixed(5);
       DOM.lon.textContent = latlng.lng.toFixed(5);
@@ -386,6 +425,16 @@
       DOM.country.textContent = countryFeature ? (countryFeature.properties.name || "Unknown") : "—";
 
       resetSelectedHex();
+      resetSelectedCountry();
+
+      // Highlight the selected country
+      if (countryFeature) {
+        const countryLayer = findCountryLayerForFeature(countryFeature);
+        if (countryLayer) {
+          APP.selectedCountryLayer = countryLayer;
+          highlightCountry(countryLayer);
+        }
+      }
 
       if (hexFeature) {
         const val = Number(hexFeature.properties.mean);
@@ -478,6 +527,7 @@
           }
           APP.currentHexGeojson = null;
           resetSelectedHex();
+          resetSelectedCountry();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
           setStatus("Overlay hidden");
         }
@@ -497,9 +547,9 @@
 
         APP.countryGeojson = await response.json();
 
-        L.geoJSON(APP.countryGeojson, {
+        APP.countryLayer = L.geoJSON(APP.countryGeojson, {
           pane: "countryPane",
-          interactive: false,
+          interactive: true,  // Make interactive for highlighting
           style: function() {
             return {
               color: "#555",
@@ -532,6 +582,7 @@
 
       APP.currentHexGeojson = null;
       resetSelectedHex();
+      resetSelectedCountry();
       DOM.hexValue.textContent = "—";
 
       try {
