@@ -204,13 +204,20 @@
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
+    // Clean GeoJSON-only Leaflet map for static GitHub Pages deployment
+    // Changes from previous version:
+    // - Removed play mode completely (not present in current code)
+    // - Removed layer click handlers to rely solely on map click for robust point-in-polygon lookup
+    // - Simplified click handling to always use Turf.js point-in-polygon regardless of click location
+    // - Removed PNG overlay code (not present)
+    // - Kept all requested features: left panel, year/opacity sliders, country boundaries, hex highlighting
+    // - Code is now simpler, more readable, and easier to extend for future maps
     const APP = {
       map: null,
       clickMarker: null,
       hexLayer: null,
       selectedHexLayer: null,
       currentYear: null,
-      currentRcp: "rcp26",
       overlayVisible: true,
       currentHexGeojson: null,
       countryGeojson: null
@@ -420,6 +427,8 @@
       APP.map.createPane("countryPane");
       APP.map.getPane("countryPane").style.zIndex = 240;
 
+      // Map click handler - only source for panel updates
+      // Removed layer click handlers to avoid double-handling and ensure robust point-in-polygon lookup
       APP.map.on("click", function(e) {
         updatePanelFromClick(e.latlng);
       });
@@ -564,11 +573,6 @@
               if (APP.selectedHexLayer !== layer && APP.hexLayer) {
                 APP.hexLayer.resetStyle(layer);
               }
-            });
-
-            layer.on("click", function(e) {
-              L.DomEvent.stopPropagation(e);
-              updatePanelFromClick(e.latlng);
             });
           }
         }).addTo(APP.map);
