@@ -159,6 +159,15 @@
       <div class="control-block">
         <h3>Overlay</h3>
 
+        <div class="label">RCP Scenario</div>
+        <div class="row">
+          <select id="rcpSelector">
+            <option value="rcp26">RCP 2.6</option>
+            <option value="rcp45">RCP 4.5</option>
+            <option value="rcp85">RCP 8.5</option>
+          </select>
+        </div>
+
         <div class="label">Year</div>
         <div class="row">
           <input type="range" id="yearSlider" min="0" max="7" step="1" value="0" />
@@ -210,6 +219,7 @@
     // - Removed layer click handlers to rely solely on map click for robust point-in-polygon lookup
     // - Simplified click handling to always use Turf.js point-in-polygon regardless of click location
     // - Removed PNG overlay code (not present)
+    // - Added RCP scenario selector (2.6, 4.5, 8.5)
     // - Kept all requested features: left panel, year/opacity sliders, country boundaries, hex highlighting
     // - Code is now simpler, more readable, and easier to extend for future maps
     const APP = {
@@ -239,7 +249,8 @@
       toggleOverlayBtn: document.getElementById("toggleOverlayBtn"),
       fitOverlayBtn: document.getElementById("fitOverlayBtn"),
       legendMin: document.getElementById("legendMin"),
-      legendMax: document.getElementById("legendMax")
+      legendMax: document.getElementById("legendMax"),
+      rcpSelector: document.getElementById("rcpSelector")
     };
 
     function setStatus(text) {
@@ -494,6 +505,13 @@
       DOM.yearSlider.value = 0;
       DOM.yearValue.textContent = String(APP.currentYear);
       DOM.opacityValue.textContent = Number(DOM.opacitySlider.value).toFixed(2);
+
+      // RCP selector
+      DOM.rcpSelector.value = APP.currentRcp;
+      DOM.rcpSelector.addEventListener("change", function() {
+        APP.currentRcp = DOM.rcpSelector.value;
+        updateHexLayer();
+      });
 
       DOM.yearSlider.addEventListener("input", function() {
         const yearIndex = Number(DOM.yearSlider.value);
