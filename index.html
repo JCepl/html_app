@@ -65,7 +65,6 @@
     }
 
     .row input,
-    .row select,
     .row button {
       width: 100%;
       box-sizing: border-box;
@@ -186,29 +185,9 @@
           </div>
         </div>
 
-        <div class="control-block">
-          <h3>Play mode</h3>
-
-          <div class="label">Speed</div>
-          <div class="row">
-            <select id="speedSelect">
-              <option value="1600">Very slow</option>
-              <option value="1200">Slow</option>
-              <option value="800" selected>Normal</option>
-              <option value="500">Fast</option>
-              <option value="250">Very fast</option>
-            </select>
-          </div>
-
-          <div class="button-row">
-            <button id="playBtn" type="button">Play</button>
-            <button id="stopBtn" type="button">Stop</button>
-          </div>
-
-          <div class="small">
-            This version uses only GeoJSON vectors.<br>
-            Best for static GitHub Pages and crisp display.
-          </div>
+        <div class="small">
+          GeoJSON only.<br>
+          Click anywhere on the map to retrieve hex and country.
         </div>
       </div>
     </div>
@@ -221,20 +200,20 @@
     crossorigin=""
   ></script>
 
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
     const APP = {
       map: null,
       clickMarker: null,
-      countryLayer: null,
-      selectedCountryLayer: null,
       hexLayer: null,
       selectedHexLayer: null,
       currentYear: null,
       currentRcp: "rcp26",
       overlayVisible: true,
-      playTimer: null
+      currentHexGeojson: null,
+      countryGeojson: null
     };
 
     const DOM = {
@@ -249,9 +228,6 @@
       opacityValue: document.getElementById("opacityValue"),
       toggleOverlayBtn: document.getElementById("toggleOverlayBtn"),
       fitOverlayBtn: document.getElementById("fitOverlayBtn"),
-      speedSelect: document.getElementById("speedSelect"),
-      playBtn: document.getElementById("playBtn"),
-      stopBtn: document.getElementById("stopBtn"),
       legendMin: document.getElementById("legendMin"),
       legendMax: document.getElementById("legendMax")
     };
@@ -344,29 +320,6 @@
       }
     }
 
-    function clearCountrySelection() {
-      if (APP.selectedCountryLayer && APP.countryLayer) {
-        APP.countryLayer.resetStyle(APP.selectedCountryLayer);
-        APP.selectedCountryLayer = null;
-      }
-    }
-
-    function selectHex(feature, layer, latlng) {
-      const val = Number(feature.properties.mean);
-
-      DOM.lat.textContent = latlng.lat.toFixed(5);
-      DOM.lon.textContent = latlng.lng.toFixed(5);
-      DOM.hexValue.textContent = isFinite(val) ? val.toFixed(6) : "NA";
-
-      updateMarker(latlng);
-
-      resetSelectedHex();
-      APP.selectedHexLayer = layer;
-      highlightHex(layer);
-
-      setStatus("Hex clicked, year " + APP.currentYear);
-    }
-
     function getCurrentFile() {
       return MAP_META.files[APP.currentRcp + "_" + APP.currentYear];
     }
@@ -379,6 +332,67 @@
           [MAP_META.bbox.ymin, MAP_META.bbox.xmin],
           [MAP_META.bbox.ymax, MAP_META.bbox.xmax]
         ]);
+      }
+    }
+
+    function findContainingFeature(geojson, latlng) {
+      if (!geojson || !geojson.features) return null;
+
+      const pt = turf.point([latlng.lng, latlng.lat]);
+
+      for (const feature of geojson.features) {
+        try {
+          if (turf.booleanPointInPolygon(pt, feature)) {
+            return feature;
+          }
+        } catch (error) {
+          console.error("Point-in-polygon failed:", error);
+        }
+      }
+
+      return null;
+    }
+
+    function findLayerForFeature(targetFeature) {
+      if (!APP.hexLayer || !targetFeature) return null;
+
+      let foundLayer = null;
+
+      APP.hexLayer.eachLayer(function(layer) {
+        if (layer.feature === targetFeature) {
+          foundLayer = layer;
+        }
+      });
+
+      return foundLayer;
+    }
+
+    function updatePanelFromClick(latlng) {
+      DOM.lat.textContent = latlng.lat.toFixed(5);
+      DOM.lon.textContent = latlng.lng.toFixed(5);
+      updateMarker(latlng);
+
+      const hexFeature = findContainingFeature(APP.currentHexGeojson, latlng);
+      const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
+
+      DOM.country.textContent = countryFeature ? (countryFeature.properties.name || "Unknown") : "—";
+
+      resetSelectedHex();
+
+      if (hexFeature) {
+        const val = Number(hexFeature.properties.mean);
+        DOM.hexValue.textContent = isFinite(val) ? val.toFixed(6) : "NA";
+
+        const layer = findLayerForFeature(hexFeature);
+        if (layer) {
+          APP.selectedHexLayer = layer;
+          highlightHex(layer);
+        }
+
+        setStatus("Hex found");
+      } else {
+        DOM.hexValue.textContent = "—";
+        setStatus("No hex at clicked point");
       }
     }
 
@@ -404,13 +418,10 @@
       APP.map.getPane("hexPane").style.zIndex = 250;
 
       APP.map.createPane("countryPane");
-      APP.map.getPane("countryPane").style.zIndex = 300;
+      APP.map.getPane("countryPane").style.zIndex = 240;
 
       APP.map.on("click", function(e) {
-        DOM.lat.textContent = e.latlng.lat.toFixed(5);
-        DOM.lon.textContent = e.latlng.lng.toFixed(5);
-        updateMarker(e.latlng);
-        setStatus("Map clicked");
+        updatePanelFromClick(e.latlng);
       });
 
       setLegendLabels();
@@ -434,6 +445,7 @@
 
       DOM.opacitySlider.addEventListener("input", function() {
         DOM.opacityValue.textContent = Number(DOM.opacitySlider.value).toFixed(2);
+
         if (APP.hexLayer) {
           APP.hexLayer.setStyle(baseHexStyle);
           if (APP.selectedHexLayer) {
@@ -454,6 +466,7 @@
             APP.map.removeLayer(APP.hexLayer);
             APP.hexLayer = null;
           }
+          APP.currentHexGeojson = null;
           resetSelectedHex();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
           setStatus("Overlay hidden");
@@ -463,55 +476,29 @@
       DOM.fitOverlayBtn.addEventListener("click", function() {
         fitDataBounds();
       });
-
-      DOM.playBtn.addEventListener("click", function() {
-        startPlayMode();
-      });
-
-      DOM.stopBtn.addEventListener("click", function() {
-        stopPlayMode();
-      });
     }
 
     async function loadCountryBorders() {
       try {
         const response = await fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json");
-        const geojson = await response.json();
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
 
-        APP.countryLayer = L.geoJSON(geojson, {
+        APP.countryGeojson = await response.json();
+
+        L.geoJSON(APP.countryGeojson, {
           pane: "countryPane",
+          interactive: false,
           style: function() {
             return {
               color: "#555",
               weight: 1,
               fillOpacity: 0
             };
-          },
-          onEachFeature: function(feature, layer) {
-            layer.on("click", function(e) {
-              L.DomEvent.stopPropagation(e);
-
-              DOM.country.textContent = feature.properties.name || "Unknown";
-              DOM.lat.textContent = e.latlng.lat.toFixed(5);
-              DOM.lon.textContent = e.latlng.lng.toFixed(5);
-
-              updateMarker(e.latlng);
-
-              if (APP.selectedCountryLayer) {
-                APP.countryLayer.resetStyle(APP.selectedCountryLayer);
-              }
-
-              layer.setStyle({
-                color: "#c2185b",
-                weight: 2.5,
-                fillOpacity: 0.08
-              });
-
-              APP.selectedCountryLayer = layer;
-              setStatus("Country clicked");
-            });
           }
         }).addTo(APP.map);
+
       } catch (error) {
         console.error(error);
         setStatus("Country borders could not be loaded");
@@ -533,6 +520,7 @@
         APP.hexLayer = null;
       }
 
+      APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
 
@@ -544,9 +532,9 @@
           throw new Error("HTTP " + response.status + " for " + fileName);
         }
 
-        const geojson = await response.json();
+        APP.currentHexGeojson = await response.json();
 
-        APP.hexLayer = L.geoJSON(geojson, {
+        APP.hexLayer = L.geoJSON(APP.currentHexGeojson, {
           pane: "hexPane",
           style: baseHexStyle,
           onEachFeature: function(feature, layer) {
@@ -580,7 +568,7 @@
 
             layer.on("click", function(e) {
               L.DomEvent.stopPropagation(e);
-              selectHex(feature, layer, e.latlng);
+              updatePanelFromClick(e.latlng);
             });
           }
         }).addTo(APP.map);
@@ -589,42 +577,7 @@
 
       } catch (error) {
         console.error(error);
-        setStatus("Failed loading " + fileName);
-      }
-    }
-
-    function startPlayMode() {
-      stopPlayMode();
-
-      const speed = Number(DOM.speedSelect.value);
-      setStatus("Play mode running");
-
-      APP.playTimer = setInterval(function() {
-        let currentIndex = MAP_META.years.indexOf(APP.currentYear);
-        currentIndex = currentIndex + 1;
-
-        if (currentIndex >= MAP_META.years.length) {
-          currentIndex = 0;
-        }
-
-        APP.currentYear = MAP_META.years[currentIndex];
-        DOM.yearSlider.value = String(currentIndex);
-        DOM.yearValue.textContent = String(APP.currentYear);
-
-        if (!APP.overlayVisible) {
-          APP.overlayVisible = true;
-          DOM.toggleOverlayBtn.textContent = "Hide overlay";
-        }
-
-        updateHexLayer();
-      }, speed);
-    }
-
-    function stopPlayMode() {
-      if (APP.playTimer) {
-        clearInterval(APP.playTimer);
-        APP.playTimer = null;
-        setStatus("Play mode stopped");
+        setStatus("Failed loading " + fileName + " :: " + error.message);
       }
     }
 
