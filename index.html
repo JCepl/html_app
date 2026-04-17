@@ -21,9 +21,15 @@
 
     body {
       background: #eef3f9;
+      padding-top: 96px;
     }
 
     .top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1200;
       display: grid;
       grid-template-columns: 1.3fr 1fr;
       gap: 18px;
@@ -73,20 +79,23 @@
 
     .banner-right {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: flex-end;
-      gap: 7px;
+      justify-content: flex-end;
+      gap: 10px;
       min-width: 0;
     }
 
-    .banner-links {
+    .banner-actions {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
       gap: 8px;
+      align-items: center;
     }
 
-    .banner-link {
+    .banner-link,
+    .resources-toggle {
       display: inline-block;
       padding: 6px 10px;
       border-radius: 999px;
@@ -97,24 +106,70 @@
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
+      cursor: pointer;
     }
 
-    .banner-link:hover {
+    .banner-link:hover,
+    .resources-toggle:hover {
       background: #eaf2fb;
     }
 
-    .banner-note {
+    .resources-menu {
+      position: relative;
+    }
+
+    .resources-list {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      min-width: 220px;
       margin: 0;
+      padding: 8px;
+      list-style: none;
+      background: #ffffff;
+      border: 1px solid #c6d8eb;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(19, 51, 84, 0.15);
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .resources-menu:hover .resources-list,
+    .resources-menu:focus-within .resources-list {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .resources-list a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #133c66;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .resources-list a:hover {
+      background: #edf4fb;
+    }
+
+    .eu-note {
       font-size: 11px;
       color: #4a627d;
-      text-align: right;
-      line-height: 1.3;
+      white-space: nowrap;
     }
 
     #app {
       display: flex;
       width: 100vw;
-      height: calc(100vh - 92px);
+      height: calc(100vh - 96px);
     }
 
     #panel {
@@ -260,24 +315,34 @@
     }
 
     @media (max-width: 900px) {
+      body {
+        padding-top: 148px;
+      }
+
       .top-banner {
         grid-template-columns: 1fr;
       }
 
       .banner-right {
         align-items: flex-start;
-      }
-
-      .banner-links {
         justify-content: flex-start;
       }
 
-      .banner-note {
-        text-align: left;
+      .banner-actions {
+        justify-content: flex-start;
+      }
+
+      .resources-list {
+        right: auto;
+        left: 0;
+      }
+
+      .eu-note {
+        white-space: normal;
       }
 
       #app {
-        height: calc(100vh - 168px);
+        height: calc(100vh - 148px);
       }
     }
 
@@ -285,7 +350,7 @@
       #app {
         flex-direction: column;
         height: auto;
-        min-height: calc(100vh - 168px);
+        min-height: calc(100vh - 148px);
       }
 
       #panel {
@@ -315,14 +380,19 @@
       </div>
     </div>
     <div class="banner-right">
-      <nav class="banner-links" aria-label="Project links">
-        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">Project Page</a>
-        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/roadmap/" target="_blank" rel="noopener noreferrer">Roadmap</a>
-        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/news/" target="_blank" rel="noopener noreferrer">News</a>
-        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/outputs/" target="_blank" rel="noopener noreferrer">Outputs</a>
-        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/media/" target="_blank" rel="noopener noreferrer">Media</a>
+      <nav class="banner-actions" aria-label="Project links">
+        <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
+        <div class="resources-menu">
+          <button type="button" class="resources-toggle" aria-haspopup="true">Resources</button>
+          <ul class="resources-list" aria-label="Resources menu">
+            <li><a href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">Harmonized Database (GitHub)</a></li>
+            <li><a href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Harmonized Database (Zenodo)</a></li>
+            <li><a href="https://github.com/JCepl/html_app" target="_blank" rel="noopener noreferrer">Map App Source Code</a></li>
+            <li><a href="context_report.html" target="_blank" rel="noopener noreferrer">Local Context Report</a></li>
+          </ul>
+        </div>
       </nav>
-      <p class="banner-note">Co-financed by the European Union through Interreg Central Europe.<br>Project communication and branding references linked from official programme pages.</p>
+      <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
     </div>
   </header>
 
