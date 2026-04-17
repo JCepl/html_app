@@ -1,0 +1,13 @@
+{
+  "image": "gdd_gen_diff_raster.png",
+  "bounds": {
+    "south": 47.4168,
+    "west": 5.0005,
+    "north": 54.9999,
+    "east": 29.9966
+  },
+  "legend": {
+    "labels": ["<= -0.5", "-0.5 to 0.5", "0.5 to 1.5", "> 1.5"],
+    "colors": ["#1565c0", "#f0f4f8", "#ff9800", "#c62828"]
+  }
+}

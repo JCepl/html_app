@@ -375,6 +375,7 @@
         <div class="overlay-chooser">
           <select id="overlaySelector">
             <option value="bbtl">Bark beetle pressure (hex)</option>
+            <option value="gddraster">GDD/GEN 1km raster</option>
             <option value="gddjson">GDD/GEN 1km points (JSON preview)</option>
             <option value="wildfire">Wildfire risk (coming soon)</option>
             <option value="drought">Drought stress (coming soon)</option>
@@ -464,6 +465,7 @@
       clickMarker: null,
       hexLayer: null,
       pointLayer: null,
+      rasterLayer: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
@@ -485,6 +487,14 @@
         usesRcp: true,
         usesYear: true,
         meta: MAP_META
+      },
+      gddraster: {
+        label: "GDD/GEN 1km raster",
+        description: "Rasterized GEN difference surface generated from the 1km point dataset.",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: null
       },
       gddjson: {
         label: "GDD/GEN 1km points",
@@ -522,6 +532,7 @@
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
     const GDD_JSON_URL = "webmap_data/GDD_GEN_1km_preview.json";
+    const GDD_RASTER_META_URL = "webmap_data/gdd_gen_diff_raster_meta.json";
     const GDD_PREVIEW_BYTES = 5 * 1024 * 1024;
     const GDD_MAX_POINTS = 12000;
 
@@ -555,6 +566,12 @@
 
     function setLegendLabels() {
       const overlay = getActiveOverlay();
+      if (APP.currentOverlay === "gddraster") {
+        DOM.legendMin.textContent = "-1";
+        DOM.legendMax.textContent = "+2";
+        return;
+      }
+
       if (APP.currentOverlay === "gddjson") {
         DOM.legendMin.textContent = "GEN diff";
         DOM.legendMax.textContent = "preview";
@@ -760,6 +777,8 @@
 
       if (APP.hexLayer) {
         APP.map.fitBounds(APP.hexLayer.getBounds());
+      } else if (APP.rasterLayer) {
+        APP.map.fitBounds(APP.rasterLayer.getBounds());
       } else {
         APP.map.fitBounds([
           [meta.bbox.ymin, meta.bbox.xmin],
@@ -779,12 +798,20 @@
         APP.map.removeLayer(APP.pointLayer);
         APP.pointLayer = null;
       }
+      if (APP.rasterLayer) {
+        APP.map.removeLayer(APP.rasterLayer);
+        APP.rasterLayer = null;
+      }
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
     }
 
     function updateActiveOverlayLayer() {
+      if (APP.currentOverlay === "gddraster") {
+        updateGddRasterLayer();
+        return;
+      }
       if (APP.currentOverlay === "gddjson") {
         updateGddJsonLayer();
         return;
@@ -918,6 +945,66 @@
       }
     }
 
+    async function updateGddRasterLayer() {
+      if (!APP.overlayVisible) return;
+
+      APP.overlayLoadToken += 1;
+      const requestToken = APP.overlayLoadToken;
+
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      if (APP.pointLayer) {
+        APP.map.removeLayer(APP.pointLayer);
+        APP.pointLayer = null;
+      }
+      if (APP.rasterLayer) {
+        APP.map.removeLayer(APP.rasterLayer);
+        APP.rasterLayer = null;
+      }
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      DOM.hexValue.textContent = "—";
+      setStatus("Loading 1km raster overlay...");
+
+      try {
+        const response = await fetch(GDD_RASTER_META_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const meta = await response.json();
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        const bounds = [
+          [Number(meta.bounds.south), Number(meta.bounds.west)],
+          [Number(meta.bounds.north), Number(meta.bounds.east)]
+        ];
+
+        APP.rasterLayer = L.imageOverlay(
+          "webmap_data/" + meta.image,
+          bounds,
+          {
+            pane: "hexPane",
+            opacity: Number(DOM.opacitySlider.value),
+            interactive: false
+          }
+        ).addTo(APP.map);
+
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        setStatus("Loaded 1km raster overlay");
+      } catch (error) {
+        console.error(error);
+        setStatus("Raster overlay could not be loaded");
+      }
+    }
+
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
       DOM.overlayDescription.textContent = overlay.description;
@@ -930,6 +1017,15 @@
         clearOverlayLayer();
         setLegendLabels();
         setStatus(overlay.label + " overlay is not available yet");
+        return;
+      }
+
+      if (!overlay.usesYear || !overlay.meta || !Array.isArray(overlay.meta.years)) {
+        DOM.yearValue.textContent = "NA";
+        setLegendLabels();
+        if (APP.overlayVisible) {
+          updateActiveOverlayLayer();
+        }
         return;
       }
 
@@ -1111,6 +1207,10 @@
           if (APP.selectedHexLayer) {
             highlightHex(APP.selectedHexLayer);
           }
+        }
+
+        if (APP.rasterLayer) {
+          APP.rasterLayer.setOpacity(Number(DOM.opacitySlider.value));
         }
       });
 
