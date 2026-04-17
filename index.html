@@ -235,6 +235,42 @@
       color: #444;
     }
 
+    .citation-box {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid #d6e2ef;
+      border-radius: 8px;
+      background: #fbfdff;
+      font-size: 12px;
+      color: #2a4560;
+      line-height: 1.35;
+    }
+
+    .citation-title {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #123a62;
+    }
+
+    .citation-item {
+      margin: 0 0 8px;
+    }
+
+    .citation-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .citation-item a {
+      color: #0f3b73;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .citation-item a:hover {
+      text-decoration: underline;
+    }
+
     .leaflet-tooltip.hex-tooltip {
       background: rgba(255, 255, 255, 0.96);
       border: 1px solid #888;
@@ -379,6 +415,18 @@
             <span id="legendMin">min</span>
             <span id="legendMax">max</span>
           </div>
+        </div>
+
+        <div class="citation-box">
+          <p class="citation-title">Data source and citation</p>
+          <p class="citation-item">
+            <a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Science paper (DOI)</a><br>
+            Grunig, M., Rammer, W., Senf, C., Albrich, K., Andre, K., Augustynczik, A. L. D., et al. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789). https://doi.org/10.1126/science.adx6329
+          </p>
+          <p class="citation-item">
+            <a href="https://datadryad.org/search?search=10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Dryad dataset search</a><br>
+            Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
+          </p>
         </div>
 
         <div class="small">
@@ -679,6 +727,8 @@
     }
 
     function clearOverlayLayer() {
+      // Invalidate any in-flight overlay request so stale responses cannot re-add old layers.
+      APP.overlayLoadToken += 1;
       if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
