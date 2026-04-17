@@ -21,7 +21,7 @@
 
     body {
       background: #eef3f9;
-      padding-top: 96px;
+      padding-top: 116px;
     }
 
     .top-banner {
@@ -36,7 +36,7 @@
       align-items: center;
       box-sizing: border-box;
       width: 100%;
-      padding: 10px 18px;
+      padding: 16px 20px;
       border-bottom: 1px solid #c9d8ea;
       background: linear-gradient(180deg, #f8fbff 0%, #ecf3fb 100%);
     }
@@ -51,13 +51,13 @@
 
     .banner-logo {
       display: block;
-      max-height: 56px;
+      max-height: 62px;
       width: auto;
       object-fit: contain;
-      background: #fff;
-      border: 1px solid #d7e2f0;
-      border-radius: 6px;
-      padding: 6px 10px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
     }
 
     .banner-title {
@@ -71,18 +71,12 @@
       color: #11385f;
     }
 
-    .banner-title p {
-      margin: 3px 0 0;
-      font-size: 12px;
-      color: #355372;
-    }
-
     .banner-right {
       display: flex;
       flex-direction: row;
-      align-items: flex-end;
+      align-items: center;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 14px;
       min-width: 0;
     }
 
@@ -94,70 +88,19 @@
       align-items: center;
     }
 
-    .banner-link,
-    .resources-toggle {
+    .banner-link {
       display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid #b4c9df;
-      background: #fff;
+      padding: 4px 2px;
       color: #0f3b73;
       text-decoration: none;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      cursor: pointer;
+      border-bottom: 2px solid transparent;
     }
 
-    .banner-link:hover,
-    .resources-toggle:hover {
-      background: #eaf2fb;
-    }
-
-    .resources-menu {
-      position: relative;
-    }
-
-    .resources-list {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 6px);
-      min-width: 220px;
-      margin: 0;
-      padding: 8px;
-      list-style: none;
-      background: #ffffff;
-      border: 1px solid #c6d8eb;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(19, 51, 84, 0.15);
-      opacity: 0;
-      transform: translateY(-6px);
-      pointer-events: none;
-      transition: opacity 0.15s ease, transform 0.15s ease;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-
-    .resources-menu:hover .resources-list,
-    .resources-menu:focus-within .resources-list {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-
-    .resources-list a {
-      display: block;
-      padding: 8px 10px;
-      border-radius: 6px;
-      color: #133c66;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .resources-list a:hover {
-      background: #edf4fb;
+    .banner-link:hover {
+      border-bottom-color: #0f3b73;
     }
 
     .eu-note {
@@ -169,7 +112,7 @@
     #app {
       display: flex;
       width: 100vw;
-      height: calc(100vh - 96px);
+      height: calc(100vh - 116px);
     }
 
     #panel {
@@ -273,38 +216,6 @@
       color: #444;
     }
 
-    .context-block {
-      margin-top: 16px;
-      padding: 14px;
-      border: 1px solid #ccd8e6;
-      border-radius: 8px;
-      background: #f3f7fc;
-    }
-
-    .context-block h3 {
-      margin: 0 0 10px;
-      font-size: 16px;
-      color: #0f3b73;
-    }
-
-    .context-block p {
-      margin: 0 0 10px;
-      color: #2f3f55;
-      font-size: 13px;
-    }
-
-    .context-link {
-      display: inline-block;
-      margin-bottom: 8px;
-      color: #0f3b73;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .context-link:hover {
-      text-decoration: underline;
-    }
-
     .leaflet-tooltip.hex-tooltip {
       background: rgba(255, 255, 255, 0.96);
       border: 1px solid #888;
@@ -316,7 +227,7 @@
 
     @media (max-width: 900px) {
       body {
-        padding-top: 148px;
+        padding-top: 166px;
       }
 
       .top-banner {
@@ -332,17 +243,12 @@
         justify-content: flex-start;
       }
 
-      .resources-list {
-        right: auto;
-        left: 0;
-      }
-
       .eu-note {
         white-space: normal;
       }
 
       #app {
-        height: calc(100vh - 148px);
+        height: calc(100vh - 166px);
       }
     }
 
@@ -350,7 +256,7 @@
       #app {
         flex-direction: column;
         height: auto;
-        min-height: calc(100vh - 148px);
+        min-height: calc(100vh - 166px);
       }
 
       #panel {
@@ -376,21 +282,13 @@
       </a>
       <div class="banner-title">
         <h1>RE-ENFORCE Forest Restoration Viewer</h1>
-        <p>Transnational cooperation on nature-based solutions for restoring degraded forests in Central Europe.</p>
       </div>
     </div>
     <div class="banner-right">
       <nav class="banner-actions" aria-label="Project links">
         <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
-        <div class="resources-menu">
-          <button type="button" class="resources-toggle" aria-haspopup="true">Resources</button>
-          <ul class="resources-list" aria-label="Resources menu">
-            <li><a href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">Harmonized Database (GitHub)</a></li>
-            <li><a href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Harmonized Database (Zenodo)</a></li>
-            <li><a href="https://github.com/JCepl/html_app" target="_blank" rel="noopener noreferrer">Map App Source Code</a></li>
-            <li><a href="context_report.html" target="_blank" rel="noopener noreferrer">Local Context Report</a></li>
-          </ul>
-        </div>
+        <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
+        <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
       </nav>
       <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
     </div>
@@ -451,14 +349,6 @@
             <span id="legendMin">min</span>
             <span id="legendMax">max</span>
           </div>
-        </div>
-
-        <div class="context-block">
-          <h3>RE-ENFORCE project</h3>
-          <p>EU-funded Central Europe forest restoration context for this app.</p>
-          <a href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" class="context-link">Harmonized Database (GitHub)</a><br>
-          <a href="https://zenodo.org/records/17191513" target="_blank" class="context-link">Zenodo dataset</a><br>
-          <a href="context_report.html" target="_blank" class="context-link">Local RE-ENFORCE context report</a>
         </div>
 
         <div class="small">
