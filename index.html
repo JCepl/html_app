@@ -375,6 +375,7 @@
         <div class="overlay-chooser">
           <select id="overlaySelector">
             <option value="bbtl">Bark beetle pressure (hex)</option>
+            <option value="gddjson">GDD/GEN 1km points (JSON preview)</option>
             <option value="wildfire">Wildfire risk (coming soon)</option>
             <option value="drought">Drought stress (coming soon)</option>
             <option value="wind">Wind disturbance (coming soon)</option>
@@ -459,8 +460,10 @@
     // - Code is now simpler, more readable, and easier to extend for future maps
     const APP = {
       map: null,
+      pointRenderer: null,
       clickMarker: null,
       hexLayer: null,
+      pointLayer: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
@@ -482,6 +485,14 @@
         usesRcp: true,
         usesYear: true,
         meta: MAP_META
+      },
+      gddjson: {
+        label: "GDD/GEN 1km points",
+        description: "Preview of 1km GDD/GEN JSON points (sampled for browser performance).",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: null
       },
       wildfire: {
         label: "Wildfire risk",
@@ -510,6 +521,9 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
+    const GDD_JSON_URL = "GDD_GEN_1km_points.json";
+    const GDD_PREVIEW_BYTES = 5 * 1024 * 1024;
+    const GDD_MAX_POINTS = 12000;
 
     const DOM = {
       country: document.getElementById("country"),
@@ -541,6 +555,12 @@
 
     function setLegendLabels() {
       const overlay = getActiveOverlay();
+      if (APP.currentOverlay === "gddjson") {
+        DOM.legendMin.textContent = "GEN diff";
+        DOM.legendMax.textContent = "preview";
+        return;
+      }
+
       if (!overlay.available || !overlay.meta) {
         DOM.legendMin.textContent = "NA";
         DOM.legendMax.textContent = "NA";
@@ -592,6 +612,22 @@
       );
 
       return palette[idx];
+    }
+
+    function getGddPointColor(genDiff) {
+      if (!isFinite(genDiff)) {
+        return "#9e9e9e";
+      }
+      if (genDiff <= -1) {
+        return "#1565c0";
+      }
+      if (genDiff === 0) {
+        return "#f5f5f5";
+      }
+      if (genDiff === 1) {
+        return "#ffb74d";
+      }
+      return "#d84315";
     }
 
     function baseHexStyle(feature) {
@@ -739,9 +775,147 @@
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
       }
+      if (APP.pointLayer) {
+        APP.map.removeLayer(APP.pointLayer);
+        APP.pointLayer = null;
+      }
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
+    }
+
+    function updateActiveOverlayLayer() {
+      if (APP.currentOverlay === "gddjson") {
+        updateGddJsonLayer();
+        return;
+      }
+      updateHexLayer();
+    }
+
+    async function fetchTextPreview(url, maxBytes) {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok || !response.body) {
+        throw new Error("HTTP " + response.status);
+      }
+
+      const reader = response.body.getReader();
+      const chunks = [];
+      let total = 0;
+
+      try {
+        while (total < maxBytes) {
+          const result = await reader.read();
+          if (result.done) {
+            break;
+          }
+
+          const remaining = maxBytes - total;
+          let value = result.value;
+          if (value.length > remaining) {
+            value = value.slice(0, remaining);
+          }
+
+          chunks.push(value);
+          total += value.length;
+        }
+      } finally {
+        reader.cancel();
+      }
+
+      const merged = new Uint8Array(total);
+      let offset = 0;
+      for (const part of chunks) {
+        merged.set(part, offset);
+        offset += part.length;
+      }
+
+      return new TextDecoder().decode(merged);
+    }
+
+    function parsePartialJsonArray(text) {
+      const trimmed = text.trim();
+      if (trimmed.endsWith("]")) {
+        return JSON.parse(trimmed);
+      }
+
+      const lastBoundary = trimmed.lastIndexOf("},{");
+      if (lastBoundary < 0) {
+        return [];
+      }
+
+      const safeText = trimmed.slice(0, lastBoundary) + "]";
+      return JSON.parse(safeText);
+    }
+
+    async function updateGddJsonLayer() {
+      if (!APP.overlayVisible) return;
+
+      APP.overlayLoadToken += 1;
+      const requestToken = APP.overlayLoadToken;
+
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      if (APP.pointLayer) {
+        APP.map.removeLayer(APP.pointLayer);
+        APP.pointLayer = null;
+      }
+
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      DOM.hexValue.textContent = "—";
+      setStatus("Loading 1km JSON preview...");
+
+      try {
+        const previewText = await fetchTextPreview(GDD_JSON_URL, GDD_PREVIEW_BYTES);
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        const data = parsePartialJsonArray(previewText).filter(function(row) {
+          return isFinite(row.lat) && isFinite(row.lng) && isFinite(row.GEN_diff);
+        });
+
+        if (!data.length) {
+          setStatus("No valid JSON points found in preview chunk");
+          return;
+        }
+
+        const step = Math.max(1, Math.ceil(data.length / GDD_MAX_POINTS));
+        const sampled = data.filter(function(_, idx) {
+          return idx % step === 0;
+        });
+
+        APP.pointLayer = L.layerGroup(sampled.map(function(row) {
+          const marker = L.circleMarker([Number(row.lat), Number(row.lng)], {
+            pane: "hexPane",
+            renderer: APP.pointRenderer,
+            radius: 2,
+            weight: 0,
+            fillOpacity: 0.8,
+            fillColor: getGddPointColor(Number(row.GEN_diff))
+          });
+
+          marker.bindTooltip(
+            "GEN diff: " + Number(row.GEN_diff).toFixed(0)
+            + "<br>GEN now: " + Number(row.GEN_now).toFixed(0)
+            + "<br>GEN future: " + Number(row.GEN_future).toFixed(0),
+            { className: "hex-tooltip", direction: "top", sticky: true }
+          );
+
+          return marker;
+        })).addTo(APP.map);
+
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        setStatus("Loaded 1km JSON preview points: " + sampled.length + " (sampled)");
+      } catch (error) {
+        console.error(error);
+        setStatus("JSON preview could not be loaded");
+      }
     }
 
     function syncOverlayControls() {
@@ -768,7 +942,7 @@
       DOM.yearValue.textContent = String(APP.currentYear);
       setLegendLabels();
       if (APP.overlayVisible) {
-        updateHexLayer();
+        updateActiveOverlayLayer();
       }
     }
 
@@ -885,6 +1059,7 @@
 
       APP.map.createPane("countryPane");
       APP.map.getPane("countryPane").style.zIndex = 260;
+      APP.pointRenderer = L.canvas({ padding: 0.2 });
 
       // Map click handler - only source for panel updates
       // Removed layer click handlers to avoid double-handling and ensure robust point-in-polygon lookup
@@ -895,7 +1070,7 @@
       setLegendLabels();
       initControls();
       loadCountryBorders();
-      updateHexLayer();
+      updateActiveOverlayLayer();
     }
 
     function initControls() {
@@ -914,7 +1089,7 @@
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
         APP.currentRcp = DOM.rcpSelector.value;
-        updateHexLayer();
+        updateActiveOverlayLayer();
       });
 
       DOM.yearSlider.addEventListener("input", function() {
@@ -925,7 +1100,7 @@
         const yearIndex = Number(DOM.yearSlider.value);
         APP.currentYear = overlay.meta.years[yearIndex];
         DOM.yearValue.textContent = String(APP.currentYear);
-        updateHexLayer();
+        updateActiveOverlayLayer();
       });
 
       DOM.opacitySlider.addEventListener("input", function() {
