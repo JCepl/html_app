@@ -362,7 +362,7 @@
       <div class="label">Longitude</div>
       <div id="lon" class="value">—</div>
 
-      <div class="label">Hex value</div>
+      <div class="label">Layer value</div>
       <div id="hexValue" class="value">—</div>
 
       <div class="label">Status</div>
@@ -376,7 +376,6 @@
           <select id="overlaySelector">
             <option value="bbtl">Bark beetle pressure (hex)</option>
             <option value="gddraster">GDD/GEN 1km raster</option>
-            <option value="gddjson">GDD/GEN 1km points (JSON preview)</option>
             <option value="wildfire">Wildfire risk (coming soon)</option>
             <option value="drought">Drought stress (coming soon)</option>
             <option value="wind">Wind disturbance (coming soon)</option>
@@ -432,8 +431,7 @@
         </div>
 
         <div class="small">
-          GeoJSON only.<br>
-          Click anywhere on the map to retrieve hex and country.
+          Click anywhere on the map to retrieve layer value and country.
         </div>
       </div>
     </div>
@@ -461,11 +459,13 @@
     // - Code is now simpler, more readable, and easier to extend for future maps
     const APP = {
       map: null,
-      pointRenderer: null,
       clickMarker: null,
       hexLayer: null,
-      pointLayer: null,
       rasterLayer: null,
+      rasterMeta: null,
+      rasterPixels: null,
+      rasterWidth: 0,
+      rasterHeight: 0,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
@@ -491,14 +491,6 @@
       gddraster: {
         label: "GDD/GEN 1km raster",
         description: "Rasterized GEN difference surface generated from the 1km point dataset.",
-        available: true,
-        usesRcp: false,
-        usesYear: false,
-        meta: null
-      },
-      gddjson: {
-        label: "GDD/GEN 1km points",
-        description: "Preview of 1km GDD/GEN JSON points (sampled for browser performance).",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -531,10 +523,13 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
-    const GDD_JSON_URL = "webmap_data/GDD_GEN_1km_preview.json";
     const GDD_RASTER_META_URL = "webmap_data/gdd_gen_diff_raster_meta.json";
-    const GDD_PREVIEW_BYTES = 5 * 1024 * 1024;
-    const GDD_MAX_POINTS = 12000;
+    const GDD_RASTER_CLASSES = [
+      { color: [21, 101, 192], label: "<= -0.5", valueText: "GEN diff <= -0.5" },
+      { color: [240, 244, 248], label: "-0.5 to 0.5", valueText: "GEN diff -0.5 to 0.5" },
+      { color: [255, 152, 0], label: "0.5 to 1.5", valueText: "GEN diff 0.5 to 1.5" },
+      { color: [198, 40, 40], label: "> 1.5", valueText: "GEN diff > 1.5" }
+    ];
 
     const DOM = {
       country: document.getElementById("country"),
@@ -567,14 +562,8 @@
     function setLegendLabels() {
       const overlay = getActiveOverlay();
       if (APP.currentOverlay === "gddraster") {
-        DOM.legendMin.textContent = "-1";
-        DOM.legendMax.textContent = "+2";
-        return;
-      }
-
-      if (APP.currentOverlay === "gddjson") {
-        DOM.legendMin.textContent = "GEN diff";
-        DOM.legendMax.textContent = "preview";
+        DOM.legendMin.textContent = "<= -0.5";
+        DOM.legendMax.textContent = "> 1.5";
         return;
       }
 
@@ -629,22 +618,6 @@
       );
 
       return palette[idx];
-    }
-
-    function getGddPointColor(genDiff) {
-      if (!isFinite(genDiff)) {
-        return "#9e9e9e";
-      }
-      if (genDiff <= -1) {
-        return "#1565c0";
-      }
-      if (genDiff === 0) {
-        return "#f5f5f5";
-      }
-      if (genDiff === 1) {
-        return "#ffb74d";
-      }
-      return "#d84315";
     }
 
     function baseHexStyle(feature) {
@@ -794,14 +767,14 @@
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
       }
-      if (APP.pointLayer) {
-        APP.map.removeLayer(APP.pointLayer);
-        APP.pointLayer = null;
-      }
       if (APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
+      APP.rasterMeta = null;
+      APP.rasterPixels = null;
+      APP.rasterWidth = 0;
+      APP.rasterHeight = 0;
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -812,137 +785,87 @@
         updateGddRasterLayer();
         return;
       }
-      if (APP.currentOverlay === "gddjson") {
-        updateGddJsonLayer();
-        return;
-      }
       updateHexLayer();
     }
 
-    async function fetchTextPreview(url, maxBytes) {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok || !response.body) {
-        throw new Error("HTTP " + response.status);
-      }
+    function classifyGddRasterColor(r, g, b) {
+      let best = null;
+      let bestDist = Infinity;
 
-      const reader = response.body.getReader();
-      const chunks = [];
-      let total = 0;
-
-      try {
-        while (total < maxBytes) {
-          const result = await reader.read();
-          if (result.done) {
-            break;
-          }
-
-          const remaining = maxBytes - total;
-          let value = result.value;
-          if (value.length > remaining) {
-            value = value.slice(0, remaining);
-          }
-
-          chunks.push(value);
-          total += value.length;
+      for (const klass of GDD_RASTER_CLASSES) {
+        const dr = r - klass.color[0];
+        const dg = g - klass.color[1];
+        const db = b - klass.color[2];
+        const dist = dr * dr + dg * dg + db * db;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = klass;
         }
-      } finally {
-        reader.cancel();
       }
 
-      const merged = new Uint8Array(total);
-      let offset = 0;
-      for (const part of chunks) {
-        merged.set(part, offset);
-        offset += part.length;
-      }
-
-      return new TextDecoder().decode(merged);
+      return best;
     }
 
-    function parsePartialJsonArray(text) {
-      const trimmed = text.trim();
-      if (trimmed.endsWith("]")) {
-        return JSON.parse(trimmed);
+    function sampleGddRasterAt(latlng) {
+      if (!APP.rasterMeta || !APP.rasterPixels || APP.rasterWidth <= 0 || APP.rasterHeight <= 0) {
+        return null;
       }
 
-      const lastBoundary = trimmed.lastIndexOf("},{");
-      if (lastBoundary < 0) {
-        return [];
+      const south = Number(APP.rasterMeta.bounds.south);
+      const west = Number(APP.rasterMeta.bounds.west);
+      const north = Number(APP.rasterMeta.bounds.north);
+      const east = Number(APP.rasterMeta.bounds.east);
+
+      if (latlng.lat < south || latlng.lat > north || latlng.lng < west || latlng.lng > east) {
+        return null;
       }
 
-      const safeText = trimmed.slice(0, lastBoundary) + "]";
-      return JSON.parse(safeText);
+      const xFloat = (latlng.lng - west) / (east - west);
+      const yFloat = (north - latlng.lat) / (north - south);
+
+      const x = Math.min(APP.rasterWidth - 1, Math.max(0, Math.floor(xFloat * (APP.rasterWidth - 1))));
+      const y = Math.min(APP.rasterHeight - 1, Math.max(0, Math.floor(yFloat * (APP.rasterHeight - 1))));
+
+      const idx = (y * APP.rasterWidth + x) * 4;
+      const r = APP.rasterPixels[idx];
+      const g = APP.rasterPixels[idx + 1];
+      const b = APP.rasterPixels[idx + 2];
+      const a = APP.rasterPixels[idx + 3];
+
+      if (a < 16) {
+        return null;
+      }
+
+      return classifyGddRasterColor(r, g, b);
     }
 
-    async function updateGddJsonLayer() {
-      if (!APP.overlayVisible) return;
+    async function loadRasterPixelData(imageUrl) {
+      return new Promise(function(resolve, reject) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) {
+            reject(new Error("2D context unavailable"));
+            return;
+          }
 
-      APP.overlayLoadToken += 1;
-      const requestToken = APP.overlayLoadToken;
-
-      if (APP.hexLayer) {
-        APP.map.removeLayer(APP.hexLayer);
-        APP.hexLayer = null;
-      }
-      if (APP.pointLayer) {
-        APP.map.removeLayer(APP.pointLayer);
-        APP.pointLayer = null;
-      }
-
-      APP.currentHexGeojson = null;
-      resetSelectedHex();
-      DOM.hexValue.textContent = "—";
-      setStatus("Loading 1km JSON preview...");
-
-      try {
-        const previewText = await fetchTextPreview(GDD_JSON_URL, GDD_PREVIEW_BYTES);
-        if (requestToken !== APP.overlayLoadToken) {
-          return;
-        }
-
-        const data = parsePartialJsonArray(previewText).filter(function(row) {
-          return isFinite(row.lat) && isFinite(row.lng) && isFinite(row.GEN_diff);
-        });
-
-        if (!data.length) {
-          setStatus("No valid JSON points found in preview chunk");
-          return;
-        }
-
-        const step = Math.max(1, Math.ceil(data.length / GDD_MAX_POINTS));
-        const sampled = data.filter(function(_, idx) {
-          return idx % step === 0;
-        });
-
-        APP.pointLayer = L.layerGroup(sampled.map(function(row) {
-          const marker = L.circleMarker([Number(row.lat), Number(row.lng)], {
-            pane: "hexPane",
-            renderer: APP.pointRenderer,
-            radius: 2,
-            weight: 0,
-            fillOpacity: 0.8,
-            fillColor: getGddPointColor(Number(row.GEN_diff))
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          resolve({
+            width: canvas.width,
+            height: canvas.height,
+            pixels: imageData.data
           });
-
-          marker.bindTooltip(
-            "GEN diff: " + Number(row.GEN_diff).toFixed(0)
-            + "<br>GEN now: " + Number(row.GEN_now).toFixed(0)
-            + "<br>GEN future: " + Number(row.GEN_future).toFixed(0),
-            { className: "hex-tooltip", direction: "top", sticky: true }
-          );
-
-          return marker;
-        })).addTo(APP.map);
-
-        if (requestToken !== APP.overlayLoadToken) {
-          return;
-        }
-
-        setStatus("Loaded 1km JSON preview points: " + sampled.length + " (sampled)");
-      } catch (error) {
-        console.error(error);
-        setStatus("JSON preview could not be loaded");
-      }
+        };
+        img.onerror = function() {
+          reject(new Error("Raster image could not be decoded"));
+        };
+        img.src = imageUrl + "?v=" + Date.now();
+      });
     }
 
     async function updateGddRasterLayer() {
@@ -954,10 +877,6 @@
       if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
-      }
-      if (APP.pointLayer) {
-        APP.map.removeLayer(APP.pointLayer);
-        APP.pointLayer = null;
       }
       if (APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
@@ -993,6 +912,12 @@
             interactive: false
           }
         ).addTo(APP.map);
+
+        const rasterData = await loadRasterPixelData("webmap_data/" + meta.image);
+        APP.rasterMeta = meta;
+        APP.rasterPixels = rasterData.pixels;
+        APP.rasterWidth = rasterData.width;
+        APP.rasterHeight = rasterData.height;
 
         if (requestToken !== APP.overlayLoadToken) {
           return;
@@ -1111,6 +1036,18 @@
         }
       }
 
+      if (APP.currentOverlay === "gddraster") {
+        const rasterClass = sampleGddRasterAt(latlng);
+        if (rasterClass) {
+          DOM.hexValue.textContent = rasterClass.valueText;
+          setStatus("Raster value found: " + rasterClass.label);
+        } else {
+          DOM.hexValue.textContent = "—";
+          setStatus("No raster value at clicked point");
+        }
+        return;
+      }
+
       if (hexFeature) {
         const val = Number(hexFeature.properties.mean);
         DOM.hexValue.textContent = isFinite(val) ? val.toFixed(6) : "NA";
@@ -1155,7 +1092,6 @@
 
       APP.map.createPane("countryPane");
       APP.map.getPane("countryPane").style.zIndex = 260;
-      APP.pointRenderer = L.canvas({ padding: 0.2 });
 
       // Map click handler - only source for panel updates
       // Removed layer click handlers to avoid double-handling and ensure robust point-in-polygon lookup
