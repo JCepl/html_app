@@ -82,14 +82,18 @@
 
     .banner-actions {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       justify-content: flex-end;
       gap: 8px;
       align-items: center;
+      white-space: nowrap;
+      overflow-x: auto;
+      scrollbar-width: thin;
     }
 
     .banner-link {
       display: inline-block;
+      flex: 0 0 auto;
       padding: 4px 2px;
       color: #0f3b73;
       text-decoration: none;
@@ -148,6 +152,21 @@
       margin-top: 18px;
       padding-top: 12px;
       border-top: 1px solid #ddd;
+    }
+
+    .overlay-chooser {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #d2deeb;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .overlay-description {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #2f4b67;
+      line-height: 1.35;
     }
 
     .row {
@@ -281,7 +300,7 @@
         <img class="banner-logo" src="https://www.interreg-central.eu/wp-content/uploads/2023/01/logo-blue.svg" alt="Interreg Central Europe logo" />
       </a>
       <div class="banner-title">
-        <h1>RE-ENFORCE Forest Restoration Viewer</h1>
+        <h1>RE-ENFORCE Decision Support System</h1>
       </div>
     </div>
     <div class="banner-right">
@@ -315,6 +334,17 @@
 
       <div class="control-block">
         <h3>Overlay</h3>
+
+        <div class="label">Overlay type</div>
+        <div class="overlay-chooser">
+          <select id="overlaySelector">
+            <option value="bbtl">Bark beetle pressure (hex)</option>
+            <option value="wildfire">Wildfire risk (coming soon)</option>
+            <option value="drought">Drought stress (coming soon)</option>
+            <option value="wind">Wind disturbance (coming soon)</option>
+          </select>
+          <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
+        </div>
 
         <div class="label">RCP Scenario</div>
         <div class="row">
@@ -389,9 +419,45 @@
       selectedCountryLayer: null,
       currentYear: null,
       currentRcp: "rcp26",  // Fixed: Added back currentRcp for file path construction
+      currentOverlay: "bbtl",
       overlayVisible: true,
       currentHexGeojson: null,
       countryGeojson: null
+    };
+
+    const OVERLAY_CATALOG = {
+      bbtl: {
+        label: "Bark beetle pressure (hex)",
+        description: "Projected bark beetle pressure by hexagon under selected RCP scenario and year.",
+        available: true,
+        usesRcp: true,
+        usesYear: true,
+        meta: MAP_META
+      },
+      wildfire: {
+        label: "Wildfire risk",
+        description: "Planned overlay for modeled wildfire disturbance risk.",
+        available: false,
+        usesRcp: true,
+        usesYear: true,
+        meta: null
+      },
+      drought: {
+        label: "Drought stress",
+        description: "Planned overlay for drought stress and climate exposure.",
+        available: false,
+        usesRcp: true,
+        usesYear: true,
+        meta: null
+      },
+      wind: {
+        label: "Wind disturbance",
+        description: "Planned overlay for windthrow and storm disturbance pressure.",
+        available: false,
+        usesRcp: true,
+        usesYear: true,
+        meta: null
+      }
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
@@ -402,6 +468,8 @@
       lon: document.getElementById("lon"),
       hexValue: document.getElementById("hexValue"),
       status: document.getElementById("status"),
+      overlaySelector: document.getElementById("overlaySelector"),
+      overlayDescription: document.getElementById("overlayDescription"),
       yearSlider: document.getElementById("yearSlider"),
       yearValue: document.getElementById("yearValue"),
       opacitySlider: document.getElementById("opacitySlider"),
@@ -413,13 +481,24 @@
       rcpSelector: document.getElementById("rcpSelector")
     };
 
+    function getActiveOverlay() {
+      return OVERLAY_CATALOG[APP.currentOverlay] || OVERLAY_CATALOG.bbtl;
+    }
+
     function setStatus(text) {
       DOM.status.textContent = text;
     }
 
     function setLegendLabels() {
-      DOM.legendMin.textContent = Number(MAP_META.valueRange.zmin).toFixed(3);
-      DOM.legendMax.textContent = Number(MAP_META.valueRange.zmax).toFixed(3);
+      const overlay = getActiveOverlay();
+      if (!overlay.available || !overlay.meta) {
+        DOM.legendMin.textContent = "NA";
+        DOM.legendMax.textContent = "NA";
+        return;
+      }
+
+      DOM.legendMin.textContent = Number(overlay.meta.valueRange.zmin).toFixed(3);
+      DOM.legendMax.textContent = Number(overlay.meta.valueRange.zmax).toFixed(3);
     }
 
     function getColor(value) {
@@ -437,8 +516,13 @@
         return "#cccccc";
       }
 
-      const zmin = Number(MAP_META.valueRange.zmin);
-      const zmax = Number(MAP_META.valueRange.zmax);
+      const overlay = getActiveOverlay();
+      if (!overlay.available || !overlay.meta) {
+        return "#cccccc";
+      }
+
+      const zmin = Number(overlay.meta.valueRange.zmin);
+      const zmax = Number(overlay.meta.valueRange.zmax);
 
       if (zmax <= zmin) {
         return palette[0];
@@ -530,7 +614,11 @@
     }
 
     function getCurrentFile() {
-      return MAP_META.files[APP.currentRcp + "_" + APP.currentYear];
+      const overlay = getActiveOverlay();
+      if (!overlay.available || !overlay.meta) {
+        return null;
+      }
+      return overlay.meta.files[APP.currentRcp + "_" + APP.currentYear];
     }
 
     function getCountryName(feature) {
@@ -573,13 +661,52 @@
     }
 
     function fitDataBounds() {
+      const overlay = getActiveOverlay();
+      const meta = overlay.meta || MAP_META;
+
       if (APP.hexLayer) {
         APP.map.fitBounds(APP.hexLayer.getBounds());
       } else {
         APP.map.fitBounds([
-          [MAP_META.bbox.ymin, MAP_META.bbox.xmin],
-          [MAP_META.bbox.ymax, MAP_META.bbox.xmax]
+          [meta.bbox.ymin, meta.bbox.xmin],
+          [meta.bbox.ymax, meta.bbox.xmax]
         ]);
+      }
+    }
+
+    function clearOverlayLayer() {
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      DOM.hexValue.textContent = "—";
+    }
+
+    function syncOverlayControls() {
+      const overlay = getActiveOverlay();
+      DOM.overlayDescription.textContent = overlay.description;
+      DOM.rcpSelector.disabled = !overlay.usesRcp;
+      DOM.yearSlider.disabled = !overlay.usesYear;
+      DOM.yearValue.style.opacity = overlay.usesYear ? "1" : "0.6";
+
+      if (!overlay.available) {
+        clearOverlayLayer();
+        setLegendLabels();
+        setStatus(overlay.label + " overlay is not available yet");
+        return;
+      }
+
+      const years = overlay.meta.years;
+      DOM.yearSlider.max = years.length - 1;
+      if (!years.includes(APP.currentYear)) {
+        APP.currentYear = years[0];
+      }
+      DOM.yearValue.textContent = String(APP.currentYear);
+      setLegendLabels();
+      if (APP.overlayVisible) {
+        updateHexLayer();
       }
     }
 
@@ -670,7 +797,7 @@
     }
 
     function initMap() {
-      APP.currentYear = MAP_META.years[0];
+      APP.currentYear = getActiveOverlay().meta.years[0];
 
       APP.map = L.map("map", {
         center: [50.2, 12.5],
@@ -710,10 +837,16 @@
     }
 
     function initControls() {
-      DOM.yearSlider.max = MAP_META.years.length - 1;
+      DOM.yearSlider.max = getActiveOverlay().meta.years.length - 1;
       DOM.yearSlider.value = 0;
       DOM.yearValue.textContent = String(APP.currentYear);
       DOM.opacityValue.textContent = Number(DOM.opacitySlider.value).toFixed(2);
+
+      DOM.overlaySelector.value = APP.currentOverlay;
+      DOM.overlaySelector.addEventListener("change", function() {
+        APP.currentOverlay = DOM.overlaySelector.value;
+        syncOverlayControls();
+      });
 
       // RCP selector
       DOM.rcpSelector.value = APP.currentRcp;
@@ -723,8 +856,12 @@
       });
 
       DOM.yearSlider.addEventListener("input", function() {
+        const overlay = getActiveOverlay();
+        if (!overlay.available || !overlay.meta) {
+          return;
+        }
         const yearIndex = Number(DOM.yearSlider.value);
-        APP.currentYear = MAP_META.years[yearIndex];
+        APP.currentYear = overlay.meta.years[yearIndex];
         DOM.yearValue.textContent = String(APP.currentYear);
         updateHexLayer();
       });
@@ -744,15 +881,11 @@
         APP.overlayVisible = !APP.overlayVisible;
 
         if (APP.overlayVisible) {
-          updateHexLayer();
+          syncOverlayControls();
           DOM.toggleOverlayBtn.textContent = "Hide overlay";
           setStatus("Overlay shown");
         } else {
-          if (APP.hexLayer) {
-            APP.map.removeLayer(APP.hexLayer);
-            APP.hexLayer = null;
-          }
-          APP.currentHexGeojson = null;
+          clearOverlayLayer();
           resetSelectedHex();
           resetSelectedCountry();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
@@ -763,6 +896,8 @@
       DOM.fitOverlayBtn.addEventListener("click", function() {
         fitDataBounds();
       });
+
+      syncOverlayControls();
     }
 
     async function loadCountryBorders() {
