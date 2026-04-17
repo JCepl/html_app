@@ -236,8 +236,6 @@
     }
 
     .citation-box {
-      position: sticky;
-      bottom: 0;
       margin-top: 12px;
       padding: 10px;
       border: 1px solid #d6e2ef;
@@ -246,7 +244,6 @@
       font-size: 12px;
       color: #2a4560;
       line-height: 1.35;
-      z-index: 10;
     }
 
     .citation-title {
@@ -385,6 +382,18 @@
           <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
         </div>
 
+        <div id="citationBox" class="citation-box">
+          <p class="citation-title">Data source and citation</p>
+          <p class="citation-item">
+            <a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Science paper (DOI)</a><br>
+            Grunig, M., Rammer, W., Senf, C., Albrich, K., Andre, K., Augustynczik, A. L. D., et al. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789). https://doi.org/10.1126/science.adx6329
+          </p>
+          <p class="citation-item">
+            <a href="https://datadryad.org/search?search=10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Dryad dataset search</a><br>
+            Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
+          </p>
+        </div>
+
         <div class="label">RCP Scenario</div>
         <div class="row">
           <select id="rcpSelector">
@@ -418,18 +427,6 @@
             <span id="legendMin">min</span>
             <span id="legendMax">max</span>
           </div>
-        </div>
-
-        <div id="citationBox" class="citation-box">
-          <p class="citation-title">Data source and citation</p>
-          <p class="citation-item">
-            <a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Science paper (DOI)</a><br>
-            Grunig, M., Rammer, W., Senf, C., Albrich, K., Andre, K., Augustynczik, A. L. D., et al. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789). https://doi.org/10.1126/science.adx6329
-          </p>
-          <p class="citation-item">
-            <a href="https://datadryad.org/search?search=10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Dryad dataset search</a><br>
-            Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
-          </p>
         </div>
 
         <div class="small">
