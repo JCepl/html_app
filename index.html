@@ -523,7 +523,7 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
-  const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84.tif";
+  const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84_filled.tif";
     const GDD_RASTER_CLASSES = [
       { color: [21, 101, 192], label: "<= -0.5", valueText: "GEN diff <= -0.5" },
       { color: [240, 244, 248], label: "-0.5 to 0.5", valueText: "GEN diff -0.5 to 0.5" },
@@ -876,6 +876,7 @@
           opacity: Number(DOM.opacitySlider.value),
           pane: "hexPane",
           resolution: 256,
+          resampleMethod: "bilinear",
           pixelValuesToColorFn: function(values) {
             const value = values && values.length ? Number(values[0]) : NaN;
             if (!isFinite(value)) {
