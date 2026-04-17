@@ -420,7 +420,7 @@
           </div>
         </div>
 
-        <div class="citation-box">
+        <div id="citationBox" class="citation-box">
           <p class="citation-title">Data source and citation</p>
           <p class="citation-item">
             <a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Science paper (DOI)</a><br>
@@ -520,6 +520,7 @@
       lon: document.getElementById("lon"),
       hexValue: document.getElementById("hexValue"),
       status: document.getElementById("status"),
+      citationBox: document.getElementById("citationBox"),
       overlaySelector: document.getElementById("overlaySelector"),
       overlayDescription: document.getElementById("overlayDescription"),
       yearSlider: document.getElementById("yearSlider"),
@@ -551,6 +552,11 @@
 
       DOM.legendMin.textContent = Number(overlay.meta.valueRange.zmin).toFixed(3);
       DOM.legendMax.textContent = Number(overlay.meta.valueRange.zmax).toFixed(3);
+    }
+
+    function syncCitationVisibility() {
+      const showCitation = APP.currentOverlay === "bbtl" && APP.overlayVisible;
+      DOM.citationBox.style.display = showCitation ? "block" : "none";
     }
 
     function getColor(value) {
@@ -747,6 +753,7 @@
       DOM.rcpSelector.disabled = !overlay.usesRcp;
       DOM.yearSlider.disabled = !overlay.usesYear;
       DOM.yearValue.style.opacity = overlay.usesYear ? "1" : "0.6";
+      syncCitationVisibility();
 
       if (!overlay.available) {
         clearOverlayLayer();
@@ -937,6 +944,7 @@
 
       DOM.toggleOverlayBtn.addEventListener("click", function() {
         APP.overlayVisible = !APP.overlayVisible;
+        syncCitationVisibility();
 
         if (APP.overlayVisible) {
           syncOverlayControls();
