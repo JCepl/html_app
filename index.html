@@ -277,7 +277,7 @@
       countryGeojson: null
     };
 
-    const COUNTRY_GEOJSON_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson";
+    const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
 
     const DOM = {
       country: document.getElementById("country"),
@@ -380,7 +380,9 @@
         color: "#c62828",
         weight: 2.8,
         opacity: 1,
-        fillOpacity: 0.06
+        fillOpacity: 0.06,
+        lineCap: "round",
+        lineJoin: "round"
       });
 
       if (layer.bringToFront) {
@@ -419,11 +421,38 @@
         return "Unknown";
       }
 
-      return feature.properties.name
+      return feature.properties.CNTR_NAME
+        || feature.properties.NAME_ENGL
+        || feature.properties.name
         || feature.properties.NAME_EN
         || feature.properties.ADMIN
         || feature.properties.SOVEREIGNT
         || "Unknown";
+    }
+
+    function getMapExtentCountryGeojson(geojson) {
+      if (!geojson || !geojson.features) {
+        return geojson;
+      }
+
+      const bboxFeature = turf.bboxPolygon([
+        MAP_META.bbox.xmin,
+        MAP_META.bbox.ymin,
+        MAP_META.bbox.xmax,
+        MAP_META.bbox.ymax
+      ]);
+
+      return {
+        type: "FeatureCollection",
+        features: geojson.features.filter(function(feature) {
+          try {
+            return turf.booleanIntersects(feature, bboxFeature);
+          } catch (error) {
+            console.error("Country bbox filter failed:", error);
+            return false;
+          }
+        })
+      };
     }
 
     function fitDataBounds() {
@@ -529,6 +558,7 @@
       APP.map = L.map("map", {
         center: [50.2, 12.5],
         zoom: 4.7,
+        renderer: L.svg(),
         maxBounds: [
           [34.0, -15.0],
           [73.0, 36.0]
@@ -625,17 +655,21 @@
           throw new Error("HTTP " + response.status);
         }
 
-        APP.countryGeojson = await response.json();
+        APP.countryGeojson = getMapExtentCountryGeojson(await response.json());
 
         APP.countryHaloLayer = L.geoJSON(APP.countryGeojson, {
           pane: "countryHaloPane",
           interactive: false,
+          smoothFactor: 0,
+          noClip: true,
           style: function() {
             return {
               color: "#ffffff",
               weight: 3.4,
               opacity: 0.85,
-              fillOpacity: 0
+              fillOpacity: 0,
+              lineCap: "round",
+              lineJoin: "round"
             };
           }
         }).addTo(APP.map);
@@ -643,12 +677,16 @@
         APP.countryLayer = L.geoJSON(APP.countryGeojson, {
           pane: "countryPane",
           interactive: true,  // Make interactive for highlighting
+          smoothFactor: 0,
+          noClip: true,
           style: function() {
             return {
               color: "#29465b",
               weight: 1.05,
               opacity: 0.95,
-              fillOpacity: 0
+              fillOpacity: 0,
+              lineCap: "round",
+              lineJoin: "round"
             };
           }
         }).addTo(APP.map);
