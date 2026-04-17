@@ -420,6 +420,7 @@
       currentYear: null,
       currentRcp: "rcp26",  // Fixed: Added back currentRcp for file path construction
       currentOverlay: "bbtl",
+      overlayLoadToken: 0,
       overlayVisible: true,
       currentHexGeojson: null,
       countryGeojson: null
@@ -542,8 +543,8 @@
     function baseHexStyle(feature) {
       const value = Number(feature.properties.mean);
       const fillOpacity = Number(DOM.opacitySlider.value);
-      // Fade borders slower than fill, but allow them to fade out when fill is zero
-      const borderOpacity = Math.max(0.1, fillOpacity * 0.5);
+      // Keep border tied to fill opacity so slider behavior feels predictable.
+      const borderOpacity = fillOpacity <= 0 ? 0 : Math.min(1, fillOpacity * 0.6);
 
       return {
         color: "#222222",
@@ -555,12 +556,15 @@
     }
 
     function highlightHex(layer) {
+      const baseOpacity = Number(DOM.opacitySlider.value);
+      const selectedOpacity = Math.min(baseOpacity + 0.15, 0.5);
+
       layer.setStyle({
         color: "#111111",
         weight: 2.0,
         opacity: 1,
         fillColor: "#ffffff",
-        fillOpacity: 0.25
+        fillOpacity: selectedOpacity
       });
 
       if (layer.bringToFront) {
@@ -703,6 +707,7 @@
       if (!years.includes(APP.currentYear)) {
         APP.currentYear = years[0];
       }
+      DOM.yearSlider.value = String(years.indexOf(APP.currentYear));
       DOM.yearValue.textContent = String(APP.currentYear);
       setLegendLabels();
       if (APP.overlayVisible) {
@@ -952,6 +957,9 @@
     async function updateHexLayer() {
       if (!APP.overlayVisible) return;
 
+      APP.overlayLoadToken += 1;
+      const requestToken = APP.overlayLoadToken;
+
       const fileName = getCurrentFile();
 
       if (!fileName) {
@@ -977,7 +985,12 @@
           throw new Error("HTTP " + response.status + " for " + fileName);
         }
 
-        APP.currentHexGeojson = await response.json();
+        const nextGeojson = await response.json();
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        APP.currentHexGeojson = nextGeojson;
 
         APP.hexLayer = L.geoJSON(APP.currentHexGeojson, {
           pane: "hexPane",
