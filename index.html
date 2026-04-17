@@ -445,6 +445,9 @@
   ></script>
 
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <script src="https://unpkg.com/geotiff/dist-browser/geotiff.js"></script>
+  <script src="https://unpkg.com/georaster/dist/georaster.browser.bundle.min.js"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
@@ -462,10 +465,7 @@
       clickMarker: null,
       hexLayer: null,
       rasterLayer: null,
-      rasterMeta: null,
-      rasterPixels: null,
-      rasterWidth: 0,
-      rasterHeight: 0,
+      rasterData: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
@@ -523,7 +523,7 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
-    const GDD_RASTER_META_URL = "webmap_data/gdd_gen_diff_raster_meta.json";
+  const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84.tif";
     const GDD_RASTER_CLASSES = [
       { color: [21, 101, 192], label: "<= -0.5", valueText: "GEN diff <= -0.5" },
       { color: [240, 244, 248], label: "-0.5 to 0.5", valueText: "GEN diff -0.5 to 0.5" },
@@ -751,7 +751,9 @@
       if (APP.hexLayer) {
         APP.map.fitBounds(APP.hexLayer.getBounds());
       } else if (APP.rasterLayer) {
-        APP.map.fitBounds(APP.rasterLayer.getBounds());
+        if (APP.rasterLayer.getBounds) {
+          APP.map.fitBounds(APP.rasterLayer.getBounds());
+        }
       } else {
         APP.map.fitBounds([
           [meta.bbox.ymin, meta.bbox.xmin],
@@ -771,10 +773,7 @@
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
-      APP.rasterMeta = null;
-      APP.rasterPixels = null;
-      APP.rasterWidth = 0;
-      APP.rasterHeight = 0;
+      APP.rasterData = null;
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -788,84 +787,55 @@
       updateHexLayer();
     }
 
-    function classifyGddRasterColor(r, g, b) {
-      let best = null;
-      let bestDist = Infinity;
-
-      for (const klass of GDD_RASTER_CLASSES) {
-        const dr = r - klass.color[0];
-        const dg = g - klass.color[1];
-        const db = b - klass.color[2];
-        const dist = dr * dr + dg * dg + db * db;
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = klass;
-        }
-      }
-
-      return best;
+    function classifyGddRasterValue(value) {
+      if (!isFinite(value)) return null;
+      if (value <= -0.5) return GDD_RASTER_CLASSES[0];
+      if (value <= 0.5) return GDD_RASTER_CLASSES[1];
+      if (value <= 1.5) return GDD_RASTER_CLASSES[2];
+      return GDD_RASTER_CLASSES[3];
     }
 
     function sampleGddRasterAt(latlng) {
-      if (!APP.rasterMeta || !APP.rasterPixels || APP.rasterWidth <= 0 || APP.rasterHeight <= 0) {
+      if (!APP.rasterData || !APP.rasterData.values || !APP.rasterData.values[0]) {
         return null;
       }
 
-      const south = Number(APP.rasterMeta.bounds.south);
-      const west = Number(APP.rasterMeta.bounds.west);
-      const north = Number(APP.rasterMeta.bounds.north);
-      const east = Number(APP.rasterMeta.bounds.east);
+      const west = Number(APP.rasterData.xmin);
+      const east = Number(APP.rasterData.xmax);
+      const south = Number(APP.rasterData.ymin);
+      const north = Number(APP.rasterData.ymax);
 
       if (latlng.lat < south || latlng.lat > north || latlng.lng < west || latlng.lng > east) {
         return null;
       }
 
-      const xFloat = (latlng.lng - west) / (east - west);
-      const yFloat = (north - latlng.lat) / (north - south);
-
-      const x = Math.min(APP.rasterWidth - 1, Math.max(0, Math.floor(xFloat * (APP.rasterWidth - 1))));
-      const y = Math.min(APP.rasterHeight - 1, Math.max(0, Math.floor(yFloat * (APP.rasterHeight - 1))));
-
-      const idx = (y * APP.rasterWidth + x) * 4;
-      const r = APP.rasterPixels[idx];
-      const g = APP.rasterPixels[idx + 1];
-      const b = APP.rasterPixels[idx + 2];
-      const a = APP.rasterPixels[idx + 3];
-
-      if (a < 16) {
+      const width = Number(APP.rasterData.width);
+      const height = Number(APP.rasterData.height);
+      if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) {
         return null;
       }
 
-      return classifyGddRasterColor(r, g, b);
-    }
+      const pixelWidth = Math.abs((east - west) / width);
+      const pixelHeight = Math.abs((north - south) / height);
 
-    async function loadRasterPixelData(imageUrl) {
-      return new Promise(function(resolve, reject) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = function() {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          if (!ctx) {
-            reject(new Error("2D context unavailable"));
-            return;
-          }
+      const col = Math.floor((latlng.lng - west) / pixelWidth);
+      const row = Math.floor((north - latlng.lat) / pixelHeight);
+      if (row < 0 || row >= height || col < 0 || col >= width) {
+        return null;
+      }
 
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          resolve({
-            width: canvas.width,
-            height: canvas.height,
-            pixels: imageData.data
-          });
-        };
-        img.onerror = function() {
-          reject(new Error("Raster image could not be decoded"));
-        };
-        img.src = imageUrl + "?v=" + Date.now();
-      });
+      const band = APP.rasterData.values[0];
+      if (!band[row]) {
+        return null;
+      }
+
+      const value = band[row][col];
+      const noData = APP.rasterData.noDataValue;
+      if (!isFinite(value) || (isFinite(noData) && value === noData)) {
+        return null;
+      }
+
+      return Number(value);
     }
 
     async function updateGddRasterLayer() {
@@ -888,36 +858,39 @@
       setStatus("Loading 1km raster overlay...");
 
       try {
-        const response = await fetch(GDD_RASTER_META_URL, { cache: "no-store" });
+        const response = await fetch(GDD_RASTER_TIF_URL, { cache: "no-store" });
         if (!response.ok) {
           throw new Error("HTTP " + response.status);
         }
 
-        const meta = await response.json();
+        const arrayBuffer = await response.arrayBuffer();
+        const georaster = await parseGeoraster(arrayBuffer);
         if (requestToken !== APP.overlayLoadToken) {
           return;
         }
 
-        const bounds = [
-          [Number(meta.bounds.south), Number(meta.bounds.west)],
-          [Number(meta.bounds.north), Number(meta.bounds.east)]
-        ];
+        APP.rasterData = georaster;
 
-        APP.rasterLayer = L.imageOverlay(
-          "webmap_data/" + meta.image,
-          bounds,
-          {
-            pane: "hexPane",
-            opacity: Number(DOM.opacitySlider.value),
-            interactive: false
+        APP.rasterLayer = new GeoRasterLayer({
+          georaster: georaster,
+          opacity: Number(DOM.opacitySlider.value),
+          pane: "hexPane",
+          resolution: 256,
+          pixelValuesToColorFn: function(values) {
+            const value = values && values.length ? Number(values[0]) : NaN;
+            if (!isFinite(value)) {
+              return null;
+            }
+
+            const klass = classifyGddRasterValue(value);
+            if (!klass) {
+              return null;
+            }
+
+            return "rgb(" + klass.color[0] + "," + klass.color[1] + "," + klass.color[2] + ")";
           }
-        ).addTo(APP.map);
-
-        const rasterData = await loadRasterPixelData("webmap_data/" + meta.image);
-        APP.rasterMeta = meta;
-        APP.rasterPixels = rasterData.pixels;
-        APP.rasterWidth = rasterData.width;
-        APP.rasterHeight = rasterData.height;
+        });
+        APP.rasterLayer.addTo(APP.map);
 
         if (requestToken !== APP.overlayLoadToken) {
           return;
@@ -1037,10 +1010,11 @@
       }
 
       if (APP.currentOverlay === "gddraster") {
-        const rasterClass = sampleGddRasterAt(latlng);
-        if (rasterClass) {
-          DOM.hexValue.textContent = rasterClass.valueText;
-          setStatus("Raster value found: " + rasterClass.label);
+        const rasterValue = sampleGddRasterAt(latlng);
+        if (isFinite(rasterValue)) {
+          const rasterClass = classifyGddRasterValue(rasterValue);
+          DOM.hexValue.textContent = rasterValue.toFixed(2) + " (" + rasterClass.label + ")";
+          setStatus("Raster value found: " + rasterValue.toFixed(2));
         } else {
           DOM.hexValue.textContent = "—";
           setStatus("No raster value at clicked point");
