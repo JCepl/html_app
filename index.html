@@ -660,6 +660,13 @@
         return;
       }
 
+      if (APP.currentOverlay === "bbtpast") {
+        DOM.legendBar.style.display = "none";
+        DOM.legendMin.textContent = "Loading...";
+        DOM.legendMax.textContent = "";
+        return;
+      }
+
       if (!overlay.available || !overlay.meta) {
         DOM.legendMin.textContent = "NA";
         DOM.legendMax.textContent = "NA";
