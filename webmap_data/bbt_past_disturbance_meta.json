@@ -1,0 +1,19 @@
+{
+  "image": "bbt_past_disturbance.png",
+  "bounds": {
+    "south": 34.4887,
+    "west": -10.6599,
+    "north": 71.1814,
+    "east": 38.6077
+  },
+  "dimensions": {
+    "width": 3103,
+    "height": 2311
+  },
+  "source": "EU_total_sum_over_forest_1km_1985_2023.tif",
+  "legend": {
+    "breaks": [0, 0.1, 0.25, 0.5, 0.9, 1.5, 3],
+    "labels": ["0 (transparent)", "0 to 0.1", "0.1 to 0.25", "0.25 to 0.5", "0.5 to 0.9", "0.9 to 1.5", "1.5 to 3", "> 3"],
+    "colors": ["#00000000", "#fee8c8", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#7f0000"]
+  }
+}
