@@ -655,8 +655,8 @@
     function resetSelectedHex() {
       if (APP.selectedHexLayer && APP.hexLayer) {
         APP.hexLayer.resetStyle(APP.selectedHexLayer);
-        APP.selectedHexLayer = null;
       }
+      APP.selectedHexLayer = null;
     }
 
     // Highlight selected country
@@ -765,6 +765,8 @@
     function clearOverlayLayer() {
       // Invalidate any in-flight overlay request so stale responses cannot re-add old layers.
       APP.overlayLoadToken += 1;
+      resetSelectedHex();
+      resetSelectedCountry();
       if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
@@ -775,7 +777,6 @@
       }
       APP.rasterData = null;
       APP.currentHexGeojson = null;
-      resetSelectedHex();
       DOM.hexValue.textContent = "—";
     }
 
@@ -1041,7 +1042,10 @@
     }
 
     function initMap() {
-      APP.currentYear = getActiveOverlay().meta.years[0];
+      const defaultOverlay = getActiveOverlay();
+      if (defaultOverlay.meta && Array.isArray(defaultOverlay.meta.years) && defaultOverlay.meta.years.length) {
+        APP.currentYear = defaultOverlay.meta.years[0];
+      }
 
       APP.map = L.map("map", {
         center: [50.2, 12.5],
@@ -1081,9 +1085,14 @@
     }
 
     function initControls() {
-      DOM.yearSlider.max = getActiveOverlay().meta.years.length - 1;
-      DOM.yearSlider.value = 0;
-      DOM.yearValue.textContent = String(APP.currentYear);
+      const defaultOverlay = getActiveOverlay();
+      if (defaultOverlay.meta && Array.isArray(defaultOverlay.meta.years) && defaultOverlay.meta.years.length) {
+        DOM.yearSlider.max = defaultOverlay.meta.years.length - 1;
+        DOM.yearSlider.value = 0;
+        DOM.yearValue.textContent = String(APP.currentYear);
+      } else {
+        DOM.yearValue.textContent = "NA";
+      }
       DOM.opacityValue.textContent = Number(DOM.opacitySlider.value).toFixed(2);
 
       DOM.overlaySelector.value = APP.currentOverlay;
@@ -1215,7 +1224,12 @@
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
       }
+      if (APP.rasterLayer) {
+        APP.map.removeLayer(APP.rasterLayer);
+        APP.rasterLayer = null;
+      }
 
+      APP.rasterData = null;
       APP.currentHexGeojson = null;
       resetSelectedHex();
       resetSelectedCountry();
