@@ -126,6 +126,7 @@
       border-right: 1px solid #ccc;
       background: #f7f7f7;
       overflow-y: auto;
+      scrollbar-gutter: stable;
     }
 
     #map {
@@ -146,6 +147,13 @@
     .value {
       min-height: 20px;
       line-height: 1.35;
+    }
+
+    #status {
+      min-height: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .control-block {
@@ -233,6 +241,29 @@
       margin-top: 4px;
       font-size: 12px;
       color: #444;
+    }
+
+    .legend-swatches {
+      margin-top: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .legend-swatch-color {
+      width: 18px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      box-sizing: border-box;
     }
 
     .citation-box {
@@ -376,6 +407,7 @@
           <select id="overlaySelector">
             <option value="bbtl">Bark beetle pressure (hex)</option>
             <option value="gddraster">GDD/GEN 1km raster</option>
+            <option value="bbtpast">Past bark beetle disturbance</option>
             <option value="wildfire">Wildfire risk (coming soon)</option>
             <option value="drought">Drought stress (coming soon)</option>
             <option value="wind">Wind disturbance (coming soon)</option>
@@ -428,6 +460,7 @@
             <span id="legendMin">min</span>
             <span id="legendMax">max</span>
           </div>
+          <div id="legendSwatches" class="legend-swatches"></div>
         </div>
 
         <div class="small">
@@ -496,6 +529,19 @@
         usesYear: false,
         meta: null
       },
+      bbtpast: {
+        label: "Past bark beetle disturbance",
+        description: "Classified historical bark beetle disturbance surface for 1985-2023, optimized as a lightweight PNG overlay.",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: {
+          image: "webmap_data/bbt_past_disturbance.png",
+          metaUrl: "webmap_data/bbt_past_disturbance_meta.json",
+          bounds: null,
+          legend: null
+        }
+      },
       wildfire: {
         label: "Wildfire risk",
         description: "Planned overlay for modeled wildfire disturbance risk.",
@@ -546,8 +592,10 @@
       opacityValue: document.getElementById("opacityValue"),
       toggleOverlayBtn: document.getElementById("toggleOverlayBtn"),
       fitOverlayBtn: document.getElementById("fitOverlayBtn"),
+      legendBar: document.querySelector(".legend-bar"),
       legendMin: document.getElementById("legendMin"),
       legendMax: document.getElementById("legendMax"),
+      legendSwatches: document.getElementById("legendSwatches"),
       rcpSelector: document.getElementById("rcpSelector")
     };
 
@@ -559,11 +607,56 @@
       DOM.status.textContent = text;
     }
 
+    function renderLegendSwatches(items) {
+      DOM.legendSwatches.innerHTML = "";
+      if (!items || !items.length) {
+        return;
+      }
+
+      items.forEach(function(item) {
+        const row = document.createElement("div");
+        row.className = "legend-swatch";
+
+        const color = document.createElement("span");
+        color.className = "legend-swatch-color";
+        color.style.background = item.color;
+
+        const label = document.createElement("span");
+        label.textContent = item.label;
+
+        row.appendChild(color);
+        row.appendChild(label);
+        DOM.legendSwatches.appendChild(row);
+      });
+    }
+
     function setLegendLabels() {
       const overlay = getActiveOverlay();
+      renderLegendSwatches([]);
+      DOM.legendBar.style.display = "block";
       if (APP.currentOverlay === "gddraster") {
+        DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "<= -0.5";
         DOM.legendMax.textContent = "> 1.5";
+        renderLegendSwatches(GDD_RASTER_CLASSES.map(function(item) {
+          return {
+            color: "rgb(" + item.color[0] + "," + item.color[1] + "," + item.color[2] + ")",
+            label: item.label
+          };
+        }));
+        return;
+      }
+
+      if (APP.currentOverlay === "bbtpast" && overlay.meta && overlay.meta.legend) {
+        DOM.legendBar.style.display = "none";
+        DOM.legendMin.textContent = overlay.meta.legend.labels[0] || "min";
+        DOM.legendMax.textContent = overlay.meta.legend.labels[overlay.meta.legend.labels.length - 1] || "max";
+        renderLegendSwatches(overlay.meta.legend.labels.map(function(label, index) {
+          return {
+            color: overlay.meta.legend.colors[index],
+            label: label
+          };
+        }));
         return;
       }
 
@@ -781,6 +874,10 @@
     }
 
     function updateActiveOverlayLayer() {
+      if (APP.currentOverlay === "bbtpast") {
+        updateClassifiedImageOverlay();
+        return;
+      }
       if (APP.currentOverlay === "gddraster") {
         updateGddRasterLayer();
         return;
@@ -905,6 +1002,62 @@
       }
     }
 
+    async function updateClassifiedImageOverlay() {
+      if (!APP.overlayVisible) return;
+
+      APP.overlayLoadToken += 1;
+      const requestToken = APP.overlayLoadToken;
+      const overlay = getActiveOverlay();
+
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      if (APP.rasterLayer) {
+        APP.map.removeLayer(APP.rasterLayer);
+        APP.rasterLayer = null;
+      }
+      APP.rasterData = null;
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      DOM.hexValue.textContent = "—";
+      setStatus("Loading historical bark beetle overlay...");
+
+      try {
+        if (!overlay.meta.bounds || !overlay.meta.legend) {
+          const response = await fetch(overlay.meta.metaUrl, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const overlayMeta = await response.json();
+          overlay.meta.bounds = overlayMeta.bounds;
+          overlay.meta.legend = overlayMeta.legend;
+          if (overlayMeta.image) {
+            overlay.meta.image = "webmap_data/" + overlayMeta.image;
+          }
+        }
+
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        APP.rasterLayer = L.imageOverlay(overlay.meta.image, [
+          [overlay.meta.bounds.south, overlay.meta.bounds.west],
+          [overlay.meta.bounds.north, overlay.meta.bounds.east]
+        ], {
+          opacity: Number(DOM.opacitySlider.value),
+          pane: "hexPane"
+        }).addTo(APP.map);
+
+        setLegendLabels();
+        setStatus("Loaded historical bark beetle overlay");
+      } catch (error) {
+        console.error(error);
+        setStatus("Historical bark beetle overlay could not be loaded");
+      }
+    }
+
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
       DOM.overlayDescription.textContent = overlay.description;
@@ -1021,6 +1174,12 @@
           DOM.hexValue.textContent = "—";
           setStatus("No raster value at clicked point");
         }
+        return;
+      }
+
+      if (APP.currentOverlay === "bbtpast") {
+        DOM.hexValue.textContent = "Classified PNG overlay";
+        setStatus("Historical overlay is visualization-only");
         return;
       }
 
