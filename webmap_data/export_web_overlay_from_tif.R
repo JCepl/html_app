@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
   library(jsonlite)
 })
 
-# Convert a georeferenced WGS84 GeoTIFF to web overlay assets:
+# Convert a georeferenced GeoTIFF to web overlay assets:
 # 1) RGBA PNG with transparent NA
-# 2) metadata JSON with exact bounds for Leaflet imageOverlay and class breaks
+# 2) metadata JSON with bounds for Leaflet imageOverlay and class breaks
 #
 # Usage:
 #   Rscript webmap_data/export_web_overlay_from_tif.R \
@@ -32,11 +32,16 @@ if (!file.exists(input_tif)) {
 }
 
 r <- rast(input_tif)
-orig_ext <- ext(r)
-crs_text <- crs(r)
-if (is.na(crs_text) || (!grepl("WGS 84", crs_text, fixed = TRUE) && !grepl("4326", crs_text, fixed = TRUE))) {
-  stop("Input raster must be WGS84/EPSG:4326.")
+source_crs <- crs(r)
+if (is.na(source_crs) || !nzchar(source_crs)) {
+  stop("Input raster must have a valid CRS.")
 }
+
+# Leaflet's imageOverlay is rendered in the map projection plane.
+# Reprojecting the raster to Web Mercator avoids large positional drift that
+# appears when a lat/lon image is stretched directly over an EPSG:3857 basemap.
+r <- project(r, "EPSG:3857", method = "near")
+merc_ext <- ext(r)
 
 vals <- values(r, mat = FALSE)
 nx <- ncol(r)
@@ -114,13 +119,25 @@ plot.new()
 rasterImage(as.raster(rgba), 0, 0, 1, 1, interpolate = FALSE)
 dev.off()
 
+corner_xy <- rbind(
+  c(xmin(merc_ext), ymin(merc_ext)),
+  c(xmin(merc_ext), ymax(merc_ext)),
+  c(xmax(merc_ext), ymin(merc_ext)),
+  c(xmax(merc_ext), ymax(merc_ext))
+)
+corner_ll <- project(corner_xy, from = "EPSG:3857", to = "EPSG:4326")
+west <- min(corner_ll[, 1], na.rm = TRUE)
+east <- max(corner_ll[, 1], na.rm = TRUE)
+south <- min(corner_ll[, 2], na.rm = TRUE)
+north <- max(corner_ll[, 2], na.rm = TRUE)
+
 meta <- list(
   image = basename(output_png),
   bounds = list(
-    south = unname(ymin(orig_ext)),
-    west = unname(xmin(orig_ext)),
-    north = unname(ymax(orig_ext)),
-    east = unname(xmax(orig_ext))
+    south = unname(south),
+    west = unname(west),
+    north = unname(north),
+    east = unname(east)
   ),
   dimensions = list(
     width = nx,
@@ -138,5 +155,5 @@ write_json(meta, output_meta, pretty = TRUE, auto_unbox = TRUE)
 
 cat("Created:", output_png, "\n")
 cat("Created:", output_meta, "\n")
-cat("Bounds:", xmin(orig_ext), ymin(orig_ext), xmax(orig_ext), ymax(orig_ext), "\n")
+cat("Bounds:", west, south, east, north, "\n")
 cat("Dimensions:", nx, "x", ny, "\n")
