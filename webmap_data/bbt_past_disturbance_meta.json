@@ -1,10 +1,10 @@
 {
   "image": "bbt_past_disturbance.png",
   "bounds": {
-    "south": 34.4887,
+    "south": 34.5006,
     "west": -10.6599,
     "north": 71.1814,
-    "east": 38.6077
+    "east": 38.5998
   },
   "dimensions": {
     "width": 3103,

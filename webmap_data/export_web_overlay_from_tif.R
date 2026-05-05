@@ -32,6 +32,7 @@ if (!file.exists(input_tif)) {
 }
 
 r <- rast(input_tif)
+orig_ext <- ext(r)
 crs_text <- crs(r)
 if (is.na(crs_text) || (!grepl("WGS 84", crs_text, fixed = TRUE) && !grepl("4326", crs_text, fixed = TRUE))) {
   stop("Input raster must be WGS84/EPSG:4326.")
@@ -113,14 +114,13 @@ plot.new()
 rasterImage(as.raster(rgba), 0, 0, 1, 1, interpolate = FALSE)
 dev.off()
 
-e <- ext(r)
 meta <- list(
   image = basename(output_png),
   bounds = list(
-    south = unname(ymin(e)),
-    west = unname(xmin(e)),
-    north = unname(ymax(e)),
-    east = unname(xmax(e))
+    south = unname(ymin(orig_ext)),
+    west = unname(xmin(orig_ext)),
+    north = unname(ymax(orig_ext)),
+    east = unname(xmax(orig_ext))
   ),
   dimensions = list(
     width = nx,
@@ -138,5 +138,5 @@ write_json(meta, output_meta, pretty = TRUE, auto_unbox = TRUE)
 
 cat("Created:", output_png, "\n")
 cat("Created:", output_meta, "\n")
-cat("Bounds:", xmin(e), ymin(e), xmax(e), ymax(e), "\n")
+cat("Bounds:", xmin(orig_ext), ymin(orig_ext), xmax(orig_ext), ymax(orig_ext), "\n")
 cat("Dimensions:", nx, "x", ny, "\n")
