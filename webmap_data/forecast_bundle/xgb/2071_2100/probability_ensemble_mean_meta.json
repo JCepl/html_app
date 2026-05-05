@@ -1,0 +1,23 @@
+{
+  "image": "probability_ensemble_mean.png",
+  "bounds": {
+    "south": 34.7841,
+    "west": -10.48,
+    "north": 71.24,
+    "east": 31.5803
+  },
+  "dimensions": {
+    "width": 272,
+    "height": 427
+  },
+  "source": "probability_ensemble_mean.tif",
+  "legend": {
+    "breaks": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+    "labels": ["<= 0.10", "0.10-0.20", "0.20-0.30", "0.30-0.40", "0.40-0.50", "0.50-0.60", "0.60-0.70", "0.70-0.80", "0.80-0.90", "> 0.90"],
+    "colors": ["#fff7ec", "#fee8c8", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#b30000", "#7f0000", "#4d0000"]
+  },
+  "value_range": {
+    "min": 0,
+    "max": 1
+  }
+}

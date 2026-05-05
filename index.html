@@ -607,7 +607,6 @@
       currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
-      currentRasterPaneName: null,
       overlayLoadToken: 0,
       overlayVisible: true,
       currentHexGeojson: null,
@@ -738,6 +737,22 @@
         return null;
       }
       return APP.forecastManifest.entries[getForecastEntryKey()] || null;
+    }
+
+    function getForecastOverlayPaths(entry) {
+      const tifPath = APP.currentForecastView === "probability"
+        ? entry.ensemble_probability_tif
+        : entry.threshold_visible_tifs[APP.currentForecastThreshold];
+
+      if (!tifPath) {
+        return null;
+      }
+
+      return {
+        tifPath: tifPath,
+        imagePath: tifPath.replace(/\.tif$/i, ".png"),
+        metaPath: tifPath.replace(/\.tif$/i, "_meta.json")
+      };
     }
 
     async function ensureForecastManifestLoaded() {
@@ -1202,52 +1217,7 @@
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
       APP.currentHexGeojson = null;
-      clearRasterPaneArtifacts();
-      destroyRasterPane();
       DOM.hexValue.textContent = "—";
-    }
-
-    function clearRasterPaneArtifacts() {
-      if (!APP.map || !APP.map.getPane) {
-        return;
-      }
-
-      const rasterPane = APP.currentRasterPaneName
-        ? APP.map.getPane(APP.currentRasterPaneName)
-        : APP.map.getPane("rasterPane");
-      if (!rasterPane) {
-        return;
-      }
-
-      while (rasterPane.firstChild) {
-        rasterPane.removeChild(rasterPane.firstChild);
-      }
-    }
-
-    function destroyRasterPane() {
-      if (!APP.map || !APP.currentRasterPaneName) {
-        return;
-      }
-
-      const pane = APP.map.getPane(APP.currentRasterPaneName);
-      if (pane && pane.parentNode) {
-        pane.parentNode.removeChild(pane);
-      }
-      APP.currentRasterPaneName = null;
-    }
-
-    function createFreshRasterPane() {
-      if (!APP.map) {
-        return "rasterPane";
-      }
-
-      destroyRasterPane();
-
-      const paneName = "rasterPane_" + APP.overlayLoadToken;
-      APP.map.createPane(paneName);
-      APP.map.getPane(paneName).style.zIndex = 240;
-      APP.currentRasterPaneName = paneName;
-      return paneName;
     }
 
     function updateActiveOverlayLayer() {
@@ -1332,8 +1302,6 @@
         APP.rasterLayer = null;
       }
       APP.currentHexGeojson = null;
-      clearRasterPaneArtifacts();
-      destroyRasterPane();
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
       setStatus("Loading 1km raster overlay...");
@@ -1351,12 +1319,11 @@
         }
 
         APP.rasterData = georaster;
-        const rasterPaneName = createFreshRasterPane();
 
         APP.rasterLayer = new GeoRasterLayer({
           georaster: georaster,
           opacity: Number(DOM.opacitySlider.value),
-          pane: rasterPaneName,
+          pane: "rasterPane",
           resolution: 256,
           resampleMethod: "bilinear",
           pixelValuesToColorFn: function(values) {
@@ -1402,8 +1369,6 @@
         APP.rasterLayer = null;
       }
       APP.rasterData = null;
-      clearRasterPaneArtifacts();
-      destroyRasterPane();
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -1428,13 +1393,12 @@
           return;
         }
 
-        const rasterPaneName = createFreshRasterPane();
         APP.rasterLayer = L.imageOverlay(overlay.meta.image, [
           [overlay.meta.bounds.south, overlay.meta.bounds.west],
           [overlay.meta.bounds.north, overlay.meta.bounds.east]
         ], {
           opacity: Number(DOM.opacitySlider.value),
-          pane: rasterPaneName
+          pane: "rasterPane"
         }).addTo(APP.map);
 
         setLegendLabels();
@@ -1460,8 +1424,7 @@
         APP.rasterLayer = null;
       }
       APP.rasterData = null;
-      clearRasterPaneArtifacts();
-      destroyRasterPane();
+      APP.currentForecastRasterRange = null;
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -1474,46 +1437,36 @@
           throw new Error("Forecast entry missing for " + getForecastEntryKey());
         }
 
-        const tifPath = APP.currentForecastView === "probability"
-          ? entry.ensemble_probability_tif
-          : entry.threshold_visible_tifs[APP.currentForecastThreshold];
-
-        if (!tifPath) {
+        const overlayPaths = getForecastOverlayPaths(entry);
+        if (!overlayPaths) {
           throw new Error("Forecast raster missing for current selection");
         }
 
-        const response = await fetch(tifPath, { cache: "no-store" });
+        const response = await fetch(overlayPaths.metaPath, { cache: "no-store" });
         if (!response.ok) {
-          throw new Error("HTTP " + response.status + " for " + tifPath);
+          throw new Error("HTTP " + response.status + " for " + overlayPaths.metaPath);
         }
 
-        const arrayBuffer = await response.arrayBuffer();
-        const georaster = await parseGeoraster(arrayBuffer);
+        const overlayMeta = await response.json();
         if (requestToken !== APP.overlayLoadToken) {
           return;
         }
 
-        APP.rasterData = georaster;
         APP.currentForecastRasterRange = {
-          min: Array.isArray(georaster.mins) ? Number(georaster.mins[0]) : 0,
-          max: Array.isArray(georaster.maxs) ? Number(georaster.maxs[0]) : 1
+          min: overlayMeta.value_range && isFinite(Number(overlayMeta.value_range.min))
+            ? Number(overlayMeta.value_range.min)
+            : (APP.currentForecastView === "threshold" ? Number(APP.currentForecastThreshold) : 0),
+          max: overlayMeta.value_range && isFinite(Number(overlayMeta.value_range.max))
+            ? Number(overlayMeta.value_range.max)
+            : 1
         };
-        const rasterPaneName = createFreshRasterPane();
-        APP.rasterLayer = new GeoRasterLayer({
-          georaster: georaster,
+        APP.rasterLayer = L.imageOverlay(overlayPaths.imagePath, [
+          [overlayMeta.bounds.south, overlayMeta.bounds.west],
+          [overlayMeta.bounds.north, overlayMeta.bounds.east]
+        ], {
           opacity: Number(DOM.opacitySlider.value),
-          pane: rasterPaneName,
-          resolution: 128,
-          resampleMethod: "nearest",
-          pixelValuesToColorFn: function(values) {
-            const value = values && values.length ? Number(values[0]) : NaN;
-            if (!isFinite(value)) {
-              return null;
-            }
-            return getForecastColor(value);
-          }
-        });
-        APP.rasterLayer.addTo(APP.map);
+          pane: "rasterPane"
+        }).addTo(APP.map);
 
         if (requestToken !== APP.overlayLoadToken) {
           return;
@@ -1648,14 +1601,8 @@
       }
 
       if (APP.currentOverlay === "bbtforecast") {
-        const rasterValue = sampleGddRasterAt(latlng);
-        if (isFinite(rasterValue)) {
-          DOM.hexValue.textContent = rasterValue.toFixed(3);
-          setStatus("Forecast probability found: " + rasterValue.toFixed(3));
-        } else {
-          DOM.hexValue.textContent = "—";
-          setStatus("No forecast value at clicked point");
-        }
+        DOM.hexValue.textContent = "PNG overlay";
+        setStatus("Forecast overlay is visualization-only");
         return;
       }
 
@@ -1706,6 +1653,8 @@
 
       APP.map.createPane("hexPane");
       APP.map.getPane("hexPane").style.zIndex = 250;
+      APP.map.createPane("rasterPane");
+      APP.map.getPane("rasterPane").style.zIndex = 240;
 
       APP.map.createPane("countryHaloPane");
       APP.map.getPane("countryHaloPane").style.zIndex = 255;
