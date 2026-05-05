@@ -819,6 +819,11 @@
         APP.currentForecastPeriod = periods[0];
       }
 
+      const entry = getForecastEntry();
+      if (!entry) {
+        throw new Error("Forecast entry missing for " + getForecastEntryKey());
+      }
+
       const metrics = await ensureForecastMetricsLoaded(APP.currentForecastModel);
       const manifestThresholds = (manifest.thresholds || []).map(function(value) {
         return Number(value);
@@ -826,8 +831,11 @@
       const metricThresholds = (metrics.aggregate_by_cutoff || []).map(function(item) {
         return Number(item.cutoff);
       });
+      const entryThresholds = Object.keys(entry.threshold_visible_tifs || {}).map(function(value) {
+        return Number(value);
+      });
       const thresholds = manifestThresholds.filter(function(value) {
-        return metricThresholds.includes(value);
+        return metricThresholds.includes(value) && entryThresholds.includes(value);
       }).map(function(value) {
         return String(value);
       });
@@ -1442,7 +1450,7 @@
         setStatus("Loaded " + APP.currentForecastModel.toUpperCase() + " forecast for " + APP.currentForecastPeriod.replace("_", "-"));
       } catch (error) {
         console.error(error);
-        setStatus("Forecast overlay could not be loaded");
+        setStatus("Forecast overlay could not be loaded for " + APP.currentForecastModel.toUpperCase() + " " + APP.currentForecastPeriod.replace("_", "-"));
       }
     }
 
