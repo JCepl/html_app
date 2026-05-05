@@ -21,7 +21,7 @@
 
     body {
       background: #eef3f9;
-      padding-top: 116px;
+      padding-top: 176px;
     }
 
     .top-banner {
@@ -116,7 +116,19 @@
     #app {
       display: flex;
       width: 100vw;
-      height: calc(100vh - 116px);
+      height: calc(100vh - 176px);
+    }
+
+    .layer-ribbon {
+      position: fixed;
+      top: 116px;
+      left: 0;
+      right: 0;
+      z-index: 1190;
+      padding: 10px 20px 12px;
+      border-bottom: 1px solid #c9d8ea;
+      background: rgba(244, 249, 255, 0.96);
+      backdrop-filter: blur(6px);
     }
 
     #panel {
@@ -458,7 +470,7 @@
 
     @media (max-width: 900px) {
       body {
-        padding-top: 166px;
+        padding-top: 234px;
       }
 
       .top-banner {
@@ -479,7 +491,11 @@
       }
 
       #app {
-        height: calc(100vh - 166px);
+        height: calc(100vh - 234px);
+      }
+
+      .layer-ribbon {
+        top: 166px;
       }
     }
 
@@ -487,7 +503,7 @@
       #app {
         flex-direction: column;
         height: auto;
-        min-height: calc(100vh - 166px);
+        min-height: calc(100vh - 234px);
       }
 
       #panel {
@@ -525,6 +541,39 @@
     </div>
   </header>
 
+  <div class="layer-ribbon">
+    <div id="overlayCardStrip" class="overlay-card-strip" role="tablist" aria-label="Overlay choices">
+      <button class="overlay-card active" type="button" data-overlay="bbtl">
+        <span class="overlay-card-title">Hex pressure</span>
+        <span class="overlay-card-copy">Projected bark beetle pressure by scenario and year.</span>
+      </button>
+      <button class="overlay-card" type="button" data-overlay="bbtforecast">
+        <span class="overlay-card-title">Predictions</span>
+        <span class="overlay-card-copy">Future bark beetle forecast models and thresholds.</span>
+      </button>
+      <button class="overlay-card" type="button" data-overlay="gddraster">
+        <span class="overlay-card-title">GDD raster</span>
+        <span class="overlay-card-copy">1 km GEN difference raster surface.</span>
+      </button>
+      <button class="overlay-card" type="button" data-overlay="bbtpast">
+        <span class="overlay-card-title">Past disturbance</span>
+        <span class="overlay-card-copy">Historical bark beetle disturbance footprint.</span>
+      </button>
+      <button class="overlay-card coming-soon" type="button" data-overlay="wildfire">
+        <span class="overlay-card-title">Wildfire</span>
+        <span class="overlay-card-copy">Coming soon.</span>
+      </button>
+      <button class="overlay-card coming-soon" type="button" data-overlay="drought">
+        <span class="overlay-card-title">Drought</span>
+        <span class="overlay-card-copy">Coming soon.</span>
+      </button>
+      <button class="overlay-card coming-soon" type="button" data-overlay="wind">
+        <span class="overlay-card-title">Wind</span>
+        <span class="overlay-card-copy">Coming soon.</span>
+      </button>
+    </div>
+  </div>
+
   <div id="app">
     <div id="panel">
       <h2>Clicked place</h2>
@@ -549,44 +598,7 @@
 
         <div class="label">Active layer</div>
         <div class="overlay-chooser">
-          <div id="overlayCardStrip" class="overlay-card-strip" role="tablist" aria-label="Overlay choices">
-            <button class="overlay-card active" type="button" data-overlay="bbtl">
-              <span class="overlay-card-title">Hex pressure</span>
-              <span class="overlay-card-copy">Projected bark beetle pressure by scenario and year.</span>
-            </button>
-            <button class="overlay-card" type="button" data-overlay="bbtforecast">
-              <span class="overlay-card-title">Predictions</span>
-              <span class="overlay-card-copy">Future bark beetle forecast models and thresholds.</span>
-            </button>
-            <button class="overlay-card" type="button" data-overlay="gddraster">
-              <span class="overlay-card-title">GDD raster</span>
-              <span class="overlay-card-copy">1 km GEN difference raster surface.</span>
-            </button>
-            <button class="overlay-card" type="button" data-overlay="bbtpast">
-              <span class="overlay-card-title">Past disturbance</span>
-              <span class="overlay-card-copy">Historical bark beetle disturbance footprint.</span>
-            </button>
-            <button class="overlay-card coming-soon" type="button" data-overlay="wildfire">
-              <span class="overlay-card-title">Wildfire</span>
-              <span class="overlay-card-copy">Coming soon.</span>
-            </button>
-            <button class="overlay-card coming-soon" type="button" data-overlay="drought">
-              <span class="overlay-card-title">Drought</span>
-              <span class="overlay-card-copy">Coming soon.</span>
-            </button>
-            <button class="overlay-card coming-soon" type="button" data-overlay="wind">
-              <span class="overlay-card-title">Wind</span>
-              <span class="overlay-card-copy">Coming soon.</span>
-            </button>
-          </div>
           <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
-        </div>
-
-        <div id="pastUnderlayRow" class="row">
-          <label style="display:flex; gap:8px; align-items:flex-start;">
-            <input id="pastUnderlayToggle" type="checkbox" style="width:auto; margin-top:2px;" />
-            <span>Show historical disturbance under the hex pressure layer</span>
-          </label>
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
@@ -620,12 +632,43 @@
               </div>
             </div>
           </div>
+          <div class="row">
+            <label style="display:flex; gap:8px; align-items:flex-start;">
+              <input id="forecastHexToggle" type="checkbox" style="width:auto; margin-top:2px;" />
+              <span>Show hex pressure overlay together with forecast</span>
+            </label>
+          </div>
           <div id="forecastMetricsBox" class="metric-box">
             <p class="metric-title">Historical Evaluation At Selected Cutoff</p>
             <div id="forecastMetricsGrid" class="metric-grid"></div>
             <div id="forecastConfusionMatrix" class="confusion-matrix"></div>
             <div id="forecastMetricsNote" class="small"></div>
           </div>
+        </div>
+
+        <div id="hexControlPanel" class="nested-panel">
+          <p id="hexControlTitle" class="nested-title">Hex Pressure Controls</p>
+          <div id="pastUnderlayRow" class="row">
+            <label style="display:flex; gap:8px; align-items:flex-start;">
+              <input id="pastUnderlayToggle" type="checkbox" style="width:auto; margin-top:2px;" />
+              <span>Show historical disturbance under the hex pressure layer</span>
+            </label>
+          </div>
+
+          <div class="label">RCP Scenario</div>
+          <div class="row">
+            <select id="rcpSelector">
+              <option value="rcp26">RCP 2.6</option>
+              <option value="rcp45">RCP 4.5</option>
+              <option value="rcp85">RCP 8.5</option>
+            </select>
+          </div>
+
+          <div class="label">Year</div>
+          <div class="row">
+            <input type="range" id="yearSlider" min="0" max="7" step="1" value="0" />
+          </div>
+          <div id="yearValue" class="value">2030</div>
         </div>
 
         <div id="citationBox" class="citation-box">
@@ -639,21 +682,6 @@
             Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
           </p>
         </div>
-
-        <div class="label">RCP Scenario</div>
-        <div class="row">
-          <select id="rcpSelector">
-            <option value="rcp26">RCP 2.6</option>
-            <option value="rcp45">RCP 4.5</option>
-            <option value="rcp85">RCP 8.5</option>
-          </select>
-        </div>
-
-        <div class="label">Year</div>
-        <div class="row">
-          <input type="range" id="yearSlider" min="0" max="7" step="1" value="0" />
-        </div>
-        <div id="yearValue" class="value">2030</div>
 
         <div class="label">Opacity</div>
         <div class="row">
@@ -721,6 +749,7 @@
       currentRcp: "rcp85",
       currentOverlay: "bbtl",
       showPastUnderlay: false,
+      showHexWithForecast: true,
       currentForecastModel: "xgb",
       currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
@@ -728,7 +757,8 @@
       currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
-      overlayLoadToken: 0,
+      hexLoadToken: 0,
+      rasterLoadToken: 0,
       overlayVisible: true,
       currentHexGeojson: null,
       countryGeojson: null
@@ -817,9 +847,12 @@
       citationBox: document.getElementById("citationBox"),
       overlayCardStrip: document.getElementById("overlayCardStrip"),
       overlayDescription: document.getElementById("overlayDescription"),
+      hexControlPanel: document.getElementById("hexControlPanel"),
+      hexControlTitle: document.getElementById("hexControlTitle"),
       pastUnderlayRow: document.getElementById("pastUnderlayRow"),
       pastUnderlayToggle: document.getElementById("pastUnderlayToggle"),
       forecastPanel: document.getElementById("forecastPanel"),
+      forecastHexToggle: document.getElementById("forecastHexToggle"),
       forecastModelSelector: document.getElementById("forecastModelSelector"),
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
       forecastViewSelector: document.getElementById("forecastViewSelector"),
@@ -1388,7 +1421,9 @@
     }
 
     async function syncPastUnderlay() {
-      const shouldShow = APP.overlayVisible && APP.currentOverlay === "bbtl" && APP.showPastUnderlay;
+      const shouldShow = APP.overlayVisible
+        && APP.showPastUnderlay
+        && (APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast));
 
       if (!shouldShow) {
         if (APP.pastUnderlayLayer) {
@@ -1415,7 +1450,8 @@
 
     function clearOverlayLayer() {
       // Invalidate any in-flight overlay request so stale responses cannot re-add old layers.
-      APP.overlayLoadToken += 1;
+      APP.hexLoadToken += 1;
+      APP.rasterLoadToken += 1;
       resetSelectedHex();
       resetSelectedCountry();
       if (APP.hexLayer) {
@@ -1439,6 +1475,15 @@
     function updateActiveOverlayLayer() {
       if (APP.currentOverlay === "bbtforecast") {
         updateForecastOverlay();
+        if (APP.showHexWithForecast) {
+          updateHexLayer(true);
+        } else if (APP.hexLayer) {
+          APP.hexLoadToken += 1;
+          APP.map.removeLayer(APP.hexLayer);
+          APP.hexLayer = null;
+          APP.currentHexGeojson = null;
+          resetSelectedHex();
+        }
         return;
       }
       if (APP.currentOverlay === "bbtpast") {
@@ -1449,7 +1494,7 @@
         updateGddRasterLayer();
         return;
       }
-      updateHexLayer();
+      updateHexLayer(false);
     }
 
     function classifyGddRasterValue(value) {
@@ -1506,8 +1551,9 @@
     async function updateGddRasterLayer() {
       if (!APP.overlayVisible) return;
 
-      APP.overlayLoadToken += 1;
-      const requestToken = APP.overlayLoadToken;
+      APP.rasterLoadToken += 1;
+      APP.hexLoadToken += 1;
+      const requestToken = APP.rasterLoadToken;
 
       if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
@@ -1534,7 +1580,7 @@
 
         const arrayBuffer = await response.arrayBuffer();
         const georaster = await parseGeoraster(arrayBuffer);
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.rasterLoadToken) {
           return;
         }
 
@@ -1562,7 +1608,7 @@
         });
         APP.rasterLayer.addTo(APP.map);
 
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.rasterLoadToken) {
           return;
         }
 
@@ -1576,8 +1622,9 @@
     async function updateClassifiedImageOverlay() {
       if (!APP.overlayVisible) return;
 
-      APP.overlayLoadToken += 1;
-      const requestToken = APP.overlayLoadToken;
+      APP.rasterLoadToken += 1;
+      APP.hexLoadToken += 1;
+      const requestToken = APP.rasterLoadToken;
       const overlay = getActiveOverlay();
 
       if (APP.hexLayer) {
@@ -1601,7 +1648,7 @@
       try {
         await ensurePastOverlayMetaLoaded();
 
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.rasterLoadToken) {
           return;
         }
 
@@ -1624,12 +1671,13 @@
     async function updateForecastOverlay() {
       if (!APP.overlayVisible) return;
 
-      APP.overlayLoadToken += 1;
-      const requestToken = APP.overlayLoadToken;
+      APP.rasterLoadToken += 1;
+      const requestToken = APP.rasterLoadToken;
 
-      if (APP.hexLayer) {
+      if (!APP.showHexWithForecast && APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
+        APP.currentHexGeojson = null;
       }
       if (APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
@@ -1641,8 +1689,9 @@
       }
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
-      APP.currentHexGeojson = null;
-      resetSelectedHex();
+      if (!APP.showHexWithForecast) {
+        resetSelectedHex();
+      }
       DOM.hexValue.textContent = "—";
       setStatus("Loading bark beetle forecast...");
 
@@ -1664,7 +1713,7 @@
         }
 
         const overlayMeta = await response.json();
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.rasterLoadToken) {
           return;
         }
 
@@ -1684,7 +1733,7 @@
           pane: "rasterPane"
         }).addTo(APP.map);
 
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.rasterLoadToken) {
           return;
         }
 
@@ -1698,13 +1747,17 @@
 
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
+      const showHexControls = APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast);
       DOM.overlayDescription.textContent = overlay.description;
       updateOverlayCardStates();
       updateForecastPanelVisibility();
-      DOM.rcpSelector.disabled = !overlay.usesRcp;
-      DOM.yearSlider.disabled = !overlay.usesYear;
-      DOM.yearValue.style.opacity = overlay.usesYear ? "1" : "0.6";
-      DOM.pastUnderlayRow.hidden = APP.currentOverlay !== "bbtl";
+      DOM.hexControlPanel.hidden = !showHexControls;
+      DOM.hexControlTitle.textContent = APP.currentOverlay === "bbtforecast" ? "Hex Pressure Companion" : "Hex Pressure Controls";
+      DOM.forecastHexToggle.checked = APP.showHexWithForecast;
+      DOM.rcpSelector.disabled = !showHexControls;
+      DOM.yearSlider.disabled = !showHexControls;
+      DOM.yearValue.style.opacity = showHexControls ? "1" : "0.6";
+      DOM.pastUnderlayRow.hidden = !showHexControls;
       DOM.pastUnderlayToggle.checked = APP.showPastUnderlay;
       syncCitationVisibility();
 
@@ -1715,7 +1768,7 @@
         return;
       }
 
-      if (!overlay.usesYear || !overlay.meta || !Array.isArray(overlay.meta.years)) {
+      if (!showHexControls) {
         DOM.yearValue.textContent = "NA";
         setLegendLabels();
         if (APP.overlayVisible) {
@@ -1724,7 +1777,7 @@
         return;
       }
 
-      const years = overlay.meta.years;
+      const years = MAP_META.years;
       DOM.yearSlider.max = years.length - 1;
       if (!years.includes(APP.currentYear)) {
         APP.currentYear = years[0];
@@ -1820,8 +1873,21 @@
       }
 
       if (APP.currentOverlay === "bbtforecast") {
-        DOM.hexValue.textContent = "PNG overlay";
-        setStatus("Forecast overlay is visualization-only");
+        if (APP.showHexWithForecast && hexFeature) {
+          const val = Number(hexFeature.properties.mean);
+          DOM.hexValue.textContent = isFinite(val) ? val.toFixed(6) : "NA";
+
+          const layer = findLayerForFeature(hexFeature);
+          if (layer) {
+            APP.selectedHexLayer = layer;
+            highlightHex(layer);
+          }
+
+          setStatus("Forecast view loaded; hex companion value shown");
+        } else {
+          DOM.hexValue.textContent = "PNG overlay";
+          setStatus("Forecast overlay is visualization-only");
+        }
         return;
       }
 
@@ -1915,6 +1981,16 @@
       DOM.pastUnderlayToggle.checked = APP.showPastUnderlay;
       DOM.pastUnderlayToggle.addEventListener("change", function() {
         APP.showPastUnderlay = DOM.pastUnderlayToggle.checked;
+        if (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast) {
+          updateHexLayer(true);
+          return;
+        }
+        syncOverlayControls();
+      });
+
+      DOM.forecastHexToggle.checked = APP.showHexWithForecast;
+      DOM.forecastHexToggle.addEventListener("change", function() {
+        APP.showHexWithForecast = DOM.forecastHexToggle.checked;
         syncOverlayControls();
       });
 
@@ -1942,17 +2018,25 @@
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
         APP.currentRcp = DOM.rcpSelector.value;
+        if (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast) {
+          updateHexLayer(true);
+          return;
+        }
         updateActiveOverlayLayer();
       });
 
       DOM.yearSlider.addEventListener("input", function() {
-        const overlay = getActiveOverlay();
-        if (!overlay.available || !overlay.meta) {
+        const showHexControls = APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast);
+        if (!showHexControls) {
           return;
         }
         const yearIndex = Number(DOM.yearSlider.value);
-        APP.currentYear = overlay.meta.years[yearIndex];
+        APP.currentYear = MAP_META.years[yearIndex];
         DOM.yearValue.textContent = String(APP.currentYear);
+        if (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast) {
+          updateHexLayer(true);
+          return;
+        }
         updateActiveOverlayLayer();
       });
 
@@ -2048,11 +2132,11 @@
       }
     }
 
-    async function updateHexLayer() {
+    async function updateHexLayer(preserveRaster) {
       if (!APP.overlayVisible) return;
 
-      APP.overlayLoadToken += 1;
-      const requestToken = APP.overlayLoadToken;
+      APP.hexLoadToken += 1;
+      const requestToken = APP.hexLoadToken;
 
       const fileName = getCurrentFile();
 
@@ -2065,7 +2149,7 @@
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
       }
-      if (APP.rasterLayer) {
+      if (!preserveRaster && APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
@@ -2074,14 +2158,18 @@
         APP.pastUnderlayLayer = null;
       }
 
-      APP.rasterData = null;
+      if (!preserveRaster) {
+        APP.rasterData = null;
+      }
       APP.currentHexGeojson = null;
       resetSelectedHex();
       resetSelectedCountry();
       DOM.hexValue.textContent = "—";
 
       try {
-        setStatus("Loading " + fileName + "...");
+        if (!preserveRaster) {
+          setStatus("Loading " + fileName + "...");
+        }
 
         const response = await fetch(fileName);
         if (!response.ok) {
@@ -2089,13 +2177,13 @@
         }
 
         const nextGeojson = await response.json();
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.hexLoadToken) {
           return;
         }
 
         APP.currentHexGeojson = nextGeojson;
         await syncPastUnderlay();
-        if (requestToken !== APP.overlayLoadToken) {
+        if (requestToken !== APP.hexLoadToken) {
           return;
         }
 
@@ -2133,11 +2221,15 @@
           }
         }).addTo(APP.map);
 
-        setStatus("Loaded year " + APP.currentYear);
+        if (!preserveRaster) {
+          setStatus("Loaded year " + APP.currentYear);
+        }
 
       } catch (error) {
         console.error(error);
-        setStatus("Failed loading " + fileName + " :: " + error.message);
+        if (!preserveRaster) {
+          setStatus("Failed loading " + fileName + " :: " + error.message);
+        }
       }
     }
 
