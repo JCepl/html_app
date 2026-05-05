@@ -604,6 +604,7 @@
       currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
       currentForecastThreshold: "0.75",
+      currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
       overlayLoadToken: 0,
@@ -945,8 +946,16 @@
       if (APP.currentOverlay === "bbtforecast") {
         DOM.legendBar.style.display = "block";
         DOM.legendBar.style.background = "linear-gradient(to right, #fff5eb 0%, #fee6ce 14%, #fdd0a2 28%, #fdae6b 42%, #fd8d3c 57%, #ef6548 71%, #d7301f 85%, #7f0000 100%)";
-        DOM.legendMin.textContent = APP.currentForecastView === "threshold" ? formatForecastThreshold(APP.currentForecastThreshold) : "0.00";
-        DOM.legendMax.textContent = "1.00";
+        if (APP.currentForecastView === "threshold") {
+          DOM.legendMin.textContent = formatForecastThreshold(APP.currentForecastThreshold);
+          DOM.legendMax.textContent = "1.00";
+        } else if (APP.currentForecastRasterRange) {
+          DOM.legendMin.textContent = Number(APP.currentForecastRasterRange.min).toFixed(2);
+          DOM.legendMax.textContent = Number(APP.currentForecastRasterRange.max).toFixed(2);
+        } else {
+          DOM.legendMin.textContent = "0.00";
+          DOM.legendMax.textContent = "1.00";
+        }
         return;
       }
 
@@ -985,6 +994,10 @@
       if (APP.currentForecastView === "threshold") {
         const cutoff = Number(APP.currentForecastThreshold);
         t = (Number(value) - cutoff) / Math.max(1e-6, 1 - cutoff);
+      } else if (APP.currentForecastRasterRange) {
+        const vmin = Number(APP.currentForecastRasterRange.min);
+        const vmax = Number(APP.currentForecastRasterRange.max);
+        t = vmax > vmin ? (Number(value) - vmin) / (vmax - vmin) : 0;
       }
       t = Math.max(0, Math.min(1, t));
       const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
@@ -1186,6 +1199,7 @@
         APP.rasterLayer = null;
       }
       APP.rasterData = null;
+      APP.currentForecastRasterRange = null;
       APP.currentHexGeojson = null;
       DOM.hexValue.textContent = "—";
     }
@@ -1426,6 +1440,10 @@
         }
 
         APP.rasterData = georaster;
+        APP.currentForecastRasterRange = {
+          min: Array.isArray(georaster.mins) ? Number(georaster.mins[0]) : 0,
+          max: Array.isArray(georaster.maxs) ? Number(georaster.maxs[0]) : 1
+        };
         APP.rasterLayer = new GeoRasterLayer({
           georaster: georaster,
           opacity: Number(DOM.opacitySlider.value),
