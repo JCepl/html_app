@@ -1201,7 +1201,23 @@
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
       APP.currentHexGeojson = null;
+      clearRasterPaneArtifacts();
       DOM.hexValue.textContent = "—";
+    }
+
+    function clearRasterPaneArtifacts() {
+      if (!APP.map || !APP.map.getPane) {
+        return;
+      }
+
+      const rasterPane = APP.map.getPane("rasterPane");
+      if (!rasterPane) {
+        return;
+      }
+
+      while (rasterPane.firstChild) {
+        rasterPane.removeChild(rasterPane.firstChild);
+      }
     }
 
     function updateActiveOverlayLayer() {
@@ -1286,6 +1302,7 @@
         APP.rasterLayer = null;
       }
       APP.currentHexGeojson = null;
+      clearRasterPaneArtifacts();
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
       setStatus("Loading 1km raster overlay...");
@@ -1307,7 +1324,7 @@
         APP.rasterLayer = new GeoRasterLayer({
           georaster: georaster,
           opacity: Number(DOM.opacitySlider.value),
-          pane: "hexPane",
+          pane: "rasterPane",
           resolution: 256,
           resampleMethod: "bilinear",
           pixelValuesToColorFn: function(values) {
@@ -1353,6 +1370,7 @@
         APP.rasterLayer = null;
       }
       APP.rasterData = null;
+      clearRasterPaneArtifacts();
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -1382,7 +1400,7 @@
           [overlay.meta.bounds.north, overlay.meta.bounds.east]
         ], {
           opacity: Number(DOM.opacitySlider.value),
-          pane: "hexPane"
+          pane: "rasterPane"
         }).addTo(APP.map);
 
         setLegendLabels();
@@ -1408,6 +1426,7 @@
         APP.rasterLayer = null;
       }
       APP.rasterData = null;
+      clearRasterPaneArtifacts();
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -1447,7 +1466,7 @@
         APP.rasterLayer = new GeoRasterLayer({
           georaster: georaster,
           opacity: Number(DOM.opacitySlider.value),
-          pane: "hexPane",
+          pane: "rasterPane",
           resolution: 128,
           resampleMethod: "nearest",
           pixelValuesToColorFn: function(values) {
@@ -1651,6 +1670,8 @@
 
       APP.map.createPane("hexPane");
       APP.map.getPane("hexPane").style.zIndex = 250;
+      APP.map.createPane("rasterPane");
+      APP.map.getPane("rasterPane").style.zIndex = 240;
 
       APP.map.createPane("countryHaloPane");
       APP.map.getPane("countryHaloPane").style.zIndex = 255;
