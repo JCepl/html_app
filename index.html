@@ -602,7 +602,7 @@
       currentOverlay: "bbtl",
       currentForecastModel: "xgb",
       currentForecastPeriod: "2041_2070",
-      currentForecastView: "threshold",
+      currentForecastView: "probability",
       currentForecastThreshold: "0.75",
       forecastManifest: null,
       forecastMetricsCache: {},
@@ -973,7 +973,12 @@
         [127, 0, 0]
       ];
 
-      const t = Math.max(0, Math.min(1, Number(value)));
+      let t = Number(value);
+      if (APP.currentForecastView === "threshold") {
+        const cutoff = Number(APP.currentForecastThreshold);
+        t = (Number(value) - cutoff) / Math.max(1e-6, 1 - cutoff);
+      }
+      t = Math.max(0, Math.min(1, t));
       const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
       const color = palette[idx];
       return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
