@@ -819,11 +819,25 @@
         APP.currentForecastPeriod = periods[0];
       }
 
-      const thresholds = (manifest.thresholds || []).map(function(value) {
+      const metrics = await ensureForecastMetricsLoaded(APP.currentForecastModel);
+      const manifestThresholds = (manifest.thresholds || []).map(function(value) {
+        return Number(value);
+      });
+      const metricThresholds = (metrics.aggregate_by_cutoff || []).map(function(item) {
+        return Number(item.cutoff);
+      });
+      const thresholds = manifestThresholds.filter(function(value) {
+        return metricThresholds.includes(value);
+      }).map(function(value) {
         return String(value);
       });
+
+      if (!thresholds.length) {
+        throw new Error("No matching forecast thresholds found for " + APP.currentForecastModel);
+      }
+
       if (!thresholds.includes(APP.currentForecastThreshold)) {
-        APP.currentForecastThreshold = thresholds.includes("0.65") ? "0.65" : thresholds[0];
+        APP.currentForecastThreshold = thresholds.includes("0.75") ? "0.75" : thresholds[0];
       }
 
       populateSelectOptions(DOM.forecastModelSelector, modelKeys, APP.currentForecastModel, function(value) {
@@ -838,7 +852,6 @@
       DOM.forecastViewSelector.value = APP.currentForecastView;
       DOM.forecastThresholdSelector.disabled = APP.currentForecastView === "probability";
 
-      const metrics = await ensureForecastMetricsLoaded(APP.currentForecastModel);
       const cutoff = Number(APP.currentForecastThreshold);
       const row = (metrics.aggregate_by_cutoff || []).find(function(item) {
         return Number(item.cutoff) === cutoff;
