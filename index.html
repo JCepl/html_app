@@ -170,6 +170,57 @@
       background: #ffffff;
     }
 
+    .overlay-card-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+
+    .overlay-card {
+      min-width: 148px;
+      padding: 10px 11px;
+      border: 1px solid #cddced;
+      border-radius: 10px;
+      background: #f8fbff;
+      color: #153b61;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .overlay-card:hover {
+      background: #eef5fd;
+      border-color: #a8c0dd;
+    }
+
+    .overlay-card.active {
+      background: #173f69;
+      border-color: #173f69;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(23, 63, 105, 0.18);
+    }
+
+    .overlay-card.coming-soon {
+      opacity: 0.72;
+    }
+
+    .overlay-card-title {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .overlay-card-copy {
+      display: block;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
     .overlay-description {
       margin-top: 8px;
       font-size: 12px;
@@ -229,6 +280,45 @@
       color: #163b60;
       font-size: 11px;
       margin-bottom: 2px;
+    }
+
+    .confusion-matrix {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 72px repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .cm-head,
+    .cm-side,
+    .cm-cell {
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid #d6e2ef;
+      background: #fbfdff;
+    }
+
+    .cm-head,
+    .cm-side {
+      font-weight: 700;
+      color: #163b60;
+      background: #f3f8fd;
+    }
+
+    .cm-cell strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: #163b60;
+    }
+
+    .cm-corner {
+      border: 0;
+      background: transparent;
+      padding: 0;
     }
 
     .row {
@@ -457,18 +547,46 @@
       <div class="control-block">
         <h3>Overlay</h3>
 
-        <div class="label">Overlay type</div>
+        <div class="label">Active layer</div>
         <div class="overlay-chooser">
-          <select id="overlaySelector">
-            <option value="bbtl">Bark beetle pressure (hex)</option>
-            <option value="bbtforecast">Bark beetle forecast</option>
-            <option value="gddraster">GDD/GEN 1km raster</option>
-            <option value="bbtpast">Past bark beetle disturbance</option>
-            <option value="wildfire">Wildfire risk (coming soon)</option>
-            <option value="drought">Drought stress (coming soon)</option>
-            <option value="wind">Wind disturbance (coming soon)</option>
-          </select>
+          <div id="overlayCardStrip" class="overlay-card-strip" role="tablist" aria-label="Overlay choices">
+            <button class="overlay-card active" type="button" data-overlay="bbtl">
+              <span class="overlay-card-title">Hex pressure</span>
+              <span class="overlay-card-copy">Projected bark beetle pressure by scenario and year.</span>
+            </button>
+            <button class="overlay-card" type="button" data-overlay="bbtforecast">
+              <span class="overlay-card-title">Predictions</span>
+              <span class="overlay-card-copy">Future bark beetle forecast models and thresholds.</span>
+            </button>
+            <button class="overlay-card" type="button" data-overlay="gddraster">
+              <span class="overlay-card-title">GDD raster</span>
+              <span class="overlay-card-copy">1 km GEN difference raster surface.</span>
+            </button>
+            <button class="overlay-card" type="button" data-overlay="bbtpast">
+              <span class="overlay-card-title">Past disturbance</span>
+              <span class="overlay-card-copy">Historical bark beetle disturbance footprint.</span>
+            </button>
+            <button class="overlay-card coming-soon" type="button" data-overlay="wildfire">
+              <span class="overlay-card-title">Wildfire</span>
+              <span class="overlay-card-copy">Coming soon.</span>
+            </button>
+            <button class="overlay-card coming-soon" type="button" data-overlay="drought">
+              <span class="overlay-card-title">Drought</span>
+              <span class="overlay-card-copy">Coming soon.</span>
+            </button>
+            <button class="overlay-card coming-soon" type="button" data-overlay="wind">
+              <span class="overlay-card-title">Wind</span>
+              <span class="overlay-card-copy">Coming soon.</span>
+            </button>
+          </div>
           <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
+        </div>
+
+        <div id="pastUnderlayRow" class="row">
+          <label style="display:flex; gap:8px; align-items:flex-start;">
+            <input id="pastUnderlayToggle" type="checkbox" style="width:auto; margin-top:2px;" />
+            <span>Show historical disturbance under the hex pressure layer</span>
+          </label>
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
@@ -505,6 +623,7 @@
           <div id="forecastMetricsBox" class="metric-box">
             <p class="metric-title">Historical Evaluation At Selected Cutoff</p>
             <div id="forecastMetricsGrid" class="metric-grid"></div>
+            <div id="forecastConfusionMatrix" class="confusion-matrix"></div>
             <div id="forecastMetricsNote" class="small"></div>
           </div>
         </div>
@@ -592,14 +711,16 @@
       clickMarker: null,
       hexLayer: null,
       rasterLayer: null,
+      pastUnderlayLayer: null,
       rasterData: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
       selectedCountryLayer: null,
       currentYear: null,
-      currentRcp: "rcp26",  // Fixed: Added back currentRcp for file path construction
+      currentRcp: "rcp85",
       currentOverlay: "bbtl",
+      showPastUnderlay: false,
       currentForecastModel: "xgb",
       currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
@@ -694,14 +815,17 @@
       hexValue: document.getElementById("hexValue"),
       status: document.getElementById("status"),
       citationBox: document.getElementById("citationBox"),
-      overlaySelector: document.getElementById("overlaySelector"),
+      overlayCardStrip: document.getElementById("overlayCardStrip"),
       overlayDescription: document.getElementById("overlayDescription"),
+      pastUnderlayRow: document.getElementById("pastUnderlayRow"),
+      pastUnderlayToggle: document.getElementById("pastUnderlayToggle"),
       forecastPanel: document.getElementById("forecastPanel"),
       forecastModelSelector: document.getElementById("forecastModelSelector"),
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
       forecastViewSelector: document.getElementById("forecastViewSelector"),
       forecastThresholdSelector: document.getElementById("forecastThresholdSelector"),
       forecastMetricsGrid: document.getElementById("forecastMetricsGrid"),
+      forecastConfusionMatrix: document.getElementById("forecastConfusionMatrix"),
       forecastMetricsNote: document.getElementById("forecastMetricsNote"),
       yearSlider: document.getElementById("yearSlider"),
       yearValue: document.getElementById("yearValue"),
@@ -753,6 +877,26 @@
         imagePath: tifPath.replace(/\.tif$/i, ".png"),
         metaPath: tifPath.replace(/\.tif$/i, "_meta.json")
       };
+    }
+
+    async function ensurePastOverlayMetaLoaded() {
+      const overlay = OVERLAY_CATALOG.bbtpast;
+      if (overlay.meta.bounds && overlay.meta.legend) {
+        return overlay.meta;
+      }
+
+      const response = await fetch(overlay.meta.metaUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status + " for " + overlay.meta.metaUrl);
+      }
+
+      const overlayMeta = await response.json();
+      overlay.meta.bounds = overlayMeta.bounds;
+      overlay.meta.legend = overlayMeta.legend;
+      if (overlayMeta.image) {
+        overlay.meta.image = "webmap_data/" + overlayMeta.image;
+      }
+      return overlay.meta;
     }
 
     async function ensureForecastManifestLoaded() {
@@ -812,6 +956,44 @@
         cell.className = "metric-item";
         cell.innerHTML = "<strong>" + item.label + "</strong>" + item.value;
         DOM.forecastMetricsGrid.appendChild(cell);
+      });
+    }
+
+    function renderForecastConfusionMatrix(row) {
+      DOM.forecastConfusionMatrix.innerHTML = "";
+      if (!row) {
+        return;
+      }
+
+      const cells = [
+        { className: "cm-corner", html: "" },
+        { className: "cm-head", html: "Observed +<br>disturbance" },
+        { className: "cm-head", html: "Observed -<br>no disturbance" },
+        { className: "cm-side", html: "Predicted +" },
+        { className: "cm-cell", html: "<strong>TP</strong>" + Number(row.TP).toLocaleString() },
+        { className: "cm-cell", html: "<strong>FP</strong>" + Number(row.FP).toLocaleString() },
+        { className: "cm-side", html: "Predicted -" },
+        { className: "cm-cell", html: "<strong>FN</strong>" + Number(row.FN).toLocaleString() },
+        { className: "cm-cell", html: "<strong>TN</strong>" + Number(row.TN).toLocaleString() }
+      ];
+
+      cells.forEach(function(item) {
+        const cell = document.createElement("div");
+        cell.className = item.className;
+        cell.innerHTML = item.html;
+        DOM.forecastConfusionMatrix.appendChild(cell);
+      });
+    }
+
+    function updateOverlayCardStates() {
+      if (!DOM.overlayCardStrip) {
+        return;
+      }
+
+      DOM.overlayCardStrip.querySelectorAll("[data-overlay]").forEach(function(button) {
+        const isActive = button.dataset.overlay === APP.currentOverlay;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
       });
     }
 
@@ -889,11 +1071,13 @@
           { label: "Specificity", value: Number(row.specificity).toFixed(3) },
           { label: "F1", value: Number(row.F1).toFixed(3) },
           { label: "Red fraction", value: Number(row.red_fraction).toFixed(3) },
-          { label: "TP / FP", value: Number(row.TP) + " / " + Number(row.FP) }
+          { label: "Cutoff", value: formatForecastThreshold(cutoff) }
         ]);
+        renderForecastConfusionMatrix(row);
         DOM.forecastMetricsNote.textContent = "Historical evaluation summary aggregated across available GCMs at cutoff " + formatForecastThreshold(cutoff) + ".";
       } else {
         renderForecastMetricsGrid([]);
+        renderForecastConfusionMatrix(null);
         DOM.forecastMetricsNote.textContent = "No matching historical evaluation row is available for cutoff " + formatForecastThreshold(cutoff) + ".";
       }
     }
@@ -1189,6 +1373,8 @@
 
       if (APP.hexLayer) {
         APP.map.fitBounds(APP.hexLayer.getBounds());
+      } else if (APP.pastUnderlayLayer && APP.pastUnderlayLayer.getBounds) {
+        APP.map.fitBounds(APP.pastUnderlayLayer.getBounds());
       } else if (APP.rasterLayer) {
         if (APP.rasterLayer.getBounds) {
           APP.map.fitBounds(APP.rasterLayer.getBounds());
@@ -1199,6 +1385,32 @@
           [meta.bbox.ymax, meta.bbox.xmax]
         ]);
       }
+    }
+
+    async function syncPastUnderlay() {
+      const shouldShow = APP.overlayVisible && APP.currentOverlay === "bbtl" && APP.showPastUnderlay;
+
+      if (!shouldShow) {
+        if (APP.pastUnderlayLayer) {
+          APP.map.removeLayer(APP.pastUnderlayLayer);
+          APP.pastUnderlayLayer = null;
+        }
+        return;
+      }
+
+      const meta = await ensurePastOverlayMetaLoaded();
+      if (APP.pastUnderlayLayer) {
+        APP.pastUnderlayLayer.setOpacity(Math.max(Number(DOM.opacitySlider.value) - 0.15, 0.2));
+        return;
+      }
+
+      APP.pastUnderlayLayer = L.imageOverlay(meta.image, [
+        [meta.bounds.south, meta.bounds.west],
+        [meta.bounds.north, meta.bounds.east]
+      ], {
+        opacity: Math.max(Number(DOM.opacitySlider.value) - 0.15, 0.2),
+        pane: "rasterPane"
+      }).addTo(APP.map);
     }
 
     function clearOverlayLayer() {
@@ -1213,6 +1425,10 @@
       if (APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
+      }
+      if (APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
       }
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
@@ -1301,6 +1517,10 @@
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
+      if (APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
+      }
       APP.currentHexGeojson = null;
       resetSelectedHex();
       DOM.hexValue.textContent = "—";
@@ -1368,6 +1588,10 @@
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
+      if (APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
+      }
       APP.rasterData = null;
       APP.currentHexGeojson = null;
       resetSelectedHex();
@@ -1375,19 +1599,7 @@
       setStatus("Loading historical bark beetle overlay...");
 
       try {
-        if (!overlay.meta.bounds || !overlay.meta.legend) {
-          const response = await fetch(overlay.meta.metaUrl, { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-          }
-
-          const overlayMeta = await response.json();
-          overlay.meta.bounds = overlayMeta.bounds;
-          overlay.meta.legend = overlayMeta.legend;
-          if (overlayMeta.image) {
-            overlay.meta.image = "webmap_data/" + overlayMeta.image;
-          }
-        }
+        await ensurePastOverlayMetaLoaded();
 
         if (requestToken !== APP.overlayLoadToken) {
           return;
@@ -1422,6 +1634,10 @@
       if (APP.rasterLayer) {
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
+      }
+      if (APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
       }
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
@@ -1483,10 +1699,13 @@
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
       DOM.overlayDescription.textContent = overlay.description;
+      updateOverlayCardStates();
       updateForecastPanelVisibility();
       DOM.rcpSelector.disabled = !overlay.usesRcp;
       DOM.yearSlider.disabled = !overlay.usesYear;
       DOM.yearValue.style.opacity = overlay.usesYear ? "1" : "0.6";
+      DOM.pastUnderlayRow.hidden = APP.currentOverlay !== "bbtl";
+      DOM.pastUnderlayToggle.checked = APP.showPastUnderlay;
       syncCitationVisibility();
 
       if (!overlay.available) {
@@ -1685,9 +1904,17 @@
       }
       DOM.opacityValue.textContent = Number(DOM.opacitySlider.value).toFixed(2);
 
-      DOM.overlaySelector.value = APP.currentOverlay;
-      DOM.overlaySelector.addEventListener("change", function() {
-        APP.currentOverlay = DOM.overlaySelector.value;
+      updateOverlayCardStates();
+      DOM.overlayCardStrip.querySelectorAll("[data-overlay]").forEach(function(button) {
+        button.addEventListener("click", function() {
+          APP.currentOverlay = button.dataset.overlay;
+          syncOverlayControls();
+        });
+      });
+
+      DOM.pastUnderlayToggle.checked = APP.showPastUnderlay;
+      DOM.pastUnderlayToggle.addEventListener("change", function() {
+        APP.showPastUnderlay = DOM.pastUnderlayToggle.checked;
         syncOverlayControls();
       });
 
@@ -1741,6 +1968,10 @@
 
         if (APP.rasterLayer) {
           APP.rasterLayer.setOpacity(Number(DOM.opacitySlider.value));
+        }
+
+        if (APP.pastUnderlayLayer) {
+          APP.pastUnderlayLayer.setOpacity(Math.max(Number(DOM.opacitySlider.value) - 0.15, 0.2));
         }
       });
 
@@ -1838,6 +2069,10 @@
         APP.map.removeLayer(APP.rasterLayer);
         APP.rasterLayer = null;
       }
+      if (!APP.showPastUnderlay && APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
+      }
 
       APP.rasterData = null;
       APP.currentHexGeojson = null;
@@ -1859,6 +2094,10 @@
         }
 
         APP.currentHexGeojson = nextGeojson;
+        await syncPastUnderlay();
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
 
         APP.hexLayer = L.geoJSON(APP.currentHexGeojson, {
           pane: "hexPane",
