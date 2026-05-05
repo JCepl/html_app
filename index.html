@@ -177,11 +177,66 @@
       line-height: 1.35;
     }
 
+    .nested-panel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #d2deeb;
+      border-radius: 8px;
+      background: #f9fbfe;
+    }
+
+    .nested-panel[hidden] {
+      display: none;
+    }
+
+    .nested-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #163b60;
+    }
+
+    .nested-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric-box {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #d6e2ef;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .metric-title {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #163b60;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 12px;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .metric-item strong {
+      display: block;
+      color: #163b60;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
     .row {
       margin-top: 10px;
     }
 
     .row input,
+    .row select,
     .row button {
       width: 100%;
       box-sizing: border-box;
@@ -406,6 +461,7 @@
         <div class="overlay-chooser">
           <select id="overlaySelector">
             <option value="bbtl">Bark beetle pressure (hex)</option>
+            <option value="bbtforecast">Bark beetle forecast</option>
             <option value="gddraster">GDD/GEN 1km raster</option>
             <option value="bbtpast">Past bark beetle disturbance</option>
             <option value="wildfire">Wildfire risk (coming soon)</option>
@@ -413,6 +469,44 @@
             <option value="wind">Wind disturbance (coming soon)</option>
           </select>
           <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
+        </div>
+
+        <div id="forecastPanel" class="nested-panel" hidden>
+          <p class="nested-title">Bark Beetle Forecast</p>
+          <div class="nested-grid">
+            <div>
+              <div class="label">Model</div>
+              <div class="row">
+                <select id="forecastModelSelector"></select>
+              </div>
+            </div>
+            <div>
+              <div class="label">Future period</div>
+              <div class="row">
+                <select id="forecastPeriodSelector"></select>
+              </div>
+            </div>
+            <div>
+              <div class="label">View</div>
+              <div class="row">
+                <select id="forecastViewSelector">
+                  <option value="threshold">Thresholded risk</option>
+                  <option value="probability">Ensemble probability</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <div class="label">Threshold</div>
+              <div class="row">
+                <select id="forecastThresholdSelector"></select>
+              </div>
+            </div>
+          </div>
+          <div id="forecastMetricsBox" class="metric-box">
+            <p class="metric-title">Historical Evaluation At Selected Cutoff</p>
+            <div id="forecastMetricsGrid" class="metric-grid"></div>
+            <div id="forecastMetricsNote" class="small"></div>
+          </div>
         </div>
 
         <div id="citationBox" class="citation-box">
@@ -506,6 +600,12 @@
       currentYear: null,
       currentRcp: "rcp26",  // Fixed: Added back currentRcp for file path construction
       currentOverlay: "bbtl",
+      currentForecastModel: "xgb",
+      currentForecastPeriod: "2041_2070",
+      currentForecastView: "threshold",
+      currentForecastThreshold: "0.75",
+      forecastManifest: null,
+      forecastMetricsCache: {},
       overlayLoadToken: 0,
       overlayVisible: true,
       currentHexGeojson: null,
@@ -524,6 +624,14 @@
       gddraster: {
         label: "GDD/GEN 1km raster",
         description: "Rasterized GEN difference surface generated from the 1km point dataset.",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: null
+      },
+      bbtforecast: {
+        label: "Bark beetle forecast",
+        description: "Future bark beetle risk forecasts from the forecast bundle. Choose model, future period, and threshold to compare projected risk surfaces.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -569,7 +677,8 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
-  const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84_filled.tif";
+    const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84_filled.tif";
+    const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
     const GDD_RASTER_CLASSES = [
       { color: [21, 101, 192], label: "<= -0.5", valueText: "GEN diff <= -0.5" },
       { color: [240, 244, 248], label: "-0.5 to 0.5", valueText: "GEN diff -0.5 to 0.5" },
@@ -586,6 +695,13 @@
       citationBox: document.getElementById("citationBox"),
       overlaySelector: document.getElementById("overlaySelector"),
       overlayDescription: document.getElementById("overlayDescription"),
+      forecastPanel: document.getElementById("forecastPanel"),
+      forecastModelSelector: document.getElementById("forecastModelSelector"),
+      forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
+      forecastViewSelector: document.getElementById("forecastViewSelector"),
+      forecastThresholdSelector: document.getElementById("forecastThresholdSelector"),
+      forecastMetricsGrid: document.getElementById("forecastMetricsGrid"),
+      forecastMetricsNote: document.getElementById("forecastMetricsNote"),
       yearSlider: document.getElementById("yearSlider"),
       yearValue: document.getElementById("yearValue"),
       opacitySlider: document.getElementById("opacitySlider"),
@@ -605,6 +721,143 @@
 
     function setStatus(text) {
       DOM.status.textContent = text;
+    }
+
+    function formatForecastThreshold(threshold) {
+      return Number(threshold).toFixed(2);
+    }
+
+    function getForecastEntryKey() {
+      return APP.currentForecastModel + "::" + APP.currentForecastPeriod;
+    }
+
+    function getForecastEntry() {
+      if (!APP.forecastManifest || !APP.forecastManifest.entries) {
+        return null;
+      }
+      return APP.forecastManifest.entries[getForecastEntryKey()] || null;
+    }
+
+    async function ensureForecastManifestLoaded() {
+      if (APP.forecastManifest) {
+        return APP.forecastManifest;
+      }
+
+      const response = await fetch(FORECAST_MANIFEST_URL, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status + " for forecast manifest");
+      }
+
+      APP.forecastManifest = await response.json();
+      return APP.forecastManifest;
+    }
+
+    async function ensureForecastMetricsLoaded(modelKey) {
+      if (APP.forecastMetricsCache[modelKey]) {
+        return APP.forecastMetricsCache[modelKey];
+      }
+
+      const modelMeta = APP.forecastManifest && APP.forecastManifest.models ? APP.forecastManifest.models[modelKey] : null;
+      if (!modelMeta) {
+        throw new Error("Forecast model metadata missing for " + modelKey);
+      }
+
+      const response = await fetch(modelMeta.metrics_file, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status + " for forecast metrics");
+      }
+
+      APP.forecastMetricsCache[modelKey] = await response.json();
+      return APP.forecastMetricsCache[modelKey];
+    }
+
+    function updateForecastPanelVisibility() {
+      DOM.forecastPanel.hidden = APP.currentOverlay !== "bbtforecast";
+    }
+
+    function populateSelectOptions(select, values, selectedValue, labelFn) {
+      select.innerHTML = "";
+      values.forEach(function(value) {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = labelFn ? labelFn(value) : String(value);
+        if (String(value) === String(selectedValue)) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+
+    function renderForecastMetricsGrid(items) {
+      DOM.forecastMetricsGrid.innerHTML = "";
+      items.forEach(function(item) {
+        const cell = document.createElement("div");
+        cell.className = "metric-item";
+        cell.innerHTML = "<strong>" + item.label + "</strong>" + item.value;
+        DOM.forecastMetricsGrid.appendChild(cell);
+      });
+    }
+
+    async function hydrateForecastControls() {
+      updateForecastPanelVisibility();
+      if (APP.currentOverlay !== "bbtforecast") {
+        return;
+      }
+
+      const manifest = await ensureForecastManifestLoaded();
+      const modelKeys = Object.keys(manifest.models || {});
+      if (!modelKeys.length) {
+        throw new Error("Forecast bundle has no models");
+      }
+
+      if (!modelKeys.includes(APP.currentForecastModel)) {
+        APP.currentForecastModel = modelKeys[0];
+      }
+
+      const periods = (manifest.models[APP.currentForecastModel] && manifest.models[APP.currentForecastModel].periods) || manifest.periods || [];
+      if (!periods.includes(APP.currentForecastPeriod)) {
+        APP.currentForecastPeriod = periods[0];
+      }
+
+      const thresholds = (manifest.thresholds || []).map(function(value) {
+        return String(value);
+      });
+      if (!thresholds.includes(APP.currentForecastThreshold)) {
+        APP.currentForecastThreshold = thresholds.includes("0.65") ? "0.65" : thresholds[0];
+      }
+
+      populateSelectOptions(DOM.forecastModelSelector, modelKeys, APP.currentForecastModel, function(value) {
+        return value.toUpperCase();
+      });
+      populateSelectOptions(DOM.forecastPeriodSelector, periods, APP.currentForecastPeriod, function(value) {
+        return value.replace("_", "-");
+      });
+      populateSelectOptions(DOM.forecastThresholdSelector, thresholds, APP.currentForecastThreshold, function(value) {
+        return formatForecastThreshold(value);
+      });
+      DOM.forecastViewSelector.value = APP.currentForecastView;
+      DOM.forecastThresholdSelector.disabled = APP.currentForecastView === "probability";
+
+      const metrics = await ensureForecastMetricsLoaded(APP.currentForecastModel);
+      const cutoff = Number(APP.currentForecastThreshold);
+      const row = (metrics.aggregate_by_cutoff || []).find(function(item) {
+        return Number(item.cutoff) === cutoff;
+      });
+
+      if (row) {
+        renderForecastMetricsGrid([
+          { label: "Precision", value: Number(row.precision).toFixed(3) },
+          { label: "Recall", value: Number(row.recall).toFixed(3) },
+          { label: "Specificity", value: Number(row.specificity).toFixed(3) },
+          { label: "F1", value: Number(row.F1).toFixed(3) },
+          { label: "Red fraction", value: Number(row.red_fraction).toFixed(3) },
+          { label: "TP / FP", value: Number(row.TP) + " / " + Number(row.FP) }
+        ]);
+        DOM.forecastMetricsNote.textContent = "Historical evaluation summary aggregated across available GCMs at cutoff " + formatForecastThreshold(cutoff) + ".";
+      } else {
+        renderForecastMetricsGrid([]);
+        DOM.forecastMetricsNote.textContent = "No matching historical evaluation row is available for cutoff " + formatForecastThreshold(cutoff) + ".";
+      }
     }
 
     function renderLegendSwatches(items) {
@@ -634,6 +887,7 @@
       const overlay = getActiveOverlay();
       renderLegendSwatches([]);
       DOM.legendBar.style.display = "block";
+      DOM.legendBar.style.background = "linear-gradient(to right, #7ec8ff 0%, #39a9ff 16.6%, #00c2a8 33.2%, #7ad151 49.8%, #fde725 66.4%, #f8961e 83%, #f94144 100%)";
       if (APP.currentOverlay === "gddraster") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "<= -0.5";
@@ -667,6 +921,14 @@
         return;
       }
 
+      if (APP.currentOverlay === "bbtforecast") {
+        DOM.legendBar.style.display = "block";
+        DOM.legendBar.style.background = "linear-gradient(to right, #fff5eb 0%, #fee6ce 14%, #fdd0a2 28%, #fdae6b 42%, #fd8d3c 57%, #ef6548 71%, #d7301f 85%, #7f0000 100%)";
+        DOM.legendMin.textContent = APP.currentForecastView === "threshold" ? formatForecastThreshold(APP.currentForecastThreshold) : "0.00";
+        DOM.legendMax.textContent = "1.00";
+        return;
+      }
+
       if (!overlay.available || !overlay.meta) {
         DOM.legendMin.textContent = "NA";
         DOM.legendMax.textContent = "NA";
@@ -680,6 +942,28 @@
     function syncCitationVisibility() {
       const showCitation = APP.currentOverlay === "bbtl" && APP.overlayVisible;
       DOM.citationBox.style.display = showCitation ? "block" : "none";
+    }
+
+    function getForecastColor(value) {
+      if (!isFinite(value)) {
+        return null;
+      }
+
+      const palette = [
+        [255, 245, 235],
+        [254, 230, 206],
+        [253, 208, 162],
+        [253, 174, 107],
+        [253, 141, 60],
+        [239, 101, 72],
+        [215, 48, 31],
+        [127, 0, 0]
+      ];
+
+      const t = Math.max(0, Math.min(1, Number(value)));
+      const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
+      const color = palette[idx];
+      return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
     }
 
     function getColor(value) {
@@ -846,7 +1130,7 @@
 
     function fitDataBounds() {
       const overlay = getActiveOverlay();
-      const meta = overlay.meta || MAP_META;
+      const meta = (overlay.meta && overlay.meta.bbox) ? overlay.meta : MAP_META;
 
       if (APP.hexLayer) {
         APP.map.fitBounds(APP.hexLayer.getBounds());
@@ -881,6 +1165,10 @@
     }
 
     function updateActiveOverlayLayer() {
+      if (APP.currentOverlay === "bbtforecast") {
+        updateForecastOverlay();
+        return;
+      }
       if (APP.currentOverlay === "bbtpast") {
         updateClassifiedImageOverlay();
         return;
@@ -1065,9 +1353,85 @@
       }
     }
 
+    async function updateForecastOverlay() {
+      if (!APP.overlayVisible) return;
+
+      APP.overlayLoadToken += 1;
+      const requestToken = APP.overlayLoadToken;
+
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      if (APP.rasterLayer) {
+        APP.map.removeLayer(APP.rasterLayer);
+        APP.rasterLayer = null;
+      }
+      APP.rasterData = null;
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      DOM.hexValue.textContent = "—";
+      setStatus("Loading bark beetle forecast...");
+
+      try {
+        await hydrateForecastControls();
+        const entry = getForecastEntry();
+        if (!entry) {
+          throw new Error("Forecast entry missing for " + getForecastEntryKey());
+        }
+
+        const tifPath = APP.currentForecastView === "probability"
+          ? entry.ensemble_probability_tif
+          : entry.threshold_visible_tifs[APP.currentForecastThreshold];
+
+        if (!tifPath) {
+          throw new Error("Forecast raster missing for current selection");
+        }
+
+        const response = await fetch(tifPath, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status + " for " + tifPath);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const georaster = await parseGeoraster(arrayBuffer);
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        APP.rasterData = georaster;
+        APP.rasterLayer = new GeoRasterLayer({
+          georaster: georaster,
+          opacity: Number(DOM.opacitySlider.value),
+          pane: "hexPane",
+          resolution: 128,
+          resampleMethod: "nearest",
+          pixelValuesToColorFn: function(values) {
+            const value = values && values.length ? Number(values[0]) : NaN;
+            if (!isFinite(value)) {
+              return null;
+            }
+            return getForecastColor(value);
+          }
+        });
+        APP.rasterLayer.addTo(APP.map);
+
+        if (requestToken !== APP.overlayLoadToken) {
+          return;
+        }
+
+        setLegendLabels();
+        setStatus("Loaded " + APP.currentForecastModel.toUpperCase() + " forecast for " + APP.currentForecastPeriod.replace("_", "-"));
+      } catch (error) {
+        console.error(error);
+        setStatus("Forecast overlay could not be loaded");
+      }
+    }
+
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
       DOM.overlayDescription.textContent = overlay.description;
+      updateForecastPanelVisibility();
       DOM.rcpSelector.disabled = !overlay.usesRcp;
       DOM.yearSlider.disabled = !overlay.usesYear;
       DOM.yearValue.style.opacity = overlay.usesYear ? "1" : "0.6";
@@ -1184,6 +1548,18 @@
         return;
       }
 
+      if (APP.currentOverlay === "bbtforecast") {
+        const rasterValue = sampleGddRasterAt(latlng);
+        if (isFinite(rasterValue)) {
+          DOM.hexValue.textContent = rasterValue.toFixed(3);
+          setStatus("Forecast probability found: " + rasterValue.toFixed(3));
+        } else {
+          DOM.hexValue.textContent = "—";
+          setStatus("No forecast value at clicked point");
+        }
+        return;
+      }
+
       if (APP.currentOverlay === "bbtpast") {
         DOM.hexValue.textContent = "Classified PNG overlay";
         setStatus("Historical overlay is visualization-only");
@@ -1264,6 +1640,26 @@
       DOM.overlaySelector.value = APP.currentOverlay;
       DOM.overlaySelector.addEventListener("change", function() {
         APP.currentOverlay = DOM.overlaySelector.value;
+        syncOverlayControls();
+      });
+
+      DOM.forecastModelSelector.addEventListener("change", function() {
+        APP.currentForecastModel = DOM.forecastModelSelector.value;
+        syncOverlayControls();
+      });
+
+      DOM.forecastPeriodSelector.addEventListener("change", function() {
+        APP.currentForecastPeriod = DOM.forecastPeriodSelector.value;
+        syncOverlayControls();
+      });
+
+      DOM.forecastViewSelector.addEventListener("change", function() {
+        APP.currentForecastView = DOM.forecastViewSelector.value;
+        syncOverlayControls();
+      });
+
+      DOM.forecastThresholdSelector.addEventListener("change", function() {
+        APP.currentForecastThreshold = DOM.forecastThresholdSelector.value;
         syncOverlayControls();
       });
 
