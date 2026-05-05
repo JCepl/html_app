@@ -1,0 +1,66 @@
+{
+  "model": "xgb",
+  "period": "2041_2070",
+  "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+  "source_probability_files": [
+    "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+    "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+    "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+  ],
+  "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/2041_2070/probability_ensemble_mean.tif",
+  "threshold_visible_tifs": {
+    "0.5": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t50.tif",
+    "0.55": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t55.tif",
+    "0.6": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t60.tif",
+    "0.65": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t65.tif",
+    "0.7": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t70.tif",
+    "0.75": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t75.tif",
+    "0.8": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t80.tif",
+    "0.85": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t85.tif",
+    "0.9": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t90.tif"
+  },
+  "forecast_confusion_by_gcm": {
+    "ICHEC_EC_EARTH_RACMO22E": {
+      "threshold": "0.67",
+      "TP": "NA",
+      "FP": "NA",
+      "FN": "NA",
+      "TN": "NA",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "red_fraction": "0.3654",
+      "F1": "NA",
+      "threshold_metric": "fixed_threshold",
+      "max_red_fraction": "0.3"
+    },
+    "MOHC_HadGEM2_ES_RCA4": {
+      "threshold": "0.67",
+      "TP": "NA",
+      "FP": "NA",
+      "FN": "NA",
+      "TN": "NA",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "red_fraction": "0.2756",
+      "F1": "NA",
+      "threshold_metric": "fixed_threshold",
+      "max_red_fraction": "0.3"
+    },
+    "MPI_ESM_LR_REMO2009": {
+      "threshold": "0.67",
+      "TP": "NA",
+      "FP": "NA",
+      "FN": "NA",
+      "TN": "NA",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "red_fraction": "0.3512",
+      "F1": "NA",
+      "threshold_metric": "fixed_threshold",
+      "max_red_fraction": "0.3"
+    }
+  }
+}
