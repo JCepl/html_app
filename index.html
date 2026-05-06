@@ -202,6 +202,7 @@
       background: #f8fbff;
       color: #153b61;
       text-align: left;
+      cursor: pointer;
       transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
     }
 
@@ -282,8 +283,23 @@
       cursor: default;
     }
 
+    .overlay-opacity-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 9px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(185, 207, 231, 0.7);
+      cursor: default;
+    }
+
+    .overlay-card.active .overlay-opacity-row {
+      border-top-color: rgba(255, 255, 255, 0.22);
+    }
+
     .overlay-tool-slider {
-      width: 72px;
+      width: 100%;
       accent-color: #1f5a96;
     }
 
@@ -618,48 +634,52 @@
             <span class="overlay-card-title">Hex pressure</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
-              <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
-              <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
-              <button class="overlay-tool-btn" type="button" data-focus-overlay="bbtl">Settings</button>
             </span>
           </span>
           <span class="overlay-card-copy">Projected bark beetle pressure by scenario and year.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
+            <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
+          </span>
         </div>
         <div class="overlay-card" data-overlay="bbtforecast">
           <span class="overlay-card-head">
             <span class="overlay-card-title">Predictions</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
-              <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
-              <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
-              <button class="overlay-tool-btn" type="button" data-focus-overlay="bbtforecast">Settings</button>
             </span>
           </span>
           <span class="overlay-card-copy">Future bark beetle forecast models and thresholds.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
+            <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
+          </span>
         </div>
         <div class="overlay-card" data-overlay="gddraster">
           <span class="overlay-card-head">
             <span class="overlay-card-title">GDD raster</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="gddraster">Display</button>
-              <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="gddraster" />
-              <span class="overlay-tool-value" data-opacity-value="gddraster">0.85</span>
-              <button class="overlay-tool-btn" type="button" data-focus-overlay="gddraster">Settings</button>
             </span>
           </span>
           <span class="overlay-card-copy">1 km GEN difference raster surface.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="gddraster" />
+            <span class="overlay-tool-value" data-opacity-value="gddraster">0.85</span>
+          </span>
         </div>
         <div class="overlay-card" data-overlay="bbtpast">
           <span class="overlay-card-head">
             <span class="overlay-card-title">Past disturbance</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
-              <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
-              <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
-              <button class="overlay-tool-btn" type="button" data-focus-overlay="bbtpast">Settings</button>
             </span>
           </span>
           <span class="overlay-card-copy">Historical bark beetle disturbance footprint.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
+            <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
+          </span>
         </div>
         <div class="overlay-card coming-soon" data-overlay="wildfire">
           <span class="overlay-card-head">
@@ -2156,6 +2176,16 @@
       }
       syncFocusedOpacityControl();
 
+      DOM.overlayCardStrip.querySelectorAll("[data-overlay]").forEach(function(card) {
+        card.addEventListener("click", function() {
+          if (card.classList.contains("coming-soon")) {
+            return;
+          }
+          APP.focusedOverlay = card.dataset.overlay;
+          syncOverlayControls(false);
+        });
+      });
+
       DOM.overlayCardStrip.querySelectorAll("[data-toggle-overlay]").forEach(function(toggleButton) {
         toggleButton.addEventListener("pointerdown", function(event) {
           event.stopPropagation();
@@ -2165,17 +2195,6 @@
           const overlayId = toggleButton.dataset.toggleOverlay;
           const isOn = toggleButton.classList.contains("is-on");
           setLayerVisibilityFromRibbon(overlayId, !isOn);
-        });
-      });
-
-      DOM.overlayCardStrip.querySelectorAll("[data-focus-overlay]").forEach(function(setButton) {
-        setButton.addEventListener("pointerdown", function(event) {
-          event.stopPropagation();
-        });
-        setButton.addEventListener("click", function(event) {
-          event.stopPropagation();
-          APP.focusedOverlay = setButton.dataset.focusOverlay;
-          syncOverlayControls(false);
         });
       });
 
