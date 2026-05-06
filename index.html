@@ -854,8 +854,6 @@
     const APP = {
       map: null,
       clickMarker: null,
-      hexLayer: null,
-      rasterLayer: null,
       rasterData: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
@@ -1049,11 +1047,20 @@
       return overlayId === "gddraster" || overlayId === "bbtforecast" || overlayId === "bbtpast";
     }
 
+    function getHexLayer() {
+      return APP.layerInstances.bbtl || null;
+    }
+
+    function getTopRasterLayer() {
+      const topVisibleOverlayId = getTopVisibleOverlayId();
+      return isRasterOverlay(topVisibleOverlayId) ? (APP.layerInstances[topVisibleOverlayId] || null) : null;
+    }
+
     function updateOverlayPaneOrder() {
       APP.visibleOverlays.forEach(function(overlayId, index) {
         const pane = APP.map && APP.map.getPane(getOverlayPaneName(overlayId));
         if (pane) {
-          pane.style.zIndex = String(230 + index * 10);
+          pane.style.zIndex = String(300 + index * 20);
         }
         const layer = APP.layerInstances[overlayId];
         if (layer && layer.bringToFront) {
@@ -1246,22 +1253,25 @@
     }
 
     function applyOpacityToLayers() {
-      if (APP.hexLayer) {
-        APP.hexLayer.setStyle(baseHexStyle);
+      const hexLayer = getHexLayer();
+      const topRasterLayer = getTopRasterLayer();
+
+      if (hexLayer) {
+        hexLayer.setStyle(baseHexStyle);
         if (APP.selectedHexLayer) {
           highlightHex(APP.selectedHexLayer);
         }
       }
 
-      if (APP.rasterLayer) {
+      if (topRasterLayer) {
         const topVisibleOverlayId = getTopVisibleOverlayId();
         const rasterOpacity = APP.layerOpacity[topVisibleOverlayId] || 0.85;
-        APP.rasterLayer.setOpacity(Number(rasterOpacity));
+        topRasterLayer.setOpacity(Number(rasterOpacity));
       }
 
       ["gddraster", "bbtforecast", "bbtpast"].forEach(function(overlayId) {
         const layer = APP.layerInstances[overlayId];
-        if (layer && layer !== APP.rasterLayer && layer.setOpacity) {
+        if (layer && layer !== topRasterLayer && layer.setOpacity) {
           layer.setOpacity(Number(APP.layerOpacity[overlayId] || 0.85));
         }
       });
@@ -1275,7 +1285,7 @@
       if (shouldShow) {
         showOverlay(overlayId);
         APP.focusedOverlay = overlayId;
-        syncOverlayControls(true);
+        syncOverlayControls(overlayId);
       } else if (isOverlayVisible(overlayId)) {
         hideOverlay(overlayId);
         clearOverlayLayer(overlayId);
@@ -1573,8 +1583,9 @@
     }
 
     function resetSelectedHex() {
-      if (APP.selectedHexLayer && APP.hexLayer) {
-        APP.hexLayer.resetStyle(APP.selectedHexLayer);
+      const hexLayer = getHexLayer();
+      if (APP.selectedHexLayer && hexLayer) {
+        hexLayer.resetStyle(APP.selectedHexLayer);
       }
       APP.selectedHexLayer = null;
     }
@@ -1669,13 +1680,16 @@
       const overlay = getVisibleOverlay();
       const meta = (overlay.meta && overlay.meta.bbox) ? overlay.meta : MAP_META;
 
-      if (topVisibleOverlayId === "bbtl" && APP.hexLayer) {
-        APP.map.fitBounds(APP.hexLayer.getBounds());
+      const hexLayer = getHexLayer();
+      const topRasterLayer = getTopRasterLayer();
+
+      if (topVisibleOverlayId === "bbtl" && hexLayer) {
+        APP.map.fitBounds(hexLayer.getBounds());
       } else if (APP.layerInstances[topVisibleOverlayId] && APP.layerInstances[topVisibleOverlayId].getBounds) {
         APP.map.fitBounds(APP.layerInstances[topVisibleOverlayId].getBounds());
-      } else if (APP.rasterLayer) {
-        if (APP.rasterLayer.getBounds) {
-          APP.map.fitBounds(APP.rasterLayer.getBounds());
+      } else if (topRasterLayer) {
+        if (topRasterLayer.getBounds) {
+          APP.map.fitBounds(topRasterLayer.getBounds());
         }
       } else {
         APP.map.fitBounds([
@@ -1697,7 +1711,6 @@
         }
 
         if (id === "bbtl") {
-          APP.hexLayer = null;
           APP.currentHexGeojson = null;
           resetSelectedHex();
         }
@@ -1709,43 +1722,29 @@
         }
       });
 
-      APP.rasterLayer = null;
       if (!isOverlayVisible("bbtl")) {
         APP.currentHexGeojson = null;
       }
-      const topVisibleOverlayId = getTopVisibleOverlayId();
-      APP.rasterLayer = isRasterOverlay(topVisibleOverlayId) ? (APP.layerInstances[topVisibleOverlayId] || null) : null;
-      APP.hexLayer = APP.layerInstances.bbtl || null;
       resetSelectedCountry();
       DOM.hexValue.textContent = "—";
     }
 
-    async function refreshVisibleOverlays() {
-      if (!APP.overlayVisible) {
+    async function updateOverlayLayer(overlayId) {
+      if (!isOverlayVisible(overlayId)) {
         return;
       }
 
-      const visibleIds = APP.visibleOverlays.slice();
-      for (const overlayId of visibleIds) {
-        if (overlayId === "bbtl") {
-          await updateHexLayer();
-        } else if (overlayId === "gddraster") {
-          await updateGddRasterLayer();
-        } else if (overlayId === "bbtpast") {
-          await updateClassifiedImageOverlay();
-        } else if (overlayId === "bbtforecast") {
-          await updateForecastOverlay();
-        }
+      if (overlayId === "bbtl") {
+        await updateHexLayer();
+      } else if (overlayId === "gddraster") {
+        await updateGddRasterLayer();
+      } else if (overlayId === "bbtpast") {
+        await updateClassifiedImageOverlay();
+      } else if (overlayId === "bbtforecast") {
+        await updateForecastOverlay();
       }
 
-      const topVisibleId = getTopVisibleOverlayId();
-      APP.rasterLayer = isRasterOverlay(topVisibleId) ? (APP.layerInstances[topVisibleId] || null) : null;
-      APP.hexLayer = APP.layerInstances.bbtl || null;
       updateOverlayPaneOrder();
-    }
-
-    function updateActiveOverlayLayer() {
-      refreshVisibleOverlays();
     }
 
     function classifyGddRasterValue(value) {
@@ -1851,9 +1850,6 @@
           return;
         }
 
-        if (getTopVisibleOverlayId() === "gddraster") {
-          APP.rasterLayer = APP.layerInstances.gddraster;
-        }
         setStatus("Loaded 1km raster overlay");
       } catch (error) {
         console.error(error);
@@ -1889,9 +1885,6 @@
           pane: getOverlayPaneName("bbtpast")
         }).addTo(APP.map);
 
-        if (getTopVisibleOverlayId() === "bbtpast") {
-          APP.rasterLayer = APP.layerInstances.bbtpast;
-        }
         setLegendLabels();
         setStatus("Loaded historical bark beetle overlay");
       } catch (error) {
@@ -1955,9 +1948,6 @@
           return;
         }
 
-        if (getTopVisibleOverlayId() === "bbtforecast") {
-          APP.rasterLayer = APP.layerInstances.bbtforecast;
-        }
         setLegendLabels();
         setStatus("Loaded " + APP.currentForecastModel.toUpperCase() + " forecast for " + APP.currentForecastPeriod.replace("_", "-"));
       } catch (error) {
@@ -1966,7 +1956,7 @@
       }
     }
 
-    function syncOverlayControls(refreshVisibleLayer) {
+    function syncOverlayControls(refreshTarget) {
       const focusedOverlay = getFocusedOverlay();
       const showHexControls = APP.focusedOverlay === "bbtl";
       DOM.overlayDescription.textContent = focusedOverlay.description;
@@ -1989,8 +1979,8 @@
       if (!showHexControls) {
         DOM.yearValue.textContent = "NA";
         setLegendLabels();
-        if (refreshVisibleLayer && APP.overlayVisible) {
-          updateActiveOverlayLayer();
+        if (refreshTarget && APP.overlayVisible) {
+          updateOverlayLayer(refreshTarget === true ? APP.focusedOverlay : refreshTarget);
         }
         return;
       }
@@ -2003,8 +1993,8 @@
       DOM.yearSlider.value = String(years.indexOf(APP.currentYear));
       DOM.yearValue.textContent = String(APP.currentYear);
       setLegendLabels();
-      if (refreshVisibleLayer && APP.overlayVisible) {
-        updateActiveOverlayLayer();
+      if (refreshTarget && APP.overlayVisible) {
+        updateOverlayLayer(refreshTarget === true ? APP.focusedOverlay : refreshTarget);
       }
     }
 
@@ -2027,11 +2017,12 @@
     }
 
     function findLayerForFeature(targetFeature) {
-      if (!APP.hexLayer || !targetFeature) return null;
+      const hexLayer = getHexLayer();
+      if (!hexLayer || !targetFeature) return null;
 
       let foundLayer = null;
 
-      APP.hexLayer.eachLayer(function(layer) {
+      hexLayer.eachLayer(function(layer) {
         if (layer.feature === targetFeature) {
           foundLayer = layer;
         }
@@ -2144,14 +2135,14 @@
       ["bbtl", "gddraster", "bbtpast", "bbtforecast"].forEach(function(overlayId, index) {
         const paneName = getOverlayPaneName(overlayId);
         APP.map.createPane(paneName);
-        APP.map.getPane(paneName).style.zIndex = String(230 + index * 10);
+        APP.map.getPane(paneName).style.zIndex = String(300 + index * 20);
       });
 
       APP.map.createPane("countryHaloPane");
-      APP.map.getPane("countryHaloPane").style.zIndex = 255;
+      APP.map.getPane("countryHaloPane").style.zIndex = 700;
 
       APP.map.createPane("countryPane");
-      APP.map.getPane("countryPane").style.zIndex = 260;
+      APP.map.getPane("countryPane").style.zIndex = 710;
 
       // Map click handler - only source for panel updates
       // Removed layer click handlers to avoid double-handling and ensure robust point-in-polygon lookup
@@ -2162,7 +2153,6 @@
       setLegendLabels();
       initControls();
       loadCountryBorders();
-      updateActiveOverlayLayer();
     }
 
     function initControls() {
@@ -2219,22 +2209,22 @@
 
       DOM.forecastModelSelector.addEventListener("change", function() {
         APP.currentForecastModel = DOM.forecastModelSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast"));
+        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
       });
 
       DOM.forecastPeriodSelector.addEventListener("change", function() {
         APP.currentForecastPeriod = DOM.forecastPeriodSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast"));
+        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
       });
 
       DOM.forecastViewSelector.addEventListener("change", function() {
         APP.currentForecastView = DOM.forecastViewSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast"));
+        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
       });
 
       DOM.forecastThresholdSelector.addEventListener("change", function() {
         APP.currentForecastThreshold = DOM.forecastThresholdSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast"));
+        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
       });
 
       // RCP selector
@@ -2279,7 +2269,7 @@
           setStatus(APP.overlayVisible ? "Overlay hidden" : "All overlays hidden");
         } else {
           showOverlay(APP.focusedOverlay);
-          syncOverlayControls(true);
+          syncOverlayControls(APP.focusedOverlay);
           DOM.toggleOverlayBtn.textContent = "Hide overlay";
           setStatus("Overlay shown");
         }
@@ -2289,7 +2279,7 @@
         fitDataBounds();
       });
 
-      syncOverlayControls(true);
+      syncOverlayControls("bbtl");
     }
 
     async function loadCountryBorders() {
@@ -2358,7 +2348,6 @@
         APP.map.removeLayer(APP.layerInstances.bbtl);
         APP.layerInstances.bbtl = null;
       }
-      APP.hexLayer = null;
       APP.currentHexGeojson = null;
       resetSelectedHex();
       resetSelectedCountry();
@@ -2411,7 +2400,6 @@
           }
         }).addTo(APP.map);
 
-        APP.hexLayer = APP.layerInstances.bbtl;
         if (requestToken !== APP.overlayLoadTokens.bbtl) {
           return;
         }
