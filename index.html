@@ -842,15 +842,7 @@
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
-    // Clean GeoJSON-only Leaflet map for static GitHub Pages deployment
-    // Changes from previous version:
-    // - Removed play mode completely (not present in current code)
-    // - Removed layer click handlers to rely solely on map click for robust point-in-polygon lookup
-    // - Simplified click handling to always use Turf.js point-in-polygon regardless of click location
-    // - Removed PNG overlay code (not present)
-    // - Added RCP scenario selector (2.6, 4.5, 8.5)
-    // - Kept all requested features: left panel, year/opacity sliders, country boundaries, hex highlighting
-    // - Code is now simpler, more readable, and easier to extend for future maps
+    // Static Leaflet DSS prototype for GitHub Pages deployment.
     const APP = {
       map: null,
       clickMarker: null,
@@ -1067,6 +1059,35 @@
           layer.bringToFront();
         }
       });
+    }
+
+    function beginOverlayLoad(overlayId) {
+      APP.overlayLoadTokens[overlayId] += 1;
+      clearLayerInstance(overlayId);
+      return APP.overlayLoadTokens[overlayId];
+    }
+
+    function isCurrentOverlayLoad(overlayId, requestToken) {
+      return requestToken === APP.overlayLoadTokens[overlayId];
+    }
+
+    function clearLayerInstance(overlayId) {
+      const layer = APP.layerInstances[overlayId];
+      if (layer) {
+        APP.map.removeLayer(layer);
+        APP.layerInstances[overlayId] = null;
+      }
+    }
+
+    function addImageOverlayLayer(overlayId, imagePath, bounds) {
+      APP.layerInstances[overlayId] = L.imageOverlay(imagePath, [
+        [bounds.south, bounds.west],
+        [bounds.north, bounds.east]
+      ], {
+        opacity: Number(APP.layerOpacity[overlayId] || 0.85),
+        pane: getOverlayPaneName(overlayId)
+      }).addTo(APP.map);
+      return APP.layerInstances[overlayId];
     }
 
     function setStatus(text) {
@@ -1704,11 +1725,7 @@
 
       targets.forEach(function(id) {
         APP.overlayLoadTokens[id] += 1;
-        const layer = APP.layerInstances[id];
-        if (layer) {
-          APP.map.removeLayer(layer);
-          APP.layerInstances[id] = null;
-        }
+        clearLayerInstance(id);
 
         if (id === "bbtl") {
           APP.currentHexGeojson = null;
@@ -1801,13 +1818,7 @@
     async function updateGddRasterLayer() {
       if (!isOverlayVisible("gddraster")) return;
 
-      APP.overlayLoadTokens.gddraster += 1;
-      const requestToken = APP.overlayLoadTokens.gddraster;
-
-      if (APP.layerInstances.gddraster) {
-        APP.map.removeLayer(APP.layerInstances.gddraster);
-        APP.layerInstances.gddraster = null;
-      }
+      const requestToken = beginOverlayLoad("gddraster");
       setStatus("Loading 1km raster overlay...");
 
       try {
@@ -1818,7 +1829,7 @@
 
         const arrayBuffer = await response.arrayBuffer();
         const georaster = await parseGeoraster(arrayBuffer);
-        if (requestToken !== APP.overlayLoadTokens.gddraster) {
+        if (!isCurrentOverlayLoad("gddraster", requestToken)) {
           return;
         }
 
@@ -1846,7 +1857,7 @@
         });
         APP.layerInstances.gddraster.addTo(APP.map);
 
-        if (requestToken !== APP.overlayLoadTokens.gddraster) {
+        if (!isCurrentOverlayLoad("gddraster", requestToken)) {
           return;
         }
 
@@ -1860,30 +1871,18 @@
     async function updateClassifiedImageOverlay() {
       if (!isOverlayVisible("bbtpast")) return;
 
-      APP.overlayLoadTokens.bbtpast += 1;
-      const requestToken = APP.overlayLoadTokens.bbtpast;
+      const requestToken = beginOverlayLoad("bbtpast");
       const overlay = OVERLAY_CATALOG.bbtpast;
-
-      if (APP.layerInstances.bbtpast) {
-        APP.map.removeLayer(APP.layerInstances.bbtpast);
-        APP.layerInstances.bbtpast = null;
-      }
       setStatus("Loading historical bark beetle overlay...");
 
       try {
         await ensurePastOverlayMetaLoaded();
 
-        if (requestToken !== APP.overlayLoadTokens.bbtpast) {
+        if (!isCurrentOverlayLoad("bbtpast", requestToken)) {
           return;
         }
 
-        APP.layerInstances.bbtpast = L.imageOverlay(overlay.meta.image, [
-          [overlay.meta.bounds.south, overlay.meta.bounds.west],
-          [overlay.meta.bounds.north, overlay.meta.bounds.east]
-        ], {
-          opacity: Number(APP.layerOpacity.bbtpast || 0.85),
-          pane: getOverlayPaneName("bbtpast")
-        }).addTo(APP.map);
+        addImageOverlayLayer("bbtpast", overlay.meta.image, overlay.meta.bounds);
 
         setLegendLabels();
         setStatus("Loaded historical bark beetle overlay");
@@ -1896,13 +1895,8 @@
     async function updateForecastOverlay() {
       if (!isOverlayVisible("bbtforecast")) return;
 
-      APP.overlayLoadTokens.bbtforecast += 1;
-      const requestToken = APP.overlayLoadTokens.bbtforecast;
+      const requestToken = beginOverlayLoad("bbtforecast");
 
-      if (APP.layerInstances.bbtforecast) {
-        APP.map.removeLayer(APP.layerInstances.bbtforecast);
-        APP.layerInstances.bbtforecast = null;
-      }
       APP.currentForecastRasterRange = null;
       setStatus("Loading bark beetle forecast...");
 
@@ -1924,7 +1918,7 @@
         }
 
         const overlayMeta = await response.json();
-        if (requestToken !== APP.overlayLoadTokens.bbtforecast) {
+        if (!isCurrentOverlayLoad("bbtforecast", requestToken)) {
           return;
         }
 
@@ -1936,15 +1930,9 @@
             ? Number(overlayMeta.value_range.max)
             : 1
         };
-        APP.layerInstances.bbtforecast = L.imageOverlay(overlayPaths.imagePath, [
-          [overlayMeta.bounds.south, overlayMeta.bounds.west],
-          [overlayMeta.bounds.north, overlayMeta.bounds.east]
-        ], {
-          opacity: Number(APP.layerOpacity.bbtforecast || 0.85),
-          pane: getOverlayPaneName("bbtforecast")
-        }).addTo(APP.map);
+        addImageOverlayLayer("bbtforecast", overlayPaths.imagePath, overlayMeta.bounds);
 
-        if (requestToken !== APP.overlayLoadTokens.bbtforecast) {
+        if (!isCurrentOverlayLoad("bbtforecast", requestToken)) {
           return;
         }
 
@@ -2334,8 +2322,7 @@
     async function updateHexLayer() {
       if (!isOverlayVisible("bbtl")) return;
 
-      APP.overlayLoadTokens.bbtl += 1;
-      const requestToken = APP.overlayLoadTokens.bbtl;
+      const requestToken = beginOverlayLoad("bbtl");
 
       const fileName = getCurrentFile();
 
@@ -2344,10 +2331,6 @@
         return;
       }
 
-      if (APP.layerInstances.bbtl) {
-        APP.map.removeLayer(APP.layerInstances.bbtl);
-        APP.layerInstances.bbtl = null;
-      }
       APP.currentHexGeojson = null;
       resetSelectedHex();
       resetSelectedCountry();
@@ -2361,7 +2344,7 @@
         }
 
         const nextGeojson = await response.json();
-        if (requestToken !== APP.overlayLoadTokens.bbtl) {
+        if (!isCurrentOverlayLoad("bbtl", requestToken)) {
           return;
         }
 
@@ -2400,7 +2383,7 @@
           }
         }).addTo(APP.map);
 
-        if (requestToken !== APP.overlayLoadTokens.bbtl) {
+        if (!isCurrentOverlayLoad("bbtl", requestToken)) {
           return;
         }
         setStatus("Loaded year " + APP.currentYear);
