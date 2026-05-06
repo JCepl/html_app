@@ -843,7 +843,8 @@
       selectedCountryLayer: null,
       currentYear: null,
       currentRcp: "rcp85",
-      currentOverlay: "bbtl",
+      visibleOverlay: "bbtl",
+      focusedOverlay: "bbtl",
       layerOpacity: {
         bbtl: 0.85,
         bbtforecast: 0.85,
@@ -970,8 +971,12 @@
       rcpSelector: document.getElementById("rcpSelector")
     };
 
-    function getActiveOverlay() {
-      return OVERLAY_CATALOG[APP.currentOverlay] || OVERLAY_CATALOG.bbtl;
+    function getVisibleOverlay() {
+      return OVERLAY_CATALOG[APP.visibleOverlay] || OVERLAY_CATALOG.bbtl;
+    }
+
+    function getFocusedOverlay() {
+      return OVERLAY_CATALOG[APP.focusedOverlay] || OVERLAY_CATALOG.bbtl;
     }
 
     function setStatus(text) {
@@ -1063,7 +1068,7 @@
     }
 
     function updateForecastPanelVisibility() {
-      DOM.forecastPanel.hidden = APP.currentOverlay !== "bbtforecast";
+      DOM.forecastPanel.hidden = APP.focusedOverlay !== "bbtforecast";
     }
 
     function populateSelectOptions(select, values, selectedValue, labelFn) {
@@ -1121,7 +1126,7 @@
       }
 
       DOM.overlayCardStrip.querySelectorAll("[data-overlay]").forEach(function(button) {
-        const isActive = button.dataset.overlay === APP.currentOverlay;
+        const isActive = button.dataset.overlay === APP.focusedOverlay;
         button.classList.toggle("active", isActive);
       });
 
@@ -1129,13 +1134,13 @@
         const overlayId = button.dataset.toggleOverlay;
         let isOn = false;
         if (overlayId === "bbtl") {
-          isOn = APP.currentOverlay === "bbtl";
+          isOn = APP.overlayVisible && APP.visibleOverlay === "bbtl";
         } else if (overlayId === "bbtforecast") {
-          isOn = APP.currentOverlay === "bbtforecast";
+          isOn = APP.overlayVisible && APP.visibleOverlay === "bbtforecast";
         } else if (overlayId === "gddraster") {
-          isOn = APP.currentOverlay === "gddraster";
+          isOn = APP.overlayVisible && APP.visibleOverlay === "gddraster";
         } else if (overlayId === "bbtpast") {
-          isOn = APP.currentOverlay === "bbtpast";
+          isOn = APP.overlayVisible && APP.visibleOverlay === "bbtpast";
         }
         button.classList.toggle("is-on", isOn);
         button.textContent = isOn ? "Hide" : "Display";
@@ -1150,7 +1155,7 @@
     }
 
     function syncFocusedOpacityControl() {
-      const opacity = APP.layerOpacity[APP.currentOverlay];
+      const opacity = APP.layerOpacity[APP.focusedOverlay];
       if (isFinite(opacity)) {
         DOM.opacitySlider.value = String(opacity);
         DOM.opacityValue.textContent = Number(opacity).toFixed(2);
@@ -1166,7 +1171,7 @@
       }
 
       if (APP.rasterLayer) {
-        const rasterOpacity = APP.layerOpacity[APP.currentOverlay] || 0.85;
+        const rasterOpacity = APP.layerOpacity[APP.visibleOverlay] || 0.85;
         APP.rasterLayer.setOpacity(Number(rasterOpacity));
       }
 
@@ -1176,9 +1181,10 @@
       if (overlayId === "bbtl") {
         if (shouldShow) {
           APP.overlayVisible = true;
-          APP.currentOverlay = "bbtl";
-          syncOverlayControls();
-        } else if (APP.currentOverlay === "bbtl") {
+          APP.visibleOverlay = "bbtl";
+          APP.focusedOverlay = "bbtl";
+          syncOverlayControls(true);
+        } else if (APP.visibleOverlay === "bbtl") {
           APP.overlayVisible = false;
           clearOverlayLayer();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
@@ -1191,9 +1197,10 @@
       if (overlayId === "bbtforecast") {
         if (shouldShow) {
           APP.overlayVisible = true;
-          APP.currentOverlay = "bbtforecast";
-          syncOverlayControls();
-        } else if (APP.currentOverlay === "bbtforecast") {
+          APP.visibleOverlay = "bbtforecast";
+          APP.focusedOverlay = "bbtforecast";
+          syncOverlayControls(true);
+        } else if (APP.visibleOverlay === "bbtforecast") {
           APP.overlayVisible = false;
           clearOverlayLayer();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
@@ -1206,9 +1213,10 @@
       if (overlayId === "gddraster" || overlayId === "bbtpast") {
         if (shouldShow) {
           APP.overlayVisible = true;
-          APP.currentOverlay = overlayId;
-          syncOverlayControls();
-        } else if (APP.currentOverlay === overlayId) {
+          APP.visibleOverlay = overlayId;
+          APP.focusedOverlay = overlayId;
+          syncOverlayControls(true);
+        } else if (APP.visibleOverlay === overlayId) {
           APP.overlayVisible = false;
           clearOverlayLayer();
           DOM.toggleOverlayBtn.textContent = "Show overlay";
@@ -1220,7 +1228,7 @@
 
     async function hydrateForecastControls() {
       updateForecastPanelVisibility();
-      if (APP.currentOverlay !== "bbtforecast") {
+      if (APP.focusedOverlay !== "bbtforecast") {
         return;
       }
 
@@ -1327,11 +1335,11 @@
     }
 
     function setLegendLabels() {
-      const overlay = getActiveOverlay();
+      const overlay = getVisibleOverlay();
       renderLegendSwatches([]);
       DOM.legendBar.style.display = "block";
       DOM.legendBar.style.background = "linear-gradient(to right, #7ec8ff 0%, #39a9ff 16.6%, #00c2a8 33.2%, #7ad151 49.8%, #fde725 66.4%, #f8961e 83%, #f94144 100%)";
-      if (APP.currentOverlay === "gddraster") {
+      if (APP.visibleOverlay === "gddraster") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "<= -0.5";
         DOM.legendMax.textContent = "> 1.5";
@@ -1344,7 +1352,7 @@
         return;
       }
 
-      if (APP.currentOverlay === "bbtpast" && overlay.meta && overlay.meta.legend) {
+      if (APP.visibleOverlay === "bbtpast" && overlay.meta && overlay.meta.legend) {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = overlay.meta.legend.labels[0] || "min";
         DOM.legendMax.textContent = overlay.meta.legend.labels[overlay.meta.legend.labels.length - 1] || "max";
@@ -1357,14 +1365,14 @@
         return;
       }
 
-      if (APP.currentOverlay === "bbtpast") {
+      if (APP.visibleOverlay === "bbtpast") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "Loading...";
         DOM.legendMax.textContent = "";
         return;
       }
 
-      if (APP.currentOverlay === "bbtforecast") {
+      if (APP.visibleOverlay === "bbtforecast") {
         DOM.legendBar.style.display = "block";
         DOM.legendBar.style.background = "linear-gradient(to right, #fff5eb 0%, #fee6ce 14%, #fdd0a2 28%, #fdae6b 42%, #fd8d3c 57%, #ef6548 71%, #d7301f 85%, #7f0000 100%)";
         if (APP.currentForecastView === "threshold") {
@@ -1391,7 +1399,7 @@
     }
 
     function syncCitationVisibility() {
-      const showCitation = APP.currentOverlay === "bbtl" && APP.overlayVisible;
+      const showCitation = APP.visibleOverlay === "bbtl" && APP.overlayVisible;
       DOM.citationBox.style.display = showCitation ? "block" : "none";
     }
 
@@ -1441,7 +1449,7 @@
         return "#cccccc";
       }
 
-      const overlay = getActiveOverlay();
+      const overlay = getVisibleOverlay();
       if (!overlay.available || !overlay.meta) {
         return "#cccccc";
       }
@@ -1542,7 +1550,7 @@
     }
 
     function getCurrentFile() {
-      const overlay = getActiveOverlay();
+      const overlay = getVisibleOverlay();
       if (!overlay.available || !overlay.meta) {
         return null;
       }
@@ -1589,7 +1597,7 @@
     }
 
     function fitDataBounds() {
-      const overlay = getActiveOverlay();
+      const overlay = getVisibleOverlay();
       const meta = (overlay.meta && overlay.meta.bbox) ? overlay.meta : MAP_META;
 
       if (APP.hexLayer) {
@@ -1627,7 +1635,7 @@
     }
 
     function updateActiveOverlayLayer() {
-      if (APP.currentOverlay === "bbtforecast") {
+      if (APP.visibleOverlay === "bbtforecast") {
         updateForecastOverlay();
         if (APP.hexLayer) {
           APP.hexLoadToken += 1;
@@ -1638,11 +1646,11 @@
         }
         return;
       }
-      if (APP.currentOverlay === "bbtpast") {
+      if (APP.visibleOverlay === "bbtpast") {
         updateClassifiedImageOverlay();
         return;
       }
-      if (APP.currentOverlay === "gddraster") {
+      if (APP.visibleOverlay === "gddraster") {
         updateGddRasterLayer();
         return;
       }
@@ -1773,7 +1781,7 @@
       APP.rasterLoadToken += 1;
       APP.hexLoadToken += 1;
       const requestToken = APP.rasterLoadToken;
-      const overlay = getActiveOverlay();
+      const overlay = getVisibleOverlay();
 
       if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
@@ -1883,10 +1891,10 @@
       }
     }
 
-    function syncOverlayControls() {
-      const overlay = getActiveOverlay();
-      const showHexControls = APP.currentOverlay === "bbtl";
-      DOM.overlayDescription.textContent = overlay.description;
+    function syncOverlayControls(refreshVisibleLayer) {
+      const focusedOverlay = getFocusedOverlay();
+      const showHexControls = APP.focusedOverlay === "bbtl";
+      DOM.overlayDescription.textContent = focusedOverlay.description;
       updateOverlayCardStates();
       updateForecastPanelVisibility();
       DOM.hexControlPanel.hidden = !showHexControls;
@@ -1898,17 +1906,15 @@
       syncFocusedOpacityControl();
       syncCitationVisibility();
 
-      if (!overlay.available) {
-        clearOverlayLayer();
-        setLegendLabels();
-        setStatus(overlay.label + " overlay is not available yet");
+      if (!focusedOverlay.available) {
+        setStatus(focusedOverlay.label + " overlay is not available yet");
         return;
       }
 
       if (!showHexControls) {
         DOM.yearValue.textContent = "NA";
         setLegendLabels();
-        if (APP.overlayVisible) {
+        if (refreshVisibleLayer && APP.overlayVisible) {
           updateActiveOverlayLayer();
         }
         return;
@@ -1922,7 +1928,7 @@
       DOM.yearSlider.value = String(years.indexOf(APP.currentYear));
       DOM.yearValue.textContent = String(APP.currentYear);
       setLegendLabels();
-      if (APP.overlayVisible) {
+      if (refreshVisibleLayer && APP.overlayVisible) {
         updateActiveOverlayLayer();
       }
     }
@@ -1996,7 +2002,7 @@
         }
       }
 
-      if (APP.currentOverlay === "gddraster") {
+      if (APP.visibleOverlay === "gddraster") {
         const rasterValue = sampleGddRasterAt(latlng);
         if (isFinite(rasterValue)) {
           const rasterClass = classifyGddRasterValue(rasterValue);
@@ -2009,13 +2015,13 @@
         return;
       }
 
-      if (APP.currentOverlay === "bbtforecast") {
+      if (APP.visibleOverlay === "bbtforecast") {
         DOM.hexValue.textContent = "PNG overlay";
         setStatus("Forecast overlay is visualization-only");
         return;
       }
 
-      if (APP.currentOverlay === "bbtpast") {
+      if (APP.visibleOverlay === "bbtpast") {
         DOM.hexValue.textContent = "Classified PNG overlay";
         setStatus("Historical overlay is visualization-only");
         return;
@@ -2039,7 +2045,7 @@
     }
 
     function initMap() {
-      const defaultOverlay = getActiveOverlay();
+      const defaultOverlay = getVisibleOverlay();
       if (defaultOverlay.meta && Array.isArray(defaultOverlay.meta.years) && defaultOverlay.meta.years.length) {
         APP.currentYear = defaultOverlay.meta.years[0];
       }
@@ -2084,7 +2090,7 @@
     }
 
     function initControls() {
-      const defaultOverlay = getActiveOverlay();
+      const defaultOverlay = getFocusedOverlay();
       if (defaultOverlay.meta && Array.isArray(defaultOverlay.meta.years) && defaultOverlay.meta.years.length) {
         DOM.yearSlider.max = defaultOverlay.meta.years.length - 1;
         DOM.yearSlider.value = 0;
@@ -2112,8 +2118,8 @@
         });
         setButton.addEventListener("click", function(event) {
           event.stopPropagation();
-          APP.currentOverlay = setButton.dataset.focusOverlay;
-          syncOverlayControls();
+          APP.focusedOverlay = setButton.dataset.focusOverlay;
+          syncOverlayControls(false);
         });
       });
 
@@ -2129,7 +2135,7 @@
           const overlayId = slider.dataset.opacityOverlay;
           APP.layerOpacity[overlayId] = Number(slider.value);
           updateOverlayCardStates();
-          if (overlayId === APP.currentOverlay) {
+          if (overlayId === APP.focusedOverlay) {
             syncFocusedOpacityControl();
           }
           applyOpacityToLayers();
@@ -2138,44 +2144,48 @@
 
       DOM.forecastModelSelector.addEventListener("change", function() {
         APP.currentForecastModel = DOM.forecastModelSelector.value;
-        syncOverlayControls();
+        syncOverlayControls(APP.focusedOverlay === APP.visibleOverlay);
       });
 
       DOM.forecastPeriodSelector.addEventListener("change", function() {
         APP.currentForecastPeriod = DOM.forecastPeriodSelector.value;
-        syncOverlayControls();
+        syncOverlayControls(APP.focusedOverlay === APP.visibleOverlay);
       });
 
       DOM.forecastViewSelector.addEventListener("change", function() {
         APP.currentForecastView = DOM.forecastViewSelector.value;
-        syncOverlayControls();
+        syncOverlayControls(APP.focusedOverlay === APP.visibleOverlay);
       });
 
       DOM.forecastThresholdSelector.addEventListener("change", function() {
         APP.currentForecastThreshold = DOM.forecastThresholdSelector.value;
-        syncOverlayControls();
+        syncOverlayControls(APP.focusedOverlay === APP.visibleOverlay);
       });
 
       // RCP selector
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
         APP.currentRcp = DOM.rcpSelector.value;
-        updateActiveOverlayLayer();
+        if (APP.visibleOverlay === "bbtl") {
+          updateActiveOverlayLayer();
+        }
       });
 
       DOM.yearSlider.addEventListener("input", function() {
-        const showHexControls = APP.currentOverlay === "bbtl";
+        const showHexControls = APP.focusedOverlay === "bbtl";
         if (!showHexControls) {
           return;
         }
         const yearIndex = Number(DOM.yearSlider.value);
         APP.currentYear = MAP_META.years[yearIndex];
         DOM.yearValue.textContent = String(APP.currentYear);
-        updateActiveOverlayLayer();
+        if (APP.visibleOverlay === "bbtl") {
+          updateActiveOverlayLayer();
+        }
       });
 
       DOM.opacitySlider.addEventListener("input", function() {
-        APP.layerOpacity[APP.currentOverlay] = Number(DOM.opacitySlider.value);
+        APP.layerOpacity[APP.focusedOverlay] = Number(DOM.opacitySlider.value);
         syncFocusedOpacityControl();
         updateOverlayCardStates();
         applyOpacityToLayers();
@@ -2186,7 +2196,7 @@
         syncCitationVisibility();
 
         if (APP.overlayVisible) {
-          syncOverlayControls();
+          syncOverlayControls(true);
           DOM.toggleOverlayBtn.textContent = "Hide overlay";
           setStatus("Overlay shown");
         } else {
@@ -2202,7 +2212,7 @@
         fitDataBounds();
       });
 
-      syncOverlayControls();
+      syncOverlayControls(true);
     }
 
     async function loadCountryBorders() {
