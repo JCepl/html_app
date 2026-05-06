@@ -1472,6 +1472,21 @@
       DOM.hexValue.textContent = "—";
     }
 
+    function removeHexCompanionLayer() {
+      APP.hexLoadToken += 1;
+      if (APP.hexLayer) {
+        APP.map.removeLayer(APP.hexLayer);
+        APP.hexLayer = null;
+      }
+      if (APP.pastUnderlayLayer) {
+        APP.map.removeLayer(APP.pastUnderlayLayer);
+        APP.pastUnderlayLayer = null;
+      }
+      APP.currentHexGeojson = null;
+      resetSelectedHex();
+      resetSelectedCountry();
+    }
+
     function updateActiveOverlayLayer() {
       if (APP.currentOverlay === "bbtforecast") {
         updateForecastOverlay();
@@ -1991,6 +2006,16 @@
       DOM.forecastHexToggle.checked = APP.showHexWithForecast;
       DOM.forecastHexToggle.addEventListener("change", function() {
         APP.showHexWithForecast = DOM.forecastHexToggle.checked;
+        if (APP.currentOverlay === "bbtforecast") {
+          if (APP.showHexWithForecast) {
+            syncOverlayControls();
+            updateHexLayer(true);
+          } else {
+            removeHexCompanionLayer();
+            syncOverlayControls();
+          }
+          return;
+        }
         syncOverlayControls();
       });
 
