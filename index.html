@@ -741,12 +741,6 @@
               </div>
             </div>
           </div>
-          <div class="row">
-            <label style="display:flex; gap:8px; align-items:flex-start;">
-              <input id="forecastHexToggle" type="checkbox" style="width:auto; margin-top:2px;" />
-              <span>Show hex pressure overlay together with forecast</span>
-            </label>
-          </div>
           <div id="forecastMetricsBox" class="metric-box">
             <p class="metric-title">Historical Evaluation At Selected Cutoff</p>
             <div id="forecastMetricsGrid" class="metric-grid"></div>
@@ -850,7 +844,6 @@
       currentYear: null,
       currentRcp: "rcp85",
       currentOverlay: "bbtl",
-      showHexWithForecast: true,
       layerOpacity: {
         bbtl: 0.85,
         bbtforecast: 0.85,
@@ -957,7 +950,6 @@
       hexControlPanel: document.getElementById("hexControlPanel"),
       hexControlTitle: document.getElementById("hexControlTitle"),
       forecastPanel: document.getElementById("forecastPanel"),
-      forecastHexToggle: document.getElementById("forecastHexToggle"),
       forecastModelSelector: document.getElementById("forecastModelSelector"),
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
       forecastViewSelector: document.getElementById("forecastViewSelector"),
@@ -1137,7 +1129,7 @@
         const overlayId = button.dataset.toggleOverlay;
         let isOn = false;
         if (overlayId === "bbtl") {
-          isOn = APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast);
+          isOn = APP.currentOverlay === "bbtl";
         } else if (overlayId === "bbtforecast") {
           isOn = APP.currentOverlay === "bbtforecast";
         } else if (overlayId === "gddraster") {
@@ -1184,17 +1176,7 @@
       if (overlayId === "bbtl") {
         if (shouldShow) {
           APP.overlayVisible = true;
-          if (APP.currentOverlay === "bbtforecast") {
-            APP.showHexWithForecast = true;
-            syncOverlayControls();
-            updateHexLayer(true);
-          } else {
-            APP.currentOverlay = "bbtl";
-            syncOverlayControls();
-          }
-        } else if (APP.currentOverlay === "bbtforecast") {
-          APP.showHexWithForecast = false;
-          removeHexCompanionLayer();
+          APP.currentOverlay = "bbtl";
           syncOverlayControls();
         } else if (APP.currentOverlay === "bbtl") {
           APP.overlayVisible = false;
@@ -1212,16 +1194,11 @@
           APP.currentOverlay = "bbtforecast";
           syncOverlayControls();
         } else if (APP.currentOverlay === "bbtforecast") {
-          if (APP.showHexWithForecast) {
-            APP.currentOverlay = "bbtl";
-            syncOverlayControls();
-          } else {
-            APP.overlayVisible = false;
-            clearOverlayLayer();
-            DOM.toggleOverlayBtn.textContent = "Show overlay";
-            updateOverlayCardStates();
-            setStatus("Overlay hidden");
-          }
+          APP.overlayVisible = false;
+          clearOverlayLayer();
+          DOM.toggleOverlayBtn.textContent = "Show overlay";
+          updateOverlayCardStates();
+          setStatus("Overlay hidden");
         }
         return;
       }
@@ -1649,23 +1626,10 @@
       DOM.hexValue.textContent = "—";
     }
 
-    function removeHexCompanionLayer() {
-      APP.hexLoadToken += 1;
-      if (APP.hexLayer) {
-        APP.map.removeLayer(APP.hexLayer);
-        APP.hexLayer = null;
-      }
-      APP.currentHexGeojson = null;
-      resetSelectedHex();
-      resetSelectedCountry();
-    }
-
     function updateActiveOverlayLayer() {
       if (APP.currentOverlay === "bbtforecast") {
         updateForecastOverlay();
-        if (APP.showHexWithForecast) {
-          updateHexLayer(true);
-        } else if (APP.hexLayer) {
+        if (APP.hexLayer) {
           APP.hexLoadToken += 1;
           APP.map.removeLayer(APP.hexLayer);
           APP.hexLayer = null;
@@ -1854,7 +1818,7 @@
       APP.rasterLoadToken += 1;
       const requestToken = APP.rasterLoadToken;
 
-      if (!APP.showHexWithForecast && APP.hexLayer) {
+      if (APP.hexLayer) {
         APP.map.removeLayer(APP.hexLayer);
         APP.hexLayer = null;
         APP.currentHexGeojson = null;
@@ -1865,9 +1829,7 @@
       }
       APP.rasterData = null;
       APP.currentForecastRasterRange = null;
-      if (!APP.showHexWithForecast) {
-        resetSelectedHex();
-      }
+      resetSelectedHex();
       DOM.hexValue.textContent = "—";
       setStatus("Loading bark beetle forecast...");
 
@@ -1923,13 +1885,12 @@
 
     function syncOverlayControls() {
       const overlay = getActiveOverlay();
-      const showHexControls = APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast);
+      const showHexControls = APP.currentOverlay === "bbtl";
       DOM.overlayDescription.textContent = overlay.description;
       updateOverlayCardStates();
       updateForecastPanelVisibility();
       DOM.hexControlPanel.hidden = !showHexControls;
-      DOM.hexControlTitle.textContent = APP.currentOverlay === "bbtforecast" ? "Hex Pressure Companion" : "Hex Pressure Controls";
-      DOM.forecastHexToggle.checked = APP.showHexWithForecast;
+      DOM.hexControlTitle.textContent = "Hex Pressure Controls";
       DOM.rcpSelector.disabled = !showHexControls;
       DOM.yearSlider.disabled = !showHexControls;
       DOM.yearValue.style.opacity = showHexControls ? "1" : "0.6";
@@ -2049,21 +2010,8 @@
       }
 
       if (APP.currentOverlay === "bbtforecast") {
-        if (APP.showHexWithForecast && hexFeature) {
-          const val = Number(hexFeature.properties.mean);
-          DOM.hexValue.textContent = isFinite(val) ? val.toFixed(6) : "NA";
-
-          const layer = findLayerForFeature(hexFeature);
-          if (layer) {
-            APP.selectedHexLayer = layer;
-            highlightHex(layer);
-          }
-
-          setStatus("Forecast view loaded; hex companion value shown");
-        } else {
-          DOM.hexValue.textContent = "PNG overlay";
-          setStatus("Forecast overlay is visualization-only");
-        }
+        DOM.hexValue.textContent = "PNG overlay";
+        setStatus("Forecast overlay is visualization-only");
         return;
       }
 
@@ -2188,22 +2136,6 @@
         });
       });
 
-      DOM.forecastHexToggle.checked = APP.showHexWithForecast;
-      DOM.forecastHexToggle.addEventListener("change", function() {
-        APP.showHexWithForecast = DOM.forecastHexToggle.checked;
-        if (APP.currentOverlay === "bbtforecast") {
-          if (APP.showHexWithForecast) {
-            syncOverlayControls();
-            updateHexLayer(true);
-          } else {
-            removeHexCompanionLayer();
-            syncOverlayControls();
-          }
-          return;
-        }
-        syncOverlayControls();
-      });
-
       DOM.forecastModelSelector.addEventListener("change", function() {
         APP.currentForecastModel = DOM.forecastModelSelector.value;
         syncOverlayControls();
@@ -2228,25 +2160,17 @@
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
         APP.currentRcp = DOM.rcpSelector.value;
-        if (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast) {
-          updateHexLayer(true);
-          return;
-        }
         updateActiveOverlayLayer();
       });
 
       DOM.yearSlider.addEventListener("input", function() {
-        const showHexControls = APP.currentOverlay === "bbtl" || (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast);
+        const showHexControls = APP.currentOverlay === "bbtl";
         if (!showHexControls) {
           return;
         }
         const yearIndex = Number(DOM.yearSlider.value);
         APP.currentYear = MAP_META.years[yearIndex];
         DOM.yearValue.textContent = String(APP.currentYear);
-        if (APP.currentOverlay === "bbtforecast" && APP.showHexWithForecast) {
-          updateHexLayer(true);
-          return;
-        }
         updateActiveOverlayLayer();
       });
 
