@@ -997,6 +997,10 @@
       rcpSelector: document.getElementById("rcpSelector")
     };
 
+    function getOverlayIds() {
+      return Object.keys(APP.layerInstances);
+    }
+
     function getTopVisibleOverlayId() {
       if (!APP.visibleOverlays.length) {
         return APP.focusedOverlay || "bbtl";
@@ -1041,17 +1045,8 @@
       return "pane-" + overlayId;
     }
 
-    function isRasterOverlay(overlayId) {
-      return RASTER_OVERLAYS.includes(overlayId);
-    }
-
     function getHexLayer() {
       return APP.layerInstances.bbtl || null;
-    }
-
-    function getTopRasterLayer() {
-      const topVisibleOverlayId = getTopVisibleOverlayId();
-      return isRasterOverlay(topVisibleOverlayId) ? (APP.layerInstances[topVisibleOverlayId] || null) : null;
     }
 
     function updateOverlayPaneOrder() {
@@ -1207,6 +1202,18 @@
       });
     }
 
+    function getMatchingForecastThresholds(manifest, metrics, entry) {
+      const manifestThresholds = (manifest.thresholds || []).map(Number);
+      const metricThresholds = (metrics.aggregate_by_cutoff || []).map(function(item) {
+        return Number(item.cutoff);
+      });
+      const entryThresholds = Object.keys(entry.threshold_visible_tifs || {}).map(Number);
+
+      return manifestThresholds.filter(function(value) {
+        return metricThresholds.includes(value) && entryThresholds.includes(value);
+      }).map(String);
+    }
+
     function renderForecastMetricsGrid(items) {
       DOM.forecastMetricsGrid.innerHTML = "";
       items.forEach(function(item) {
@@ -1215,6 +1222,26 @@
         cell.innerHTML = "<strong>" + item.label + "</strong>" + item.value;
         DOM.forecastMetricsGrid.appendChild(cell);
       });
+    }
+
+    function renderForecastPerformance(row, cutoff) {
+      if (!row) {
+        renderForecastMetricsGrid([]);
+        renderForecastConfusionMatrix(null);
+        DOM.forecastMetricsNote.textContent = "No matching historical evaluation row is available for cutoff " + formatForecastThreshold(cutoff) + ".";
+        return;
+      }
+
+      renderForecastMetricsGrid([
+        { label: "Precision", value: Number(row.precision).toFixed(3) },
+        { label: "Recall", value: Number(row.recall).toFixed(3) },
+        { label: "Specificity", value: Number(row.specificity).toFixed(3) },
+        { label: "F1", value: Number(row.F1).toFixed(3) },
+        { label: "Red fraction", value: Number(row.red_fraction).toFixed(3) },
+        { label: "Cutoff", value: formatForecastThreshold(cutoff) }
+      ]);
+      renderForecastConfusionMatrix(row);
+      DOM.forecastMetricsNote.textContent = "Historical evaluation summary aggregated across available GCMs at cutoff " + formatForecastThreshold(cutoff) + ".";
     }
 
     function renderForecastConfusionMatrix(row) {
@@ -1344,20 +1371,7 @@
       }
 
       const metrics = await ensureForecastMetricsLoaded(APP.currentForecastModel);
-      const manifestThresholds = (manifest.thresholds || []).map(function(value) {
-        return Number(value);
-      });
-      const metricThresholds = (metrics.aggregate_by_cutoff || []).map(function(item) {
-        return Number(item.cutoff);
-      });
-      const entryThresholds = Object.keys(entry.threshold_visible_tifs || {}).map(function(value) {
-        return Number(value);
-      });
-      const thresholds = manifestThresholds.filter(function(value) {
-        return metricThresholds.includes(value) && entryThresholds.includes(value);
-      }).map(function(value) {
-        return String(value);
-      });
+      const thresholds = getMatchingForecastThresholds(manifest, metrics, entry);
 
       if (!thresholds.length) {
         throw new Error("No matching forecast thresholds found for " + APP.currentForecastModel);
@@ -1384,22 +1398,7 @@
         return Number(item.cutoff) === cutoff;
       });
 
-      if (row) {
-        renderForecastMetricsGrid([
-          { label: "Precision", value: Number(row.precision).toFixed(3) },
-          { label: "Recall", value: Number(row.recall).toFixed(3) },
-          { label: "Specificity", value: Number(row.specificity).toFixed(3) },
-          { label: "F1", value: Number(row.F1).toFixed(3) },
-          { label: "Red fraction", value: Number(row.red_fraction).toFixed(3) },
-          { label: "Cutoff", value: formatForecastThreshold(cutoff) }
-        ]);
-        renderForecastConfusionMatrix(row);
-        DOM.forecastMetricsNote.textContent = "Historical evaluation summary aggregated across available GCMs at cutoff " + formatForecastThreshold(cutoff) + ".";
-      } else {
-        renderForecastMetricsGrid([]);
-        renderForecastConfusionMatrix(null);
-        DOM.forecastMetricsNote.textContent = "No matching historical evaluation row is available for cutoff " + formatForecastThreshold(cutoff) + ".";
-      }
+      renderForecastPerformance(row, cutoff);
     }
 
     function renderLegendSwatches(items) {
@@ -1434,11 +1433,12 @@
         return;
       }
 
+      const topOverlayId = getTopVisibleOverlayId();
       const overlay = getVisibleOverlay();
       renderLegendSwatches([]);
       DOM.legendBar.style.display = "block";
       DOM.legendBar.style.background = "linear-gradient(to right, #7ec8ff 0%, #39a9ff 16.6%, #00c2a8 33.2%, #7ad151 49.8%, #fde725 66.4%, #f8961e 83%, #f94144 100%)";
-      if (getTopVisibleOverlayId() === "gddraster") {
+      if (topOverlayId === "gddraster") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "<= -0.5";
         DOM.legendMax.textContent = "> 1.5";
@@ -1451,7 +1451,7 @@
         return;
       }
 
-      if (getTopVisibleOverlayId() === "bbtpast" && overlay.meta && overlay.meta.legend) {
+      if (topOverlayId === "bbtpast" && overlay.meta && overlay.meta.legend) {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = overlay.meta.legend.labels[0] || "min";
         DOM.legendMax.textContent = overlay.meta.legend.labels[overlay.meta.legend.labels.length - 1] || "max";
@@ -1464,14 +1464,14 @@
         return;
       }
 
-      if (getTopVisibleOverlayId() === "bbtpast") {
+      if (topOverlayId === "bbtpast") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "Loading...";
         DOM.legendMax.textContent = "";
         return;
       }
 
-      if (getTopVisibleOverlayId() === "bbtforecast") {
+      if (topOverlayId === "bbtforecast") {
         DOM.legendBar.style.display = "block";
         DOM.legendBar.style.background = "linear-gradient(to right, #fff5eb 0%, #fee6ce 14%, #fdd0a2 28%, #fdae6b 42%, #fd8d3c 57%, #ef6548 71%, #d7301f 85%, #7f0000 100%)";
         if (APP.currentForecastView === "threshold") {
@@ -1698,18 +1698,13 @@
       const topVisibleOverlayId = getTopVisibleOverlayId();
       const overlay = getVisibleOverlay();
       const meta = (overlay.meta && overlay.meta.bbox) ? overlay.meta : MAP_META;
-
       const hexLayer = getHexLayer();
-      const topRasterLayer = getTopRasterLayer();
+      const topLayer = APP.layerInstances[topVisibleOverlayId];
 
       if (topVisibleOverlayId === "bbtl" && hexLayer) {
         APP.map.fitBounds(hexLayer.getBounds());
-      } else if (APP.layerInstances[topVisibleOverlayId] && APP.layerInstances[topVisibleOverlayId].getBounds) {
-        APP.map.fitBounds(APP.layerInstances[topVisibleOverlayId].getBounds());
-      } else if (topRasterLayer) {
-        if (topRasterLayer.getBounds) {
-          APP.map.fitBounds(topRasterLayer.getBounds());
-        }
+      } else if (topLayer && topLayer.getBounds) {
+        APP.map.fitBounds(topLayer.getBounds());
       } else {
         APP.map.fitBounds([
           [meta.bbox.ymin, meta.bbox.xmin],
@@ -1718,23 +1713,24 @@
       }
     }
 
+    function resetLayerCache(overlayId) {
+      if (overlayId === "bbtl") {
+        APP.currentHexGeojson = null;
+        resetSelectedHex();
+      } else if (overlayId === "gddraster") {
+        APP.rasterData = null;
+      } else if (overlayId === "bbtforecast") {
+        APP.currentForecastRasterRange = null;
+      }
+    }
+
     function clearOverlayLayer(overlayId) {
-      const targets = overlayId ? [overlayId] : Object.keys(APP.layerInstances);
+      const targets = overlayId ? [overlayId] : getOverlayIds();
 
       targets.forEach(function(id) {
         APP.overlayLoadTokens[id] += 1;
         clearLayerInstance(id);
-
-        if (id === "bbtl") {
-          APP.currentHexGeojson = null;
-          resetSelectedHex();
-        }
-        if (id === "gddraster") {
-          APP.rasterData = null;
-        }
-        if (id === "bbtforecast") {
-          APP.currentForecastRasterRange = null;
-        }
+        resetLayerCache(id);
       });
 
       if (!isOverlayVisible("bbtl")) {
@@ -1749,14 +1745,9 @@
         return;
       }
 
-      if (overlayId === "bbtl") {
-        await updateHexLayer();
-      } else if (overlayId === "gddraster") {
-        await updateGddRasterLayer();
-      } else if (overlayId === "bbtpast") {
-        await updateClassifiedImageOverlay();
-      } else if (overlayId === "bbtforecast") {
-        await updateForecastOverlay();
+      const updateLayer = OVERLAY_LOADERS[overlayId];
+      if (updateLayer) {
+        await updateLayer();
       }
 
       updateOverlayPaneOrder();
@@ -1942,6 +1933,13 @@
       }
     }
 
+    const OVERLAY_LOADERS = {
+      bbtl: updateHexLayer,
+      gddraster: updateGddRasterLayer,
+      bbtpast: updateClassifiedImageOverlay,
+      bbtforecast: updateForecastOverlay
+    };
+
     function syncOverlayControls(refreshTarget) {
       const focusedOverlay = getFocusedOverlay();
       const showHexControls = APP.focusedOverlay === "bbtl";
@@ -2119,7 +2117,7 @@
         attribution: "&copy; OpenStreetMap contributors"
       }).addTo(APP.map);
 
-      ["bbtl", "gddraster", "bbtpast", "bbtforecast"].forEach(function(overlayId, index) {
+      getOverlayIds().forEach(function(overlayId, index) {
         const paneName = getOverlayPaneName(overlayId);
         APP.map.createPane(paneName);
         APP.map.getPane(paneName).style.zIndex = String(300 + index * 20);
