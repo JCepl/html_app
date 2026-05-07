@@ -843,6 +843,7 @@
 
   <script>
     // Static Leaflet DSS prototype for GitHub Pages deployment.
+    // Keep most runtime state in one object so the app remains easy to inspect in DevTools.
     const APP = {
       map: null,
       clickMarker: null,
@@ -853,7 +854,9 @@
       selectedCountryLayer: null,
       currentYear: null,
       currentRcp: "rcp85",
+      // `visibleOverlays` controls what is drawn. The last item is drawn on top.
       visibleOverlays: ["bbtl"],
+      // `focusedOverlay` controls which settings are shown in the left panel.
       focusedOverlay: "bbtl",
       layerOpacity: {
         bbtl: 0.85,
@@ -868,6 +871,7 @@
       currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
+      // Incremented before each async fetch. Old responses are ignored if a newer load started.
       overlayLoadTokens: {
         bbtl: 0,
         bbtforecast: 0,
@@ -884,6 +888,8 @@
         bbtpast: null
       }
     };
+
+    const RASTER_OVERLAYS = ["gddraster", "bbtforecast", "bbtpast"];
 
     const OVERLAY_CATALOG = {
       bbtl: {
@@ -1036,7 +1042,7 @@
     }
 
     function isRasterOverlay(overlayId) {
-      return overlayId === "gddraster" || overlayId === "bbtforecast" || overlayId === "bbtpast";
+      return RASTER_OVERLAYS.includes(overlayId);
     }
 
     function getHexLayer() {
@@ -1061,6 +1067,7 @@
       });
     }
 
+    // Start a fresh layer load and make any older in-flight fetch harmless.
     function beginOverlayLoad(overlayId) {
       APP.overlayLoadTokens[overlayId] += 1;
       clearLayerInstance(overlayId);
@@ -1084,10 +1091,15 @@
         [bounds.south, bounds.west],
         [bounds.north, bounds.east]
       ], {
-        opacity: Number(APP.layerOpacity[overlayId] || 0.85),
+        opacity: getLayerOpacity(overlayId),
         pane: getOverlayPaneName(overlayId)
       }).addTo(APP.map);
       return APP.layerInstances[overlayId];
+    }
+
+    function getLayerOpacity(overlayId) {
+      const opacity = Number(APP.layerOpacity[overlayId]);
+      return isFinite(opacity) ? opacity : 0.85;
     }
 
     function setStatus(text) {
@@ -1243,16 +1255,7 @@
 
       DOM.overlayCardStrip.querySelectorAll("[data-toggle-overlay]").forEach(function(button) {
         const overlayId = button.dataset.toggleOverlay;
-        let isOn = false;
-        if (overlayId === "bbtl") {
-          isOn = isOverlayVisible("bbtl");
-        } else if (overlayId === "bbtforecast") {
-          isOn = isOverlayVisible("bbtforecast");
-        } else if (overlayId === "gddraster") {
-          isOn = isOverlayVisible("gddraster");
-        } else if (overlayId === "bbtpast") {
-          isOn = isOverlayVisible("bbtpast");
-        }
+        const isOn = isOverlayVisible(overlayId);
         button.classList.toggle("is-on", isOn);
         button.textContent = isOn ? "Hide" : "Display";
       });
@@ -1260,13 +1263,13 @@
       Object.keys(APP.layerOpacity).forEach(function(overlayId) {
         const slider = DOM.overlayCardStrip.querySelector("[data-opacity-overlay=\"" + overlayId + "\"]");
         const value = DOM.overlayCardStrip.querySelector("[data-opacity-value=\"" + overlayId + "\"]");
-        if (slider) slider.value = String(APP.layerOpacity[overlayId]);
-        if (value) value.textContent = Number(APP.layerOpacity[overlayId]).toFixed(2);
+        if (slider) slider.value = String(getLayerOpacity(overlayId));
+        if (value) value.textContent = getLayerOpacity(overlayId).toFixed(2);
       });
     }
 
     function syncFocusedOpacityControl() {
-      const opacity = APP.layerOpacity[APP.focusedOverlay];
+      const opacity = getLayerOpacity(APP.focusedOverlay);
       if (isFinite(opacity)) {
         DOM.opacitySlider.value = String(opacity);
         DOM.opacityValue.textContent = Number(opacity).toFixed(2);
@@ -1275,7 +1278,6 @@
 
     function applyOpacityToLayers() {
       const hexLayer = getHexLayer();
-      const topRasterLayer = getTopRasterLayer();
 
       if (hexLayer) {
         hexLayer.setStyle(baseHexStyle);
@@ -1284,18 +1286,16 @@
         }
       }
 
-      if (topRasterLayer) {
-        const topVisibleOverlayId = getTopVisibleOverlayId();
-        const rasterOpacity = APP.layerOpacity[topVisibleOverlayId] || 0.85;
-        topRasterLayer.setOpacity(Number(rasterOpacity));
-      }
-
-      ["gddraster", "bbtforecast", "bbtpast"].forEach(function(overlayId) {
+      RASTER_OVERLAYS.forEach(function(overlayId) {
         const layer = APP.layerInstances[overlayId];
-        if (layer && layer !== topRasterLayer && layer.setOpacity) {
-          layer.setOpacity(Number(APP.layerOpacity[overlayId] || 0.85));
+        if (layer && layer.setOpacity) {
+          layer.setOpacity(getLayerOpacity(overlayId));
         }
       });
+    }
+
+    function refreshForecastOverlayIfVisible() {
+      syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
     }
 
     function setLayerVisibilityFromRibbon(overlayId, shouldShow) {
@@ -1573,7 +1573,7 @@
 
     function baseHexStyle(feature) {
       const value = Number(feature.properties.mean);
-      const fillOpacity = Number(APP.layerOpacity.bbtl || 0.85);
+      const fillOpacity = getLayerOpacity("bbtl");
       // Keep border tied to fill opacity so slider behavior feels predictable.
       const borderOpacity = fillOpacity <= 0 ? 0 : Math.min(1, fillOpacity * 0.6);
 
@@ -1587,7 +1587,7 @@
     }
 
     function highlightHex(layer) {
-      const baseOpacity = Number(APP.layerOpacity.bbtl || 0.85);
+      const baseOpacity = getLayerOpacity("bbtl");
       const selectedOpacity = Math.min(baseOpacity + 0.15, 0.5);
 
       layer.setStyle({
@@ -1611,7 +1611,6 @@
       APP.selectedHexLayer = null;
     }
 
-    // Highlight selected country
     function highlightCountry(layer) {
       layer.setStyle({
         color: "#c62828",
@@ -1627,7 +1626,6 @@
       }
     }
 
-    // Reset selected country to base style
     function resetSelectedCountry() {
       if (APP.selectedCountryLayer && APP.countryLayer) {
         APP.countryLayer.resetStyle(APP.selectedCountryLayer);
@@ -1837,7 +1835,7 @@
 
         APP.layerInstances.gddraster = new GeoRasterLayer({
           georaster: georaster,
-          opacity: Number(APP.layerOpacity.gddraster || 0.85),
+          opacity: getLayerOpacity("gddraster"),
           pane: getOverlayPaneName("gddraster"),
           resolution: 256,
           resampleMethod: "bilinear",
@@ -1947,6 +1945,9 @@
     function syncOverlayControls(refreshTarget) {
       const focusedOverlay = getFocusedOverlay();
       const showHexControls = APP.focusedOverlay === "bbtl";
+
+      // Selection and display are deliberately separate:
+      // card click changes settings, while Display/Hide changes map visibility.
       DOM.overlayDescription.textContent = focusedOverlay.description;
       updateOverlayCardStates();
       updateForecastPanelVisibility();
@@ -1968,7 +1969,7 @@
         DOM.yearValue.textContent = "NA";
         setLegendLabels();
         if (refreshTarget && APP.overlayVisible) {
-          updateOverlayLayer(refreshTarget === true ? APP.focusedOverlay : refreshTarget);
+          updateOverlayLayer(refreshTarget);
         }
         return;
       }
@@ -1982,7 +1983,7 @@
       DOM.yearValue.textContent = String(APP.currentYear);
       setLegendLabels();
       if (refreshTarget && APP.overlayVisible) {
-        updateOverlayLayer(refreshTarget === true ? APP.focusedOverlay : refreshTarget);
+        updateOverlayLayer(refreshTarget);
       }
     }
 
@@ -2019,7 +2020,6 @@
       return foundLayer;
     }
 
-    // Find Leaflet layer for a given country GeoJSON feature
     function findCountryLayerForFeature(targetFeature) {
       if (!APP.countryLayer || !targetFeature) return null;
 
@@ -2047,7 +2047,6 @@
       resetSelectedHex();
       resetSelectedCountry();
 
-      // Highlight the selected country
       if (countryFeature) {
         const countryLayer = findCountryLayerForFeature(countryFeature);
         if (countryLayer) {
@@ -2132,8 +2131,7 @@
       APP.map.createPane("countryPane");
       APP.map.getPane("countryPane").style.zIndex = 710;
 
-      // Map click handler - only source for panel updates
-      // Removed layer click handlers to avoid double-handling and ensure robust point-in-polygon lookup
+      // A single map-click path avoids duplicate events from stacked Leaflet layers.
       APP.map.on("click", function(e) {
         updatePanelFromClick(e.latlng);
       });
@@ -2141,6 +2139,17 @@
       setLegendLabels();
       initControls();
       loadCountryBorders();
+    }
+
+    function stopCardControlClick(event) {
+      event.stopPropagation();
+    }
+
+    function bindForecastSelector(select, stateKey) {
+      select.addEventListener("change", function() {
+        APP[stateKey] = select.value;
+        refreshForecastOverlayIfVisible();
+      });
     }
 
     function initControls() {
@@ -2165,11 +2174,9 @@
       });
 
       DOM.overlayCardStrip.querySelectorAll("[data-toggle-overlay]").forEach(function(toggleButton) {
-        toggleButton.addEventListener("pointerdown", function(event) {
-          event.stopPropagation();
-        });
+        toggleButton.addEventListener("pointerdown", stopCardControlClick);
         toggleButton.addEventListener("click", function(event) {
-          event.stopPropagation();
+          stopCardControlClick(event);
           const overlayId = toggleButton.dataset.toggleOverlay;
           const isOn = toggleButton.classList.contains("is-on");
           setLayerVisibilityFromRibbon(overlayId, !isOn);
@@ -2177,14 +2184,10 @@
       });
 
       DOM.overlayCardStrip.querySelectorAll("[data-opacity-overlay]").forEach(function(slider) {
-        slider.addEventListener("pointerdown", function(event) {
-          event.stopPropagation();
-        });
-        slider.addEventListener("click", function(event) {
-          event.stopPropagation();
-        });
+        slider.addEventListener("pointerdown", stopCardControlClick);
+        slider.addEventListener("click", stopCardControlClick);
         slider.addEventListener("input", function(event) {
-          event.stopPropagation();
+          stopCardControlClick(event);
           const overlayId = slider.dataset.opacityOverlay;
           APP.layerOpacity[overlayId] = Number(slider.value);
           updateOverlayCardStates();
@@ -2195,27 +2198,11 @@
         });
       });
 
-      DOM.forecastModelSelector.addEventListener("change", function() {
-        APP.currentForecastModel = DOM.forecastModelSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
-      });
+      bindForecastSelector(DOM.forecastModelSelector, "currentForecastModel");
+      bindForecastSelector(DOM.forecastPeriodSelector, "currentForecastPeriod");
+      bindForecastSelector(DOM.forecastViewSelector, "currentForecastView");
+      bindForecastSelector(DOM.forecastThresholdSelector, "currentForecastThreshold");
 
-      DOM.forecastPeriodSelector.addEventListener("change", function() {
-        APP.currentForecastPeriod = DOM.forecastPeriodSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
-      });
-
-      DOM.forecastViewSelector.addEventListener("change", function() {
-        APP.currentForecastView = DOM.forecastViewSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
-      });
-
-      DOM.forecastThresholdSelector.addEventListener("change", function() {
-        APP.currentForecastThreshold = DOM.forecastThresholdSelector.value;
-        syncOverlayControls(isOverlayVisible("bbtforecast") ? "bbtforecast" : false);
-      });
-
-      // RCP selector
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
         APP.currentRcp = DOM.rcpSelector.value;
@@ -2246,21 +2233,7 @@
 
       DOM.toggleOverlayBtn.addEventListener("click", function() {
         const focusedVisible = isOverlayVisible(APP.focusedOverlay);
-
-        if (focusedVisible) {
-          hideOverlay(APP.focusedOverlay);
-          clearOverlayLayer(APP.focusedOverlay);
-          updateOverlayCardStates();
-          setLegendLabels();
-          syncCitationVisibility();
-          DOM.toggleOverlayBtn.textContent = "Show overlay";
-          setStatus(APP.overlayVisible ? "Overlay hidden" : "All overlays hidden");
-        } else {
-          showOverlay(APP.focusedOverlay);
-          syncOverlayControls(APP.focusedOverlay);
-          DOM.toggleOverlayBtn.textContent = "Hide overlay";
-          setStatus("Overlay shown");
-        }
+        setLayerVisibilityFromRibbon(APP.focusedOverlay, !focusedVisible);
       });
 
       DOM.fitOverlayBtn.addEventListener("click", function() {
@@ -2298,7 +2271,7 @@
 
         APP.countryLayer = L.geoJSON(APP.countryGeojson, {
           pane: "countryPane",
-          interactive: true,  // Make interactive for highlighting
+          interactive: true,
           smoothFactor: 0,
           noClip: true,
           style: function() {
@@ -2370,7 +2343,7 @@
                   color: "#111111",
                   weight: 1.4,
                   opacity: 1,
-                  fillOpacity: Math.min(Number(APP.layerOpacity.bbtl || 0.85) + 0.10, 1)
+                  fillOpacity: Math.min(getLayerOpacity("bbtl") + 0.10, 1)
                 });
               }
             });
