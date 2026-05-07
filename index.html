@@ -20,15 +20,13 @@
     }
 
     body {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
       background: #eef3f9;
-      padding-top: 168px;
+      overflow: hidden;
     }
 
     .top-banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
       z-index: 1200;
       display: grid;
       grid-template-columns: minmax(0, 1.45fr) minmax(360px, 1fr);
@@ -117,14 +115,11 @@
     #app {
       display: flex;
       width: 100vw;
-      height: calc(100vh - 168px);
+      height: 100%;
+      min-height: 0;
     }
 
     .layer-ribbon {
-      position: fixed;
-      top: 116px;
-      left: 0;
-      right: 0;
       z-index: 1190;
       padding: 0 20px 10px;
       border-bottom: 1px solid #c9d8ea;
@@ -136,22 +131,67 @@
     }
 
     #panel {
-      width: 340px;
+      width: 360px;
+      min-height: 0;
       box-sizing: border-box;
-      padding: 16px;
-      border-right: 1px solid #ccc;
-      background: #f7f7f7;
+      padding: 14px;
+      border-right: 1px solid #c7d6e6;
+      background: #edf3f9;
       overflow-y: auto;
       scrollbar-gutter: stable;
     }
 
     #map {
       flex: 1;
+      min-width: 0;
+      min-height: 0;
     }
 
     h2, h3 {
       margin-top: 0;
       margin-bottom: 12px;
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      color: #123a62;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .panel-card {
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid #d2deeb;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 6px 16px rgba(31, 78, 121, 0.06);
+    }
+
+    .panel-card-title {
+      margin: 0 0 10px;
+      color: #123a62;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .readout-item {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid #dbe6f2;
+      border-radius: 9px;
+      background: #f8fbff;
+    }
+
+    .readout-item.wide {
+      grid-column: 1 / -1;
     }
 
     .label {
@@ -163,6 +203,7 @@
     .value {
       min-height: 20px;
       line-height: 1.35;
+      color: #102f4f;
     }
 
     #status {
@@ -172,10 +213,9 @@
       text-overflow: ellipsis;
     }
 
-    .control-block {
-      margin-top: 18px;
-      padding-top: 12px;
-      border-top: 1px solid #ddd;
+    .panel-card .label:first-child,
+    .readout-item .label {
+      margin-top: 0;
     }
 
     .overlay-chooser {
@@ -550,10 +590,6 @@
     }
 
     @media (max-width: 900px) {
-      body {
-        padding-top: 234px;
-      }
-
       .top-banner {
         grid-template-columns: 1fr;
       }
@@ -576,19 +612,19 @@
       }
 
       #app {
-        height: calc(100vh - 234px);
-      }
-
-      .layer-ribbon {
-        top: 166px;
+        min-height: 0;
       }
     }
 
     @media (max-width: 700px) {
+      body {
+        overflow: auto;
+      }
+
       #app {
         flex-direction: column;
         height: auto;
-        min-height: calc(100vh - 234px);
+        min-height: 70vh;
       }
 
       #panel {
@@ -705,29 +741,45 @@
 
   <div id="app">
     <div id="panel">
-      <h2>Clicked place</h2>
+      <h2 class="panel-title">Map inspector</h2>
 
-      <div class="label">Country</div>
-      <div id="country" class="value">—</div>
+      <section class="panel-card">
+        <p class="panel-card-title">Clicked place</p>
+        <div class="readout-grid">
+          <div class="readout-item wide">
+            <div class="label">Country</div>
+            <div id="country" class="value">—</div>
+          </div>
+          <div class="readout-item">
+            <div class="label">Latitude</div>
+            <div id="lat" class="value">—</div>
+          </div>
+          <div class="readout-item">
+            <div class="label">Longitude</div>
+            <div id="lon" class="value">—</div>
+          </div>
+          <div class="readout-item wide">
+            <div class="label">Layer value</div>
+            <div id="hexValue" class="value">—</div>
+          </div>
+        </div>
+        <div class="small">Click anywhere on the map to inspect the top visible layer.</div>
+      </section>
 
-      <div class="label">Latitude</div>
-      <div id="lat" class="value">—</div>
+      <section class="panel-card">
+        <p class="panel-card-title">Status</p>
+        <div id="status" class="value">Loading map...</div>
+      </section>
 
-      <div class="label">Longitude</div>
-      <div id="lon" class="value">—</div>
-
-      <div class="label">Layer value</div>
-      <div id="hexValue" class="value">—</div>
-
-      <div class="label">Status</div>
-      <div id="status" class="value">Loading map...</div>
-
-      <div class="control-block">
-        <h3>Overlay</h3>
-
-        <div class="label">Active layer</div>
+      <section class="panel-card">
+        <p class="panel-card-title">Focused layer</p>
         <div class="overlay-chooser">
           <div id="overlayDescription" class="overlay-description">Projected bark beetle pressure by hexagon under selected RCP scenario and year.</div>
+        </div>
+
+        <div class="button-row">
+          <button id="toggleOverlayBtn" type="button">Hide overlay</button>
+          <button id="fitOverlayBtn" type="button">Fit data</button>
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
@@ -787,6 +839,19 @@
           </div>
           <div id="yearValue" class="value">2030</div>
         </div>
+      </section>
+
+      <section class="panel-card">
+        <p class="panel-card-title">Legend and source</p>
+        <div class="legend-box">
+          <div class="legend-title">Value scale</div>
+          <div class="legend-bar"></div>
+          <div class="legend-labels">
+            <span id="legendMin">min</span>
+            <span id="legendMax">max</span>
+          </div>
+          <div id="legendSwatches" class="legend-swatches"></div>
+        </div>
 
         <div id="citationBox" class="citation-box">
           <p class="citation-title">Data source and citation</p>
@@ -799,32 +864,7 @@
             Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
           </p>
         </div>
-
-        <div class="label">Opacity</div>
-        <div class="row">
-          <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.85" />
-        </div>
-        <div id="opacityValue" class="value">0.85</div>
-
-        <div class="button-row">
-          <button id="toggleOverlayBtn" type="button">Hide overlay</button>
-          <button id="fitOverlayBtn" type="button">Fit data</button>
-        </div>
-
-        <div class="legend-box">
-          <div class="legend-title">Value scale</div>
-          <div class="legend-bar"></div>
-          <div class="legend-labels">
-            <span id="legendMin">min</span>
-            <span id="legendMax">max</span>
-          </div>
-          <div id="legendSwatches" class="legend-swatches"></div>
-        </div>
-
-        <div class="small">
-          Click anywhere on the map to retrieve layer value and country.
-        </div>
-      </div>
+      </section>
     </div>
 
     <div id="map"></div>
@@ -986,8 +1026,6 @@
       forecastMetricsNote: document.getElementById("forecastMetricsNote"),
       yearSlider: document.getElementById("yearSlider"),
       yearValue: document.getElementById("yearValue"),
-      opacitySlider: document.getElementById("opacitySlider"),
-      opacityValue: document.getElementById("opacityValue"),
       toggleOverlayBtn: document.getElementById("toggleOverlayBtn"),
       fitOverlayBtn: document.getElementById("fitOverlayBtn"),
       legendBar: document.querySelector(".legend-bar"),
@@ -1293,14 +1331,6 @@
         if (slider) slider.value = String(getLayerOpacity(overlayId));
         if (value) value.textContent = getLayerOpacity(overlayId).toFixed(2);
       });
-    }
-
-    function syncFocusedOpacityControl() {
-      const opacity = getLayerOpacity(APP.focusedOverlay);
-      if (isFinite(opacity)) {
-        DOM.opacitySlider.value = String(opacity);
-        DOM.opacityValue.textContent = Number(opacity).toFixed(2);
-      }
     }
 
     function applyOpacityToLayers() {
@@ -1955,7 +1985,6 @@
       DOM.yearSlider.disabled = !showHexControls;
       DOM.yearValue.style.opacity = showHexControls ? "1" : "0.6";
       DOM.toggleOverlayBtn.textContent = isOverlayVisible(APP.focusedOverlay) ? "Hide overlay" : "Show overlay";
-      syncFocusedOpacityControl();
       syncCitationVisibility();
 
       if (!focusedOverlay.available) {
@@ -2159,7 +2188,6 @@
       } else {
         DOM.yearValue.textContent = "NA";
       }
-      syncFocusedOpacityControl();
 
       DOM.overlayCardStrip.querySelectorAll("[data-overlay]").forEach(function(card) {
         card.addEventListener("click", function() {
@@ -2189,9 +2217,6 @@
           const overlayId = slider.dataset.opacityOverlay;
           APP.layerOpacity[overlayId] = Number(slider.value);
           updateOverlayCardStates();
-          if (overlayId === APP.focusedOverlay) {
-            syncFocusedOpacityControl();
-          }
           applyOpacityToLayers();
         });
       });
@@ -2220,13 +2245,6 @@
         if (isOverlayVisible("bbtl")) {
           updateHexLayer();
         }
-      });
-
-      DOM.opacitySlider.addEventListener("input", function() {
-        APP.layerOpacity[APP.focusedOverlay] = Number(DOM.opacitySlider.value);
-        syncFocusedOpacityControl();
-        updateOverlayCardStates();
-        applyOpacityToLayers();
       });
 
       DOM.toggleOverlayBtn.addEventListener("click", function() {
