@@ -857,6 +857,7 @@
             <select id="phenipsViewSelector">
               <option value="abs">Absolute values</option>
               <option value="diff">Change vs. historical</option>
+              <option value="contrast">Now vs. near-future contrast</option>
             </select>
           </div>
           <div class="small">Ensemble mean · 3 GCMs · RCP8.5 · bark-temp corrected (Baier et al. 2007) · max 3 generations (photoperiod-gated)</div>
@@ -1293,10 +1294,15 @@
     function getPhenipsImagePath() {
       const p = APP.currentPhenisPeriod;
       const v = APP.currentPhenipsVar;
-      const isDiff = APP.currentPhenipsView === "diff" && p !== "hist";
-      const file = isDiff
-        ? "phenips_" + v + "_diff_" + p + ".png"
-        : "phenips_" + v + "_" + p + ".png";
+      const view = APP.currentPhenipsView;
+      let file;
+      if (view === "contrast" && v === "gen") {
+        file = "phenips_gen_contrast.png";  // always the hist→near contrast
+      } else if (view === "diff" && p !== "hist") {
+        file = "phenips_" + v + "_diff_" + p + ".png";
+      } else {
+        file = "phenips_" + v + "_" + p + ".png";
+      }
       return "webmap_data/phenips/" + file;
     }
 
@@ -1571,20 +1577,40 @@
       DOM.legendBar.style.background = "linear-gradient(to right, #7ec8ff 0%, #39a9ff 16.6%, #00c2a8 33.2%, #7ad151 49.8%, #fde725 66.4%, #f8961e 83%, #f94144 100%)";
       if (topOverlayId === "phenips") {
         const v = APP.currentPhenipsVar;
-        const isDiff = APP.currentPhenipsView === "diff" && APP.currentPhenisPeriod !== "hist";
-        DOM.legendBar.style.display = "block";
-        if (v === "gdd" && !isDiff) {
+        const view = APP.currentPhenipsView;
+        const p = APP.currentPhenisPeriod;
+        DOM.legendBar.style.display = "none";
+        if (v === "gdd" && view === "abs") {
+          DOM.legendBar.style.display = "block";
           DOM.legendBar.style.background = "linear-gradient(to right,#ffffcc,#fed976,#fd8d3c,#e31a1c,#800026)";
           DOM.legendMin.textContent = "0 DD";
           DOM.legendMax.textContent = "4000 DD";
-        } else if (v === "gen" && !isDiff) {
-          DOM.legendBar.style.background = "linear-gradient(to right,#f7fbff,#9ecae1,#4292c6,#08519c,#08306b)";
-          DOM.legendMin.textContent = "0 gen";
-          DOM.legendMax.textContent = "3 gen";
-        } else {
+        } else if (v === "gdd" && view !== "abs") {
+          DOM.legendBar.style.display = "block";
           DOM.legendBar.style.background = "linear-gradient(to right,#ffffb2,#fecc5c,#fd8d3c,#e31a1c,#800026)";
-          DOM.legendMin.textContent = v === "gen" ? "0 gen" : "0 DD";
-          DOM.legendMax.textContent = v === "gen" ? "+2.5 gen" : "+1100 DD";
+          DOM.legendMin.textContent = "0 DD";
+          DOM.legendMax.textContent = "+1100 DD";
+        } else {
+          // generations — categorical swatches
+          renderLegendSwatches([
+            { color: "#ffff50", label: "1 generation" },
+            { color: "#fd571c", label: "2 generations" },
+            { color: "#8b0000", label: "3 generations" }
+          ]);
+          if (view === "contrast") {
+            DOM.legendMin.textContent = "Now (hist) →";
+            DOM.legendMax.textContent = "near-future gain";
+          } else if (view === "diff" && p !== "hist") {
+            renderLegendSwatches([
+              { color: "#fd8d3c", label: "+1 generation" },
+              { color: "#800026", label: "+2 generations" }
+            ]);
+            DOM.legendMin.textContent = "no change";
+            DOM.legendMax.textContent = "max gain";
+          } else {
+            DOM.legendMin.textContent = "0 gen";
+            DOM.legendMax.textContent = "3 gen";
+          }
         }
         return;
       }
