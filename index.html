@@ -704,6 +704,19 @@
             <span class="overlay-tool-value" data-opacity-value="gddraster">0.85</span>
           </span>
         </div>
+        <div class="overlay-card" data-overlay="phenips">
+          <span class="overlay-card-head">
+            <span class="overlay-card-title">PHENIPS climate</span>
+            <span class="overlay-card-tools">
+              <button class="overlay-tool-btn" type="button" data-toggle-overlay="phenips">Display</button>
+            </span>
+          </span>
+          <span class="overlay-card-copy">Bark beetle GDD &amp; generations across 4 climate periods (3 GCM ensemble, RCP8.5).</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="phenips" />
+            <span class="overlay-tool-value" data-opacity-value="phenips">0.85</span>
+          </span>
+        </div>
         <div class="overlay-card" data-overlay="bbtpast">
           <span class="overlay-card-head">
             <span class="overlay-card-title">Past disturbance</span>
@@ -821,6 +834,34 @@
           </div>
         </div>
 
+        <div id="phenipsPanel" class="nested-panel" hidden>
+          <p class="nested-title">PHENIPS Climate Controls</p>
+          <div class="label">Period</div>
+          <div class="row">
+            <select id="phenisPeriodSelector">
+              <option value="hist">Historical 1985–2005</option>
+              <option value="near">Near-future 2005–2040</option>
+              <option value="mid">Mid-century 2041–2070</option>
+              <option value="end">End-century 2071–2100</option>
+            </select>
+          </div>
+          <div class="label">Variable</div>
+          <div class="row">
+            <select id="phenipsVarSelector">
+              <option value="gdd">GDD (bark °C·days)</option>
+              <option value="gen">Generations / year</option>
+            </select>
+          </div>
+          <div class="label">View</div>
+          <div class="row">
+            <select id="phenipsViewSelector">
+              <option value="abs">Absolute values</option>
+              <option value="diff">Change vs. historical</option>
+            </select>
+          </div>
+          <div class="small">Ensemble mean · 3 GCMs · RCP8.5 · bark-temp corrected (Baier et al. 2007) · max 3 generations (photoperiod-gated)</div>
+        </div>
+
         <div id="hexControlPanel" class="nested-panel">
           <p id="hexControlTitle" class="nested-title">Hex Pressure Controls</p>
 
@@ -902,8 +943,13 @@
         bbtl: 0.85,
         bbtforecast: 0.85,
         gddraster: 0.85,
+        phenips: 0.85,
         bbtpast: 0.85
       },
+      currentPhenisPeriod: "hist",
+      currentPhenipsVar: "gdd",
+      currentPhenipsView: "abs",
+      phenipsData: null,
       currentForecastModel: "xgb",
       currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
@@ -916,6 +962,7 @@
         bbtl: 0,
         bbtforecast: 0,
         gddraster: 0,
+        phenips: 0,
         bbtpast: 0
       },
       overlayVisible: true,
@@ -925,11 +972,14 @@
         bbtl: null,
         bbtforecast: null,
         gddraster: null,
+        phenips: null,
         bbtpast: null
       }
     };
 
-    const RASTER_OVERLAYS = ["gddraster", "bbtforecast", "bbtpast"];
+    const RASTER_OVERLAYS = ["gddraster", "phenips", "bbtforecast", "bbtpast"];
+    const PHENIPS_BOUNDS = { south: 34.5, west: -10.7, north: 71.57, east: 38.58 };
+    const PHENIPS_DATA_URL = "webmap_data/phenips/phenips_data.json";
 
     const OVERLAY_CATALOG = {
       bbtl: {
@@ -943,6 +993,14 @@
       gddraster: {
         label: "GDD/GEN 1km raster",
         description: "Rasterized GEN difference surface generated from the 1km point dataset.",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: null
+      },
+      phenips: {
+        label: "PHENIPS climate GDD",
+        description: "PHENIPS-compatible bark beetle Growing Degree Days and generations across 4 climate periods. Ensemble mean of 3 EURO-CORDEX GCMs (RCP8.5), bark-temperature corrected (Baier et al. 2007), max 3 generations per year (photoperiod-gated).",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -1016,6 +1074,10 @@
       overlayDescription: document.getElementById("overlayDescription"),
       hexControlPanel: document.getElementById("hexControlPanel"),
       hexControlTitle: document.getElementById("hexControlTitle"),
+      phenipsPanel: document.getElementById("phenipsPanel"),
+      phenisPeriodSelector: document.getElementById("phenisPeriodSelector"),
+      phenipsVarSelector: document.getElementById("phenipsVarSelector"),
+      phenipsViewSelector: document.getElementById("phenipsViewSelector"),
       forecastPanel: document.getElementById("forecastPanel"),
       forecastModelSelector: document.getElementById("forecastModelSelector"),
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
@@ -1225,6 +1287,45 @@
 
     function updateForecastPanelVisibility() {
       DOM.forecastPanel.hidden = APP.focusedOverlay !== "bbtforecast";
+      DOM.phenipsPanel.hidden = APP.focusedOverlay !== "phenips";
+    }
+
+    function getPhenipsImagePath() {
+      const p = APP.currentPhenisPeriod;
+      const v = APP.currentPhenipsVar;
+      const isDiff = APP.currentPhenipsView === "diff" && p !== "hist";
+      const file = isDiff
+        ? "phenips_" + v + "_diff_" + p + ".png"
+        : "phenips_" + v + "_" + p + ".png";
+      return "webmap_data/phenips/" + file;
+    }
+
+    async function ensurePhenipsDataLoaded() {
+      if (APP.phenipsData) return APP.phenipsData;
+      const res = await fetch(PHENIPS_DATA_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status + " for PHENIPS data");
+      APP.phenipsData = await res.json();
+      return APP.phenipsData;
+    }
+
+    function samplePhenipsAt(latlng) {
+      if (!APP.phenipsData) return null;
+      let best = null, bestDist = Infinity;
+      APP.phenipsData.forEach(function(pt) {
+        const d = Math.pow(pt.lat - latlng.lat, 2) + Math.pow(pt.lng - latlng.lng, 2);
+        if (d < bestDist) { bestDist = d; best = pt; }
+      });
+      return (best && bestDist < 0.5) ? best : null;
+    }
+
+    async function updatePhenipsLayer() {
+      if (!isOverlayVisible("phenips")) return;
+      clearLayerInstance("phenips");
+      addImageOverlayLayer("phenips", getPhenipsImagePath(), PHENIPS_BOUNDS);
+      ensurePhenipsDataLoaded().catch(function(e) {
+        console.warn("PHENIPS data load failed:", e);
+      });
+      setLegendLabels();
     }
 
     function populateSelectOptions(select, values, selectedValue, labelFn) {
@@ -1468,6 +1569,26 @@
       renderLegendSwatches([]);
       DOM.legendBar.style.display = "block";
       DOM.legendBar.style.background = "linear-gradient(to right, #7ec8ff 0%, #39a9ff 16.6%, #00c2a8 33.2%, #7ad151 49.8%, #fde725 66.4%, #f8961e 83%, #f94144 100%)";
+      if (topOverlayId === "phenips") {
+        const v = APP.currentPhenipsVar;
+        const isDiff = APP.currentPhenipsView === "diff" && APP.currentPhenisPeriod !== "hist";
+        DOM.legendBar.style.display = "block";
+        if (v === "gdd" && !isDiff) {
+          DOM.legendBar.style.background = "linear-gradient(to right,#ffffcc,#fed976,#fd8d3c,#e31a1c,#800026)";
+          DOM.legendMin.textContent = "0 DD";
+          DOM.legendMax.textContent = "4000 DD";
+        } else if (v === "gen" && !isDiff) {
+          DOM.legendBar.style.background = "linear-gradient(to right,#f7fbff,#9ecae1,#4292c6,#08519c,#08306b)";
+          DOM.legendMin.textContent = "0 gen";
+          DOM.legendMax.textContent = "3 gen";
+        } else {
+          DOM.legendBar.style.background = "linear-gradient(to right,#ffffb2,#fecc5c,#fd8d3c,#e31a1c,#800026)";
+          DOM.legendMin.textContent = v === "gen" ? "0 gen" : "0 DD";
+          DOM.legendMax.textContent = v === "gen" ? "+2.5 gen" : "+1100 DD";
+        }
+        return;
+      }
+
       if (topOverlayId === "gddraster") {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "<= -0.5";
@@ -1966,6 +2087,7 @@
     const OVERLAY_LOADERS = {
       bbtl: updateHexLayer,
       gddraster: updateGddRasterLayer,
+      phenips: updatePhenipsLayer,
       bbtpast: updateClassifiedImageOverlay,
       bbtforecast: updateForecastOverlay
     };
@@ -2091,6 +2213,26 @@
         } else {
           DOM.hexValue.textContent = "—";
           setStatus("No raster value at clicked point");
+        }
+        return;
+      }
+
+      if (getTopVisibleOverlayId() === "phenips") {
+        const pt = samplePhenipsAt(latlng);
+        if (pt) {
+          const v = APP.currentPhenipsVar;
+          const p = APP.currentPhenisPeriod;
+          const val = v === "gdd" ? pt["gdd_" + p] : pt["gen_" + p];
+          const hist = v === "gdd" ? pt.gdd_hist : pt.gen_hist;
+          const delta = val - hist;
+          const unit = v === "gdd" ? " DD" : " gen/yr";
+          const precision = v === "gdd" ? 0 : 2;
+          DOM.hexValue.textContent = val.toFixed(precision) + unit +
+            (p !== "hist" ? " (Δ " + (delta >= 0 ? "+" : "") + delta.toFixed(precision) + ")" : "");
+          setStatus("PHENIPS value sampled at nearest grid point");
+        } else {
+          DOM.hexValue.textContent = "—";
+          setStatus("No PHENIPS data at clicked point");
         }
         return;
       }
@@ -2225,6 +2367,22 @@
       bindForecastSelector(DOM.forecastPeriodSelector, "currentForecastPeriod");
       bindForecastSelector(DOM.forecastViewSelector, "currentForecastView");
       bindForecastSelector(DOM.forecastThresholdSelector, "currentForecastThreshold");
+
+      DOM.phenisPeriodSelector.addEventListener("change", function() {
+        APP.currentPhenisPeriod = DOM.phenisPeriodSelector.value;
+        if (isOverlayVisible("phenips")) updatePhenipsLayer();
+        else setLegendLabels();
+      });
+      DOM.phenipsVarSelector.addEventListener("change", function() {
+        APP.currentPhenipsVar = DOM.phenipsVarSelector.value;
+        if (isOverlayVisible("phenips")) updatePhenipsLayer();
+        else setLegendLabels();
+      });
+      DOM.phenipsViewSelector.addEventListener("change", function() {
+        APP.currentPhenipsView = DOM.phenipsViewSelector.value;
+        if (isOverlayVisible("phenips")) updatePhenipsLayer();
+        else setLegendLabels();
+      });
 
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {
