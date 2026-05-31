@@ -836,6 +836,14 @@
 
         <div id="phenipsPanel" class="nested-panel" hidden>
           <p class="nested-title">PHENIPS Climate Controls</p>
+          <div class="label">Scenario</div>
+          <div class="row">
+            <select id="phenipsScenSelector">
+              <option value="rcp85">RCP 8.5 — high emissions</option>
+              <option value="rcp45">RCP 4.5 — intermediate</option>
+              <option value="rcp26">RCP 2.6 — mitigation</option>
+            </select>
+          </div>
           <div class="label">Period</div>
           <div class="row">
             <select id="phenisPeriodSelector">
@@ -947,6 +955,7 @@
         phenips: 0.85,
         bbtpast: 0.85
       },
+      currentPhenipsScen: "rcp85",
       currentPhenisPeriod: "hist",
       currentPhenipsVar: "gdd",
       currentPhenipsView: "abs",
@@ -1076,6 +1085,7 @@
       hexControlPanel: document.getElementById("hexControlPanel"),
       hexControlTitle: document.getElementById("hexControlTitle"),
       phenipsPanel: document.getElementById("phenipsPanel"),
+      phenipsScenSelector: document.getElementById("phenipsScenSelector"),
       phenisPeriodSelector: document.getElementById("phenisPeriodSelector"),
       phenipsVarSelector: document.getElementById("phenipsVarSelector"),
       phenipsViewSelector: document.getElementById("phenipsViewSelector"),
@@ -1292,16 +1302,20 @@
     }
 
     function getPhenipsImagePath() {
-      const p = APP.currentPhenisPeriod;
-      const v = APP.currentPhenipsVar;
+      const p    = APP.currentPhenisPeriod;
+      const v    = APP.currentPhenipsVar;
       const view = APP.currentPhenipsView;
+      const s    = APP.currentPhenipsScen;
       let file;
-      if (view === "contrast" && v === "gen") {
-        file = "phenips_gen_contrast.png";  // always the hist→near contrast
-      } else if (view === "diff" && p !== "hist") {
-        file = "phenips_" + v + "_diff_" + p + ".png";
+      if (p === "hist") {
+        // Historical is scenario-independent
+        file = "phenips_" + v + "_hist.png";
+      } else if (view === "contrast" && v === "gen") {
+        file = "phenips_gen_" + s + "_contrast.png";
+      } else if (view === "diff") {
+        file = "phenips_" + v + "_" + s + "_diff_" + p + ".png";
       } else {
-        file = "phenips_" + v + "_" + p + ".png";
+        file = "phenips_" + v + "_" + s + "_" + p + ".png";
       }
       return "webmap_data/phenips/" + file + "?v=20260531";
     }
@@ -2246,16 +2260,28 @@
       if (getTopVisibleOverlayId() === "phenips") {
         const pt = samplePhenipsAt(latlng);
         if (pt) {
-          const v = APP.currentPhenipsVar;
-          const p = APP.currentPhenisPeriod;
-          const val = v === "gdd" ? pt["gdd_" + p] : pt["gen_" + p];
+          const v    = APP.currentPhenipsVar;
+          const p    = APP.currentPhenisPeriod;
+          const unit = v === "gdd" ? " DD" : " gen";
+          const prec = v === "gdd" ? 0 : 2;
           const hist = v === "gdd" ? pt.gdd_hist : pt.gen_hist;
-          const delta = val - hist;
-          const unit = v === "gdd" ? " DD" : " gen/yr";
-          const precision = v === "gdd" ? 0 : 2;
-          DOM.hexValue.textContent = val.toFixed(precision) + unit +
-            (p !== "hist" ? " (Δ " + (delta >= 0 ? "+" : "") + delta.toFixed(precision) + ")" : "");
-          setStatus("PHENIPS value sampled at nearest grid point");
+          const scens = ["rcp85","rcp26","rcp45"];
+          const labels = { rcp85:"RCP8.5", rcp26:"RCP2.6", rcp45:"RCP4.5" };
+          let lines = [];
+          if (p === "hist") {
+            lines.push("Hist: " + (hist != null ? hist.toFixed(prec) + unit : "—"));
+          } else {
+            scens.forEach(function(s) {
+              const key = (v === "gdd" ? "gdd_" : "gen_") + s + "_" + p;
+              const val = pt[key];
+              if (val == null) { lines.push(labels[s] + ": —"); return; }
+              const d = val - hist;
+              lines.push(labels[s] + ": " + val.toFixed(prec) + unit +
+                " (" + (d >= 0 ? "+" : "") + d.toFixed(prec) + ")");
+            });
+          }
+          DOM.hexValue.innerHTML = lines.join("<br>");
+          setStatus("PHENIPS sampled at nearest grid point");
         } else {
           DOM.hexValue.textContent = "—";
           setStatus("No PHENIPS data at clicked point");
@@ -2394,6 +2420,11 @@
       bindForecastSelector(DOM.forecastViewSelector, "currentForecastView");
       bindForecastSelector(DOM.forecastThresholdSelector, "currentForecastThreshold");
 
+      DOM.phenipsScenSelector.addEventListener("change", function() {
+        APP.currentPhenipsScen = DOM.phenipsScenSelector.value;
+        if (isOverlayVisible("phenips")) updatePhenipsLayer();
+        else setLegendLabels();
+      });
       DOM.phenisPeriodSelector.addEventListener("change", function() {
         APP.currentPhenisPeriod = DOM.phenisPeriodSelector.value;
         if (isOverlayVisible("phenips")) updatePhenipsLayer();
