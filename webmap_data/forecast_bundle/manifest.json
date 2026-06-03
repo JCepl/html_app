@@ -1,7 +1,8 @@
 {
-  "created_utc": "2026-05-05 13:41:16 UTC",
-  "output_root": "/Users/jaroslavcepl/Documents/D_MAC_2026/REENFORCE_postSopron/html_app/webmap_data/forecast_bundle",
-  "periods": ["2041_2070", "2071_2100"],
+  "created_utc": "2026-06-03 07:12:25 UTC",
+  "output_root": "/Users/jaroslavcepl/html_app/webmap_data/forecast_bundle",
+  "scenarios": ["rcp26", "rcp45", "rcp85"],
+  "periods": ["2011_2040", "2041_2070", "2071_2100"],
   "thresholds": [
     0.5,
     0.55,
@@ -14,26 +15,1464 @@
     0.9
   ],
   "models": {
+    "xgb_v2_rcp26": {
+      "metrics_file": "webmap_data/forecast_bundle/xgb_v2_rcp26/metrics_confusion.json",
+      "label": "XGB v2 <c2><b7> RCP2.6",
+      "scenarios": "rcp26",
+      "periods": ["2011_2040", "2041_2070", "2071_2100"]
+    },
+    "xgb_v2_rcp45": {
+      "metrics_file": "webmap_data/forecast_bundle/xgb_v2_rcp45/metrics_confusion.json",
+      "label": "XGB v2 <c2><b7> RCP4.5",
+      "scenarios": "rcp45",
+      "periods": ["2011_2040", "2041_2070", "2071_2100"]
+    },
     "xgb": {
       "metrics_file": "webmap_data/forecast_bundle/xgb/metrics_confusion.json",
-      "periods": ["2041_2070", "2071_2100"]
+      "label": "XGB",
+      "scenarios": ["rcp26", "rcp45", "rcp85"],
+      "periods": ["2011_2040", "2041_2070", "2071_2100"]
     },
     "rf": {
       "metrics_file": "webmap_data/forecast_bundle/rf/metrics_confusion.json",
-      "periods": ["2041_2070", "2071_2100"]
-    },
-    "gam": {
-      "metrics_file": "webmap_data/forecast_bundle/gam/metrics_confusion.json",
-      "periods": ["2041_2070", "2071_2100"]
-    },
-    "svm": {
-      "metrics_file": "webmap_data/forecast_bundle/svm/metrics_confusion.json",
+      "label": "RF",
+      "scenarios": "rcp85",
       "periods": ["2041_2070", "2071_2100"]
     }
   },
   "entries": {
+    "xgb_v2_rcp26::rcp26::2011_2040": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2122",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2327",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2685",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp26::2011_2040": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2122",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2327",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2685",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp26::rcp26::2041_2070": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2709",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2067",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2659",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp26::2041_2070": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2709",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2067",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2659",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp26::rcp26::2071_2100": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2479",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2257",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2259",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp26::2071_2100": {
+      "model": "xgb_v2_rcp26",
+      "scenario": "rcp26",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp26/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp26/rcp26/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2479",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2257",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2259",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::rcp45::2011_2040": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2207",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.263",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2504",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::2011_2040": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2207",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.263",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2504",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::rcp45::2041_2070": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2399",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2256",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.244",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::2041_2070": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2399",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2256",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.244",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::rcp45::2071_2100": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2092",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.1478",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.195",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb_v2_rcp45::2071_2100": {
+      "model": "xgb_v2_rcp45",
+      "scenario": "rcp45",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/PRODUCTION_FORECASTS_20260602_205401/rcp45/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb_v2_rcp45/rcp45/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2092",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.1478",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.195",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp26::2011_2040": {
+      "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3894",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3318",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3448",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::2011_2040": {
+      "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3894",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3318",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3448",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp26::2041_2070": {
+      "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3771",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3067",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3417",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
     "xgb::2041_2070": {
       "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3771",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3067",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3417",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp26::2071_2100": {
+      "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3488",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3139",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3247",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::2071_2100": {
+      "model": "xgb",
+      "scenario": "rcp26",
+      "period": "2071_2100",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp26_xgb/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp26/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3488",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3139",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3247",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp45::2011_2040": {
+      "model": "xgb",
+      "scenario": "rcp45",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp45_xgb/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp45_xgb/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp45/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.361",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3671",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp45::2041_2070": {
+      "model": "xgb",
+      "scenario": "rcp45",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp45_xgb/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp45_xgb/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp45/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3649",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.2941",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp45::2071_2100": {
+      "model": "xgb",
+      "scenario": "rcp45",
+      "period": "2071_2100",
+      "gcms": "ICHEC_EC_EARTH_RACMO22E",
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rcp45_xgb/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp45/2071_2100/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.7",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.36",
+          "F1": "NA",
+          "threshold_metric": "forecast_cap",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp85::2011_2040": {
+      "model": "xgb",
+      "scenario": "rcp85",
+      "period": "2011_2040",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_CCLM4_8_17", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/ICHEC_EC_EARTH_RACMO22E_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MOHC_HadGEM2_ES_RCA4_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MPI_ESM_LR_CCLM4_8_17_2011_2040/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MPI_ESM_LR_REMO2009_2011_2040/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp85/2011_2040/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.67",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3739",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.67",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3415",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_CCLM4_8_17": {
+          "threshold": "0.67",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3686",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.67",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3261",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "xgb::rcp85::2041_2070": {
+      "model": "xgb",
+      "scenario": "rcp85",
       "period": "2041_2070",
       "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
       "source_probability_files": [
@@ -41,17 +1480,17 @@
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
       ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/2041_2070/probability_ensemble_mean.tif",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/xgb/2041_2070/risk_visible_t90.tif"
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp85/2041_2070/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": {
         "ICHEC_EC_EARTH_RACMO22E": {
@@ -98,8 +1537,9 @@
         }
       }
     },
-    "xgb::2071_2100": {
+    "xgb::rcp85::2071_2100": {
       "model": "xgb",
+      "scenario": "rcp85",
       "period": "2071_2100",
       "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
       "source_probability_files": [
@@ -107,17 +1547,17 @@
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_from_pretrained_4gcm_v3/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
       ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/2071_2100/probability_ensemble_mean.tif",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/xgb/2071_2100/risk_visible_t90.tif"
+        "0.5": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/xgb/rcp85/2071_2100/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": {
         "ICHEC_EC_EARTH_RACMO22E": {
@@ -164,8 +1604,9 @@
         }
       }
     },
-    "rf::2041_2070": {
+    "rf::rcp85::2041_2070": {
       "model": "rf",
+      "scenario": "rcp85",
       "period": "2041_2070",
       "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
       "source_probability_files": [
@@ -173,17 +1614,17 @@
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
       ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/2041_2070/probability_ensemble_mean.tif",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/rf/2041_2070/risk_visible_t90.tif"
+        "0.5": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": {
         "ICHEC_EC_EARTH_RACMO22E": {
@@ -230,8 +1671,76 @@
         }
       }
     },
-    "rf::2071_2100": {
+    "rf::2041_2070": {
       "model": "rf",
+      "scenario": "rcp85",
+      "period": "2041_2070",
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
+      "source_probability_files": [
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MPI_ESM_LR_REMO2009_2041_2070/map_whole_test_pred_probability.tif"
+      ],
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/rf/rcp85/2041_2070/risk_visible_t90.tif"
+      },
+      "forecast_confusion_by_gcm": {
+        "ICHEC_EC_EARTH_RACMO22E": {
+          "threshold": "0.57",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.3812",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        },
+        "MOHC_HadGEM2_ES_RCA4": {
+          "threshold": "0.58",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.421",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        },
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.55",
+          "TP": "NA",
+          "FP": "NA",
+          "FN": "NA",
+          "TN": "NA",
+          "precision": "NA",
+          "recall": "NA",
+          "specificity": "NA",
+          "red_fraction": "0.438",
+          "F1": "NA",
+          "threshold_metric": "fixed_threshold",
+          "max_red_fraction": "0.3"
+        }
+      }
+    },
+    "rf::rcp85::2071_2100": {
+      "model": "rf",
+      "scenario": "rcp85",
       "period": "2071_2100",
       "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
       "source_probability_files": [
@@ -239,17 +1748,17 @@
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
         "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
       ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/2071_2100/probability_ensemble_mean.tif",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/rf/2071_2100/risk_visible_t90.tif"
+        "0.5": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": {
         "ICHEC_EC_EARTH_RACMO22E": {
@@ -296,80 +1805,31 @@
         }
       }
     },
-    "gam::2041_2070": {
-      "model": "gam",
-      "period": "2041_2070",
-      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
-      "source_probability_files": [
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/gam_ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/gam_MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif"
-      ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/gam/2041_2070/probability_ensemble_mean.tif",
-      "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/gam/2041_2070/risk_visible_t90.tif"
-      },
-      "forecast_confusion_by_gcm": {
-        "ICHEC_EC_EARTH_RACMO22E": {
-          "threshold": "0.67",
-          "TP": "NA",
-          "FP": "NA",
-          "FN": "NA",
-          "TN": "NA",
-          "precision": "NA",
-          "recall": "NA",
-          "specificity": "NA",
-          "red_fraction": "0.9329",
-          "F1": "NA",
-          "threshold_metric": "fixed_threshold",
-          "max_red_fraction": "0.3"
-        },
-        "MOHC_HadGEM2_ES_RCA4": {
-          "threshold": "0.67",
-          "TP": "NA",
-          "FP": "NA",
-          "FN": "NA",
-          "TN": "NA",
-          "precision": "NA",
-          "recall": "NA",
-          "specificity": "NA",
-          "red_fraction": "0.5666",
-          "F1": "NA",
-          "threshold_metric": "fixed_threshold",
-          "max_red_fraction": "0.3"
-        }
-      }
-    },
-    "gam::2071_2100": {
-      "model": "gam",
+    "rf::2071_2100": {
+      "model": "rf",
+      "scenario": "rcp85",
       "period": "2071_2100",
-      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
+      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4", "MPI_ESM_LR_REMO2009"],
       "source_probability_files": [
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/gam_ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/gam_MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif"
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif",
+        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_rf_from_pretrained_eval_20260505_094005/MPI_ESM_LR_REMO2009_2071_2100/map_whole_test_pred_probability.tif"
       ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/gam/2071_2100/probability_ensemble_mean.tif",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/gam/2071_2100/risk_visible_t90.tif"
+        "0.5": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t50.tif",
+        "0.55": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t55.tif",
+        "0.6": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t60.tif",
+        "0.65": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t65.tif",
+        "0.7": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t70.tif",
+        "0.75": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t75.tif",
+        "0.8": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t80.tif",
+        "0.85": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t85.tif",
+        "0.9": "webmap_data/forecast_bundle/rf/rcp85/2071_2100/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": {
         "ICHEC_EC_EARTH_RACMO22E": {
-          "threshold": "0.67",
+          "threshold": "0.57",
           "TP": "NA",
           "FP": "NA",
           "FN": "NA",
@@ -377,13 +1837,13 @@
           "precision": "NA",
           "recall": "NA",
           "specificity": "NA",
-          "red_fraction": "0.9979",
+          "red_fraction": "0.4046",
           "F1": "NA",
           "threshold_metric": "fixed_threshold",
           "max_red_fraction": "0.3"
         },
         "MOHC_HadGEM2_ES_RCA4": {
-          "threshold": "0.67",
+          "threshold": "0.58",
           "TP": "NA",
           "FP": "NA",
           "FN": "NA",
@@ -391,50 +1851,13 @@
           "precision": "NA",
           "recall": "NA",
           "specificity": "NA",
-          "red_fraction": "0.2829",
-          "F1": "NA",
-          "threshold_metric": "fixed_threshold",
-          "max_red_fraction": "0.3"
-        }
-      }
-    },
-    "svm::2041_2070": {
-      "model": "svm",
-      "period": "2041_2070",
-      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
-      "source_probability_files": [
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/svm_ICHEC_EC_EARTH_RACMO22E_2041_2070/map_whole_test_pred_probability.tif",
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/svm_MOHC_HadGEM2_ES_RCA4_2041_2070/map_whole_test_pred_probability.tif"
-      ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/svm/2041_2070/probability_ensemble_mean.tif",
-      "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/svm/2041_2070/risk_visible_t90.tif"
-      },
-      "forecast_confusion_by_gcm": {
-        "ICHEC_EC_EARTH_RACMO22E": {
-          "threshold": "0.67",
-          "TP": "NA",
-          "FP": "NA",
-          "FN": "NA",
-          "TN": "NA",
-          "precision": "NA",
-          "recall": "NA",
-          "specificity": "NA",
-          "red_fraction": "0.8488",
+          "red_fraction": "0.3856",
           "F1": "NA",
           "threshold_metric": "fixed_threshold",
           "max_red_fraction": "0.3"
         },
-        "MOHC_HadGEM2_ES_RCA4": {
-          "threshold": "0.67",
+        "MPI_ESM_LR_REMO2009": {
+          "threshold": "0.55",
           "TP": "NA",
           "FP": "NA",
           "FN": "NA",
@@ -442,58 +1865,7 @@
           "precision": "NA",
           "recall": "NA",
           "specificity": "NA",
-          "red_fraction": "0.7679",
-          "F1": "NA",
-          "threshold_metric": "fixed_threshold",
-          "max_red_fraction": "0.3"
-        }
-      }
-    },
-    "svm::2071_2100": {
-      "model": "svm",
-      "period": "2071_2100",
-      "gcms": ["ICHEC_EC_EARTH_RACMO22E", "MOHC_HadGEM2_ES_RCA4"],
-      "source_probability_files": [
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/svm_ICHEC_EC_EARTH_RACMO22E_2071_2100/map_whole_test_pred_probability.tif",
-        "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/EXP_future_forecasts_gam_svm_spruceclip060_20260504_223950/svm_MOHC_HadGEM2_ES_RCA4_2071_2100/map_whole_test_pred_probability.tif"
-      ],
-      "ensemble_probability_tif": "webmap_data/forecast_bundle/svm/2071_2100/probability_ensemble_mean.tif",
-      "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t50.tif",
-        "0.55": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t55.tif",
-        "0.6": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t60.tif",
-        "0.65": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t65.tif",
-        "0.7": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t70.tif",
-        "0.75": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t75.tif",
-        "0.8": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t80.tif",
-        "0.85": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t85.tif",
-        "0.9": "webmap_data/forecast_bundle/svm/2071_2100/risk_visible_t90.tif"
-      },
-      "forecast_confusion_by_gcm": {
-        "ICHEC_EC_EARTH_RACMO22E": {
-          "threshold": "0.67",
-          "TP": "NA",
-          "FP": "NA",
-          "FN": "NA",
-          "TN": "NA",
-          "precision": "NA",
-          "recall": "NA",
-          "specificity": "NA",
-          "red_fraction": "0.926",
-          "F1": "NA",
-          "threshold_metric": "fixed_threshold",
-          "max_red_fraction": "0.3"
-        },
-        "MOHC_HadGEM2_ES_RCA4": {
-          "threshold": "0.67",
-          "TP": "NA",
-          "FP": "NA",
-          "FN": "NA",
-          "TN": "NA",
-          "precision": "NA",
-          "recall": "NA",
-          "specificity": "NA",
-          "red_fraction": "0.5885",
+          "red_fraction": "0.4161",
           "F1": "NA",
           "threshold_metric": "fixed_threshold",
           "max_red_fraction": "0.3"

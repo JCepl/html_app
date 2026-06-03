@@ -960,8 +960,8 @@
       currentPhenipsVar: "gdd",
       currentPhenipsView: "abs",
       phenipsData: null,
-      currentForecastModel: "xgb",
-      currentForecastPeriod: "2041_2070",
+      currentForecastModel: "xgb_v2_rcp26",
+      currentForecastPeriod: "2011_2040",
       currentForecastView: "probability",
       currentForecastThreshold: "0.75",
       currentForecastRasterRange: null,
@@ -1532,11 +1532,16 @@
         APP.currentForecastThreshold = thresholds.includes("0.75") ? "0.75" : thresholds[0];
       }
 
+      const manifestModels = manifest.models || {};
       populateSelectOptions(DOM.forecastModelSelector, modelKeys, APP.currentForecastModel, function(value) {
+        if (manifestModels[value] && manifestModels[value].label) {
+          return manifestModels[value].label;
+        }
         return value.toUpperCase();
       });
       populateSelectOptions(DOM.forecastPeriodSelector, periods, APP.currentForecastPeriod, function(value) {
-        return value.replace("_", "-");
+        const labels = { "2011_2040": "Near future (2011-2040)", "2041_2070": "Mid century (2041-2070)", "2071_2100": "End century (2071-2100)" };
+        return labels[value] || value.replace("_", "-");
       });
       populateSelectOptions(DOM.forecastThresholdSelector, thresholds, APP.currentForecastThreshold, function(value) {
         return formatForecastThreshold(value);
