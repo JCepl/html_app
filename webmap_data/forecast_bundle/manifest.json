@@ -1,5 +1,5 @@
 {
-  "created_utc": "2026-06-03 07:12:25 UTC",
+  "created_utc": "2026-06-04 11:20:50 UTC",
   "output_root": "/Users/jaroslavcepl/html_app/webmap_data/forecast_bundle",
   "scenarios": ["rcp26", "rcp45", "rcp85"],
   "periods": ["2011_2040", "2041_2070", "2071_2100"],
@@ -17,13 +17,13 @@
   "models": {
     "xgb_v2_rcp26": {
       "metrics_file": "webmap_data/forecast_bundle/xgb_v2_rcp26/metrics_confusion.json",
-      "label": "XGB v2 <c2><b7> RCP2.6",
+      "label": "XGB v2 (RCP2.6)",
       "scenarios": "rcp26",
       "periods": ["2011_2040", "2041_2070", "2071_2100"]
     },
     "xgb_v2_rcp45": {
       "metrics_file": "webmap_data/forecast_bundle/xgb_v2_rcp45/metrics_confusion.json",
-      "label": "XGB v2 <c2><b7> RCP4.5",
+      "label": "XGB v2 (RCP4.5)",
       "scenarios": "rcp45",
       "periods": ["2011_2040", "2041_2070", "2071_2100"]
     },
