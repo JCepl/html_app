@@ -665,19 +665,6 @@
   <div class="layer-ribbon">
     <div class="ribbon-inner">
       <div id="overlayCardStrip" class="overlay-card-strip" aria-label="Overlay choices">
-        <div class="overlay-card active" data-overlay="bbtl">
-          <span class="overlay-card-head">
-            <span class="overlay-card-title">Hex pressure</span>
-            <span class="overlay-card-tools">
-              <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
-            </span>
-          </span>
-          <span class="overlay-card-copy">Projected bark beetle pressure by scenario and year.</span>
-          <span class="overlay-opacity-row">
-            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
-            <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
-          </span>
-        </div>
         <div class="overlay-card" data-overlay="bbtforecast">
           <span class="overlay-card-head">
             <span class="overlay-card-title">Predictions</span>
@@ -689,19 +676,6 @@
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
             <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
-          </span>
-        </div>
-        <div class="overlay-card" data-overlay="gddraster">
-          <span class="overlay-card-head">
-            <span class="overlay-card-title">GDD raster</span>
-            <span class="overlay-card-tools">
-              <button class="overlay-tool-btn" type="button" data-toggle-overlay="gddraster">Display</button>
-            </span>
-          </span>
-          <span class="overlay-card-copy">1 km GEN difference raster surface.</span>
-          <span class="overlay-opacity-row">
-            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="gddraster" />
-            <span class="overlay-tool-value" data-opacity-value="gddraster">0.85</span>
           </span>
         </div>
         <div class="overlay-card" data-overlay="phenips">
@@ -730,6 +704,19 @@
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
           </span>
         </div>
+        <div class="overlay-card" data-overlay="bbtl">
+          <span class="overlay-card-head">
+            <span class="overlay-card-title">Bark Beetle Pressure</span>
+            <span class="overlay-card-tools">
+              <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
+            </span>
+          </span>
+          <span class="overlay-card-copy">Modelled bark beetle pressure index by scenario and year (Hlásny et al. in prep.).</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
+            <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
+          </span>
+        </div>
         <div class="overlay-card coming-soon" data-overlay="wildfire">
           <span class="overlay-card-head">
             <span class="overlay-card-title">Wildfire</span>
@@ -755,34 +742,6 @@
   <div id="app">
     <div id="panel">
       <h2 class="panel-title">Map inspector</h2>
-
-      <section class="panel-card">
-        <p class="panel-card-title">Clicked place</p>
-        <div class="readout-grid">
-          <div class="readout-item wide">
-            <div class="label">Country</div>
-            <div id="country" class="value">—</div>
-          </div>
-          <div class="readout-item">
-            <div class="label">Latitude</div>
-            <div id="lat" class="value">—</div>
-          </div>
-          <div class="readout-item">
-            <div class="label">Longitude</div>
-            <div id="lon" class="value">—</div>
-          </div>
-          <div class="readout-item wide">
-            <div class="label">Layer value</div>
-            <div id="hexValue" class="value">—</div>
-          </div>
-        </div>
-        <div class="small">Click anywhere on the map to inspect the top visible layer.</div>
-      </section>
-
-      <section class="panel-card">
-        <p class="panel-card-title">Status</p>
-        <div id="status" class="value">Loading map...</div>
-      </section>
 
       <section class="panel-card">
         <p class="panel-card-title">Focused layer</p>
@@ -872,7 +831,7 @@
         </div>
 
         <div id="hexControlPanel" class="nested-panel">
-          <p id="hexControlTitle" class="nested-title">Hex Pressure Controls</p>
+          <p id="hexControlTitle" class="nested-title">Bark Beetle Pressure Controls</p>
 
           <div class="label">RCP Scenario</div>
           <div class="row">
@@ -915,6 +874,34 @@
           </p>
         </div>
       </section>
+
+      <section class="panel-card">
+        <p class="panel-card-title">Clicked place</p>
+        <div class="readout-grid">
+          <div class="readout-item wide">
+            <div class="label">Country</div>
+            <div id="country" class="value">—</div>
+          </div>
+          <div class="readout-item">
+            <div class="label">Latitude</div>
+            <div id="lat" class="value">—</div>
+          </div>
+          <div class="readout-item">
+            <div class="label">Longitude</div>
+            <div id="lon" class="value">—</div>
+          </div>
+          <div class="readout-item wide">
+            <div class="label">Layer value</div>
+            <div id="hexValue" class="value">—</div>
+          </div>
+        </div>
+        <div class="small">Click anywhere on the map to inspect the top visible layer.</div>
+      </section>
+
+      <section class="panel-card">
+        <p class="panel-card-title">Status</p>
+        <div id="status" class="value">Loading map...</div>
+      </section>
     </div>
 
     <div id="map"></div>
@@ -937,7 +924,6 @@
     const APP = {
       map: null,
       clickMarker: null,
-      rasterData: null,
       countryHaloLayer: null,
       selectedHexLayer: null,
       countryLayer: null,
@@ -951,7 +937,6 @@
       layerOpacity: {
         bbtl: 0.85,
         bbtforecast: 0.85,
-        gddraster: 0.85,
         phenips: 0.85,
         bbtpast: 0.85
       },
@@ -971,7 +956,6 @@
       overlayLoadTokens: {
         bbtl: 0,
         bbtforecast: 0,
-        gddraster: 0,
         phenips: 0,
         bbtpast: 0
       },
@@ -981,32 +965,23 @@
       layerInstances: {
         bbtl: null,
         bbtforecast: null,
-        gddraster: null,
         phenips: null,
         bbtpast: null
       }
     };
 
-    const RASTER_OVERLAYS = ["gddraster", "phenips", "bbtforecast", "bbtpast"];
+    const RASTER_OVERLAYS = ["phenips", "bbtforecast", "bbtpast"];
     const PHENIPS_BOUNDS = { south: 34.5, west: -10.7, north: 71.57, east: 38.58 };
     const PHENIPS_DATA_URL = "webmap_data/phenips/phenips_data.json";
 
     const OVERLAY_CATALOG = {
       bbtl: {
-        label: "Bark beetle pressure (hex)",
-        description: "Projected bark beetle pressure by hexagon under selected RCP scenario and year.",
+        label: "Bark beetle pressure index",
+        description: "Modelled bark beetle pressure index by scenario and year (Hlásny et al. in prep.). Select RCP scenario and year using the controls below.",
         available: true,
         usesRcp: true,
         usesYear: true,
         meta: MAP_META
-      },
-      gddraster: {
-        label: "GDD/GEN 1km raster",
-        description: "Rasterized GEN difference surface generated from the 1km point dataset.",
-        available: true,
-        usesRcp: false,
-        usesYear: false,
-        meta: null
       },
       phenips: {
         label: "PHENIPS climate GDD",
@@ -1064,15 +1039,7 @@
     };
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
-    const GDD_RASTER_TIF_URL = "webmap_data/gdd_gen_diff_1km_wgs84_filled.tif";
     const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
-    const GDD_RASTER_CLASSES = [
-      { color: [21, 101, 192], label: "<= -0.5", valueText: "GEN diff <= -0.5" },
-      { color: [240, 244, 248], label: "-0.5 to 0.5", valueText: "GEN diff -0.5 to 0.5" },
-      { color: [255, 152, 0], label: "0.5 to 1.5", valueText: "GEN diff 0.5 to 1.5" },
-      { color: [198, 40, 40], label: "> 1.5", valueText: "GEN diff > 1.5" }
-    ];
-
     const DOM = {
       country: document.getElementById("country"),
       lat: document.getElementById("lat"),
@@ -1634,19 +1601,6 @@
         return;
       }
 
-      if (topOverlayId === "gddraster") {
-        DOM.legendBar.style.display = "none";
-        DOM.legendMin.textContent = "<= -0.5";
-        DOM.legendMax.textContent = "> 1.5";
-        renderLegendSwatches(GDD_RASTER_CLASSES.map(function(item) {
-          return {
-            color: "rgb(" + item.color[0] + "," + item.color[1] + "," + item.color[2] + ")",
-            label: item.label
-          };
-        }));
-        return;
-      }
-
       if (topOverlayId === "bbtpast" && overlay.meta && overlay.meta.legend) {
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = overlay.meta.legend.labels[0] || "min";
@@ -1913,8 +1867,6 @@
       if (overlayId === "bbtl") {
         APP.currentHexGeojson = null;
         resetSelectedHex();
-      } else if (overlayId === "gddraster") {
-        APP.rasterData = null;
       } else if (overlayId === "bbtforecast") {
         APP.currentForecastRasterRange = null;
       }
@@ -1947,110 +1899,6 @@
       }
 
       updateOverlayPaneOrder();
-    }
-
-    function classifyGddRasterValue(value) {
-      if (!isFinite(value)) return null;
-      if (value <= -0.5) return GDD_RASTER_CLASSES[0];
-      if (value <= 0.5) return GDD_RASTER_CLASSES[1];
-      if (value <= 1.5) return GDD_RASTER_CLASSES[2];
-      return GDD_RASTER_CLASSES[3];
-    }
-
-    function sampleGddRasterAt(latlng) {
-      if (!APP.rasterData || !APP.rasterData.values || !APP.rasterData.values[0]) {
-        return null;
-      }
-
-      const west = Number(APP.rasterData.xmin);
-      const east = Number(APP.rasterData.xmax);
-      const south = Number(APP.rasterData.ymin);
-      const north = Number(APP.rasterData.ymax);
-
-      if (latlng.lat < south || latlng.lat > north || latlng.lng < west || latlng.lng > east) {
-        return null;
-      }
-
-      const width = Number(APP.rasterData.width);
-      const height = Number(APP.rasterData.height);
-      if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) {
-        return null;
-      }
-
-      const pixelWidth = Math.abs((east - west) / width);
-      const pixelHeight = Math.abs((north - south) / height);
-
-      const col = Math.floor((latlng.lng - west) / pixelWidth);
-      const row = Math.floor((north - latlng.lat) / pixelHeight);
-      if (row < 0 || row >= height || col < 0 || col >= width) {
-        return null;
-      }
-
-      const band = APP.rasterData.values[0];
-      if (!band[row]) {
-        return null;
-      }
-
-      const value = band[row][col];
-      const noData = APP.rasterData.noDataValue;
-      if (!isFinite(value) || (isFinite(noData) && value === noData)) {
-        return null;
-      }
-
-      return Number(value);
-    }
-
-    async function updateGddRasterLayer() {
-      if (!isOverlayVisible("gddraster")) return;
-
-      const requestToken = beginOverlayLoad("gddraster");
-      setStatus("Loading 1km raster overlay...");
-
-      try {
-        const response = await fetch(GDD_RASTER_TIF_URL, { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        const georaster = await parseGeoraster(arrayBuffer);
-        if (!isCurrentOverlayLoad("gddraster", requestToken)) {
-          return;
-        }
-
-        APP.rasterData = georaster;
-
-        APP.layerInstances.gddraster = new GeoRasterLayer({
-          georaster: georaster,
-          opacity: getLayerOpacity("gddraster"),
-          pane: getOverlayPaneName("gddraster"),
-          resolution: 256,
-          resampleMethod: "bilinear",
-          pixelValuesToColorFn: function(values) {
-            const value = values && values.length ? Number(values[0]) : NaN;
-            if (!isFinite(value)) {
-              return null;
-            }
-
-            const klass = classifyGddRasterValue(value);
-            if (!klass) {
-              return null;
-            }
-
-            return "rgb(" + klass.color[0] + "," + klass.color[1] + "," + klass.color[2] + ")";
-          }
-        });
-        APP.layerInstances.gddraster.addTo(APP.map);
-
-        if (!isCurrentOverlayLoad("gddraster", requestToken)) {
-          return;
-        }
-
-        setStatus("Loaded 1km raster overlay");
-      } catch (error) {
-        console.error(error);
-        setStatus("Raster overlay could not be loaded");
-      }
     }
 
     async function updateClassifiedImageOverlay() {
@@ -2131,7 +1979,6 @@
 
     const OVERLAY_LOADERS = {
       bbtl: updateHexLayer,
-      gddraster: updateGddRasterLayer,
       phenips: updatePhenipsLayer,
       bbtpast: updateClassifiedImageOverlay,
       bbtforecast: updateForecastOverlay
@@ -2147,7 +1994,7 @@
       updateOverlayCardStates();
       updateForecastPanelVisibility();
       DOM.hexControlPanel.hidden = !showHexControls;
-      DOM.hexControlTitle.textContent = "Hex Pressure Controls";
+      DOM.hexControlTitle.textContent = "Bark Beetle Pressure Controls";
       DOM.rcpSelector.disabled = !showHexControls;
       DOM.yearSlider.disabled = !showHexControls;
       DOM.yearValue.style.opacity = showHexControls ? "1" : "0.6";
@@ -2247,19 +2094,6 @@
           APP.selectedCountryLayer = countryLayer;
           highlightCountry(countryLayer);
         }
-      }
-
-      if (getTopVisibleOverlayId() === "gddraster") {
-        const rasterValue = sampleGddRasterAt(latlng);
-        if (isFinite(rasterValue)) {
-          const rasterClass = classifyGddRasterValue(rasterValue);
-          DOM.hexValue.textContent = rasterValue.toFixed(2) + " (" + rasterClass.label + ")";
-          setStatus("Raster value found: " + rasterValue.toFixed(2));
-        } else {
-          DOM.hexValue.textContent = "—";
-          setStatus("No raster value at clicked point");
-        }
-        return;
       }
 
       if (getTopVisibleOverlayId() === "phenips") {
