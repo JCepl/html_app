@@ -945,9 +945,9 @@
       currentYear: null,
       currentRcp: "rcp85",
       // `visibleOverlays` controls what is drawn. The last item is drawn on top.
-      visibleOverlays: ["bbtl"],
+      visibleOverlays: ["bbtforecast"],
       // `focusedOverlay` controls which settings are shown in the left panel.
-      focusedOverlay: "bbtl",
+      focusedOverlay: "bbtforecast",
       layerOpacity: {
         bbtl: 0.85,
         bbtforecast: 0.85,
@@ -955,7 +955,7 @@
         phenips: 0.85,
         bbtpast: 0.85
       },
-      currentPhenipsScen: "rcp85",
+      currentPhenipsScen: "rcp45",
       currentPhenisPeriod: "hist",
       currentPhenipsVar: "gdd",
       currentPhenipsView: "abs",
@@ -2476,7 +2476,7 @@
         fitDataBounds();
       });
 
-      syncOverlayControls("bbtl");
+      syncOverlayControls("bbtforecast");
     }
 
     async function loadCountryBorders() {
