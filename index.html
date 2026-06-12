@@ -709,7 +709,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Modelled bark beetle pressure index by scenario and year (Hlásný et al. in prep.).</span>
+          <span class="overlay-card-copy">Modelled bark beetle pressure index by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
             <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
@@ -867,8 +867,8 @@
             Grunig, M., Rammer, W., Senf, C., Albrich, K., Andre, K., Augustynczik, A. L. D., et al. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789). https://doi.org/10.1126/science.adx6329
           </p>
           <p class="citation-item">
-            <a href="https://datadryad.org/search?search=10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Dryad dataset search</a><br>
-            Disturbance-scenarios Dryad DOI from the article data-availability statement should be cited here once resolved.
+            <a href="https://datadryad.org/search?search=10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Dryad dataset</a><br>
+            Disturbance scenario data underlying this map layer. See article data-availability statement for the full dataset DOI.
           </p>
         </div>
       </section>
@@ -975,7 +975,7 @@
     const OVERLAY_CATALOG = {
       bbtl: {
         label: "Bark beetle pressure index",
-        description: "Modelled bark beetle pressure index by scenario and year (Hlásný et al. in prep.). Select RCP scenario and year using the controls below.",
+        description: "Modelled bark beetle pressure index by scenario and year (Grunig et al. 2026, Science). Select RCP scenario and year using the controls below.",
         available: true,
         usesRcp: true,
         usesYear: true,
