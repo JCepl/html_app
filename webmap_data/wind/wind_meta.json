@@ -1,0 +1,22 @@
+{
+  "bounds": {
+    "south": 27.42733466,
+    "west": -37.78232679,
+    "north": 73.3541708,
+    "east": 72.30775408
+  },
+  "scenario": "RCP8.5 (SSP5-8.5)",
+  "risk_cap": 0.5,
+  "images": {
+    "historical": "wind/wind_historical.png",
+    "near": "wind/wind_near.png",
+    "far": "wind/wind_far.png"
+  },
+  "legend": {
+    "min_label": "0 <e2><80><94> low risk",
+    "max_label": "<e2><89><a5> 0.5 <e2><80><94> high risk",
+    "colors": ["#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0", "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000"]
+  },
+  "source": "Tommaso <e2><80><94> risk_of_wind_damage_*_scenario_ssp585.tif",
+  "note": "Probability of wind damage 0-1 (threshold 0.5 = damage). Color saturates at 0.5."
+}
