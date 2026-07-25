@@ -148,6 +148,17 @@
         "2041_2070",
         "2071_2100"
       ]
+    },
+    "chelsa_mpi_ssp585": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/metrics_confusion.json",
+      "label": "CHELSA / MPI-ESM1-2-HR (SSP5-8.5)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1981_2010",
+        "2071_2100"
+      ]
     }
   },
   "entries": {
@@ -6364,6 +6375,32 @@
         "0.9": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/risk_visible_t90.tif"
       },
       "forecast_confusion_by_gcm": []
+    },
+    "chelsa_mpi_ssp585::1981_2010": {
+      "model": "chelsa_mpi_ssp585",
+      "period": "1981_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "Single climatological-normal snapshot (not a multi-year forecast series); scored with the already-trained v3 geography-out model, no retraining. spei3/spei6 predictors are standardized anomalies vs the training-period water-balance distribution, not fitted SPEI (a 30-year normal has no inter-annual variance to fit against).",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/1981_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/1981_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_mpi_ssp585::2071_2100": {
+      "model": "chelsa_mpi_ssp585",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "Single climatological-normal snapshot (not a multi-year forecast series); scored with the already-trained v3 geography-out model, no retraining. spei3/spei6 predictors are standardized anomalies vs the training-period water-balance distribution, not fitted SPEI (a 30-year normal has no inter-annual variance to fit against).",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/2071_2100/risk_visible_t50.tif"
+      }
     }
   }
 }

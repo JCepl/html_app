@@ -1,0 +1,14 @@
+{
+  "model": "chelsa_mpi_ssp585",
+  "notes": "Single climatological-normal snapshot per period (CHELSA 1981-2010 observed; MPI-ESM1-2-HR/SSP5-8.5 2071-2100), scored with the already-trained v3 geography-out model (no retraining). No train/test evaluation exists for this scenario -- metrics are NA, not invented skill numbers.",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "0.5",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "F1": "NA",
+      "red_fraction": "NA"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 # Convert Tommaso's wind-damage-risk GeoTIFFs (EPSG:4326, prob 0-1, ~130 m/px,
 # ~760 MB each) into lightweight web overlays for the DSS map:
-#   - one RGBA PNG per period (smooth yellow->red gradient, saturated at 0.5)
+#   - one RGBA PNG per period (Spectral blue->red gradient, saturated at 0.5)
 #   - one shared wind_meta.json (Leaflet bounds + legend description)
 #
 # Visualization follows Tommaso's note: scale 0 (low risk) -> 0.5 (high risk);
@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 # --- configuration ----------------------------------------------------------
 src_dir   <- "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/Tommaso"
 out_dir   <- "webmap_data/wind"
-max_dim   <- 4000          # target longest side in pixels for the web PNG
+max_dim   <- 8000          # target longest side in pixels for the web PNG
 risk_cap  <- 0.5           # saturate the color ramp at this probability
 fade_knee <- 0.3           # low-risk end fades in across the bottom fraction
 fade_floor <- 90           # minimum alpha at zero risk (stays faintly visible)
@@ -27,20 +27,24 @@ fade_floor <- 90           # minimum alpha at zero risk (stays faintly visible)
 periods <- list(
   list(key = "historical", tif = "risk_of_wind_damage_historical_scenario_ssp585.tif"),
   list(key = "near",       tif = "risk_of_wind_damage_2041_2070_scenario_ssp585.tif"),
-  list(key = "far",        tif = "risk_of_wind_damage_2071_2100_scenario_ssp585.tif")
+  list(key = "far",        tif = "risk_of_wind_damage_2071_2100_scenario_ssp585.tif"),
+  # Second GCM added 2026-07-24 (Tommaso / Ebner Stefan). Native grid is a
+  # different CRS/extent (EPSG:3035 LAEA) than the default WGS84 rasters, so
+  # bounds are recorded per image below rather than reused from the first one.
+  list(key = "near_mpi",   tif = "risk_of_wind_damage_2041_2070_scenario_ssp585_MPI.tif"),
+  list(key = "far_mpi",    tif = "risk_of_wind_damage_2071_2100_scenario_ssp585_MPI.tif")
 )
 
-# Intuitive sequential risk ramp (RdYlBu reversed): blue = low risk ->
-# pale yellow = moderate -> red = high risk. Avoids green so it never clashes
-# with the green land/forest on the basemap.
-ramp_colors <- c("#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0",
-                 "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000")
+# Spectral ramp (matches Tommaso's own QGIS rendering): blue = low risk ->
+# teal/green -> yellow -> orange -> red = high risk.
+ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
 # sRGB interpolation matches the CSS legend gradient and the JS ramp exactly.
 color_ramp  <- colorRamp(ramp_colors, space = "rgb")
 
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-bounds_out <- NULL
+image_records <- list()
 
 for (p in periods) {
   in_tif <- file.path(src_dir, p$tif)
@@ -60,6 +64,14 @@ for (p in periods) {
   # Reproject the small raster to Web Mercator so the imageOverlay aligns with
   # the EPSG:3857 basemap (same approach as export_web_overlay_from_tif.R).
   r <- project(r, "EPSG:3857", method = "bilinear")
+
+  # project() picks its own output resolution and can overshoot max_dim
+  # (e.g. reprojecting the MPI rasters' native EPSG:3035 LAEA grid across a
+  # wide latitude span) -- re-aggregate so every PNG stays comparably sized.
+  fact2 <- ceiling(max(ncol(r), nrow(r)) / max_dim)
+  if (fact2 > 1) {
+    r <- aggregate(r, fact = fact2, fun = "max", na.rm = TRUE)
+  }
   merc_ext <- ext(r)
 
   nx <- ncol(r); ny <- nrow(r)
@@ -89,43 +101,42 @@ for (p in periods) {
   rasterImage(as.raster(rgba), 0, 0, 1, 1, interpolate = FALSE)
   dev.off()
 
-  if (is.null(bounds_out)) {
-    corner_xy <- rbind(
-      c(xmin(merc_ext), ymin(merc_ext)),
-      c(xmin(merc_ext), ymax(merc_ext)),
-      c(xmax(merc_ext), ymin(merc_ext)),
-      c(xmax(merc_ext), ymax(merc_ext))
-    )
-    ll <- project(corner_xy, from = "EPSG:3857", to = "EPSG:4326")
-    bounds_out <- list(
+  corner_xy <- rbind(
+    c(xmin(merc_ext), ymin(merc_ext)),
+    c(xmin(merc_ext), ymax(merc_ext)),
+    c(xmax(merc_ext), ymin(merc_ext)),
+    c(xmax(merc_ext), ymax(merc_ext))
+  )
+  ll <- project(corner_xy, from = "EPSG:3857", to = "EPSG:4326")
+  image_records[[p$key]] <- list(
+    file = paste0("wind/wind_", p$key, ".png"),
+    bounds = list(
       south = min(ll[, 2]), west = min(ll[, 1]),
       north = max(ll[, 2]), east = max(ll[, 1])
     )
-  }
+  )
 
   cat("  wrote", out_png, "(", nx, "x", ny, ")\n")
 }
 
 meta <- list(
-  bounds = bounds_out,
   scenario = "RCP8.5 (SSP5-8.5)",
   risk_cap = risk_cap,
-  images = list(
-    historical = "wind/wind_historical.png",
-    near = "wind/wind_near.png",
-    far = "wind/wind_far.png"
+  images = image_records,
+  gcms = list(
+    default = list(label = "Default", periods = list("historical", "near", "far")),
+    mpi = list(label = "MPI-ESM1-2-HR", periods = list("near_mpi", "far_mpi"))
   ),
   legend = list(
     min_label = "0 — low risk",
     max_label = "≥ 0.5 — high risk",
     colors = ramp_colors
   ),
-  source = "Tommaso — risk_of_wind_damage_*_scenario_ssp585.tif",
-  note = "Probability of wind damage 0-1 (threshold 0.5 = damage). Color saturates at 0.5."
+  source = "Tommaso — risk_of_wind_damage_*_scenario_ssp585*.tif",
+  note = "Probability of wind damage 0-1 (threshold 0.5 = damage). Color saturates at 0.5. Each image carries its own reprojected bounds since the MPI-ESM1-2-HR rasters ship on a different native grid/CRS (EPSG:3035) than the default (EPSG:4326)."
 )
 
 write_json(meta, file.path(out_dir, "wind_meta.json"),
            pretty = TRUE, auto_unbox = TRUE, digits = 8)
 
-cat("Done. Bounds:", bounds_out$west, bounds_out$south,
-    bounds_out$east, bounds_out$north, "\n")
+cat("Done.\n")

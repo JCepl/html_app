@@ -1,22 +1,75 @@
 {
-  "bounds": {
-    "south": 27.42733466,
-    "west": -37.78232679,
-    "north": 73.3541708,
-    "east": 72.30775408
-  },
   "scenario": "RCP8.5 (SSP5-8.5)",
   "risk_cap": 0.5,
   "images": {
-    "historical": "wind/wind_historical.png",
-    "near": "wind/wind_near.png",
-    "far": "wind/wind_far.png"
+    "historical": {
+      "file": "wind/wind_historical.png",
+      "bounds": {
+        "south": 27.43135976,
+        "west": -37.78232679,
+        "north": 73.3541708,
+        "east": 72.29717389
+      }
+    },
+    "near": {
+      "file": "wind/wind_near.png",
+      "bounds": {
+        "south": 27.43135976,
+        "west": -37.78232679,
+        "north": 73.3541708,
+        "east": 72.29717389
+      }
+    },
+    "far": {
+      "file": "wind/wind_far.png",
+      "bounds": {
+        "south": 27.43135976,
+        "west": -37.78232679,
+        "north": 73.3541708,
+        "east": 72.29717389
+      }
+    },
+    "near_mpi": {
+      "file": "wind/wind_near_mpi.png",
+      "bounds": {
+        "south": 27.42298431,
+        "west": -37.78232679,
+        "north": 73.35419058,
+        "east": 72.30037671
+      }
+    },
+    "far_mpi": {
+      "file": "wind/wind_far_mpi.png",
+      "bounds": {
+        "south": 27.42298431,
+        "west": -37.78232679,
+        "north": 73.35419058,
+        "east": 72.30037671
+      }
+    }
+  },
+  "gcms": {
+    "default": {
+      "label": "Default",
+      "periods": [
+        "historical",
+        "near",
+        "far"
+      ]
+    },
+    "mpi": {
+      "label": "MPI-ESM1-2-HR",
+      "periods": [
+        "near_mpi",
+        "far_mpi"
+      ]
+    }
   },
   "legend": {
     "min_label": "0 <e2><80><94> low risk",
     "max_label": "<e2><89><a5> 0.5 <e2><80><94> high risk",
-    "colors": ["#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0", "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000"]
+    "colors": ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"]
   },
-  "source": "Tommaso <e2><80><94> risk_of_wind_damage_*_scenario_ssp585.tif",
-  "note": "Probability of wind damage 0-1 (threshold 0.5 = damage). Color saturates at 0.5."
+  "source": "Tommaso <e2><80><94> risk_of_wind_damage_*_scenario_ssp585*.tif",
+  "note": "Probability of wind damage 0-1 (threshold 0.5 = damage). Color saturates at 0.5. Each image carries its own reprojected bounds since the MPI-ESM1-2-HR rasters ship on a different native grid/CRS (EPSG:3035) than the default (EPSG:4326)."
 }

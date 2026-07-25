@@ -1,0 +1,18 @@
+{
+  "image": "probability_ensemble_mean.png",
+  "bounds": {
+    "south": 34.44604974,
+    "west": -10.7,
+    "north": 71.57,
+    "east": 38.60230996
+  },
+  "dimensions": {
+    "width": 448,
+    "height": 337
+  },
+  "source": "bb_risk (CHELSA-driven, v3 model, no retraining)",
+  "value_range": {
+    "min": 0,
+    "max": 1
+  }
+}
