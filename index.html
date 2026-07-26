@@ -3092,6 +3092,10 @@
 
     // --- Shareable view state (URL hash) -----------------------------------
     // Encode the meaningful view so a link reproduces what the user sees.
+    // Fixed key order for the compact "lo" (layer opacity) param -- must match
+    // the order restored in applyStateFromUrl.
+    const LAYER_OPACITY_KEYS = ["bbtl", "bbtforecast", "phenips", "bbtpast", "wind"];
+
     function buildShareUrl() {
       const p = new URLSearchParams();
       p.set("bm", APP.currentBasemap);
@@ -3110,6 +3114,15 @@
       p.set("rc", APP.currentRcp);
       if (APP.currentYear != null) p.set("yr", String(APP.currentYear));
       p.set("th", String(Math.round(APP.riskThreshold * 100)));
+      // Map view: center + zoom, so a shared link opens on the same place.
+      if (APP.map) {
+        const c = APP.map.getCenter();
+        p.set("lat", c.lat.toFixed(5));
+        p.set("lng", c.lng.toFixed(5));
+        p.set("z", APP.map.getZoom().toFixed(2));
+      }
+      // Per-layer opacity sliders.
+      p.set("lo", LAYER_OPACITY_KEYS.map(function(k) { return APP.layerOpacity[k]; }).join(","));
       return location.origin + location.pathname + "#" + p.toString();
     }
 
@@ -3129,6 +3142,18 @@
       setIf("wp", "currentWindPeriod"); setIf("wg", "currentWindGcm"); setIf("rc", "currentRcp");
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
+
+      if (p.has("lo")) {
+        const vals = p.get("lo").split(",");
+        LAYER_OPACITY_KEYS.forEach(function(key, i) {
+          const v = Number(vals[i]);
+          if (isFinite(v)) APP.layerOpacity[key] = Math.max(0, Math.min(1, v));
+        });
+      }
+      if (p.has("lat") && p.has("lng") && p.has("z")) {
+        const lat = Number(p.get("lat")), lng = Number(p.get("lng")), z = Number(p.get("z"));
+        if (isFinite(lat) && isFinite(lng) && isFinite(z)) APP.map.setView([lat, lng], z);
+      }
 
       const setSel = function(dom, val) { if (dom && val != null) dom.value = val; };
       setSel(DOM.phenipsScenSelector, APP.currentPhenipsScen);
