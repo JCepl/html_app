@@ -2371,6 +2371,27 @@
       }
     }
 
+    // In split screen, drop the same marker on the OTHER map too, so both
+    // sides point at the same spot for comparison. `side` is whichever map
+    // was actually clicked (already the active side by the time this runs).
+    function mirrorClickMarker(latlng, side) {
+      if (!APP.split) return;
+      const otherSide = side === "left" ? "right" : "left";
+      const panel = APP.panels[otherSide];
+      if (!panel || !panel.map) return;
+      if (panel.clickMarker) {
+        panel.clickMarker.setLatLng(latlng);
+      } else {
+        panel.clickMarker = L.circleMarker(latlng, {
+          radius: 5,
+          color: "#666666",
+          weight: 1,
+          fillColor: "#ffffff",
+          fillOpacity: 0.7
+        }).addTo(panel.map);
+      }
+    }
+
     function getCurrentFile() {
       const overlay = OVERLAY_CATALOG.bbtl;
       if (!overlay.available || !overlay.meta) {
@@ -2924,6 +2945,7 @@
         if (APP.split && side !== APP.activeSide) setActiveSide(side);
         updatePanelFromClick(e.latlng);
         openClickPopup(e.latlng);
+        mirrorClickMarker(e.latlng, side);
       });
     }
 
@@ -3123,6 +3145,7 @@
       }
       // Per-layer opacity sliders.
       p.set("lo", LAYER_OPACITY_KEYS.map(function(k) { return APP.layerOpacity[k]; }).join(","));
+      p.set("sp", APP.split ? "1" : "0");
       return location.origin + location.pathname + "#" + p.toString();
     }
 
@@ -3181,6 +3204,10 @@
       updateOverlayCardStates();
       setLegendLabels();
       syncCitationVisibility();
+
+      // Restore split screen last, so the right map clones the already-
+      // restored view/overlay/opacity state from the left one.
+      if (p.get("sp") === "1" && !APP.split) activateSplit();
     }
 
     function bindShareButton() {
