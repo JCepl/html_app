@@ -7,10 +7,10 @@
     "east": 38.60230996
   },
   "dimensions": {
-    "width": 448,
-    "height": 337
+    "width": 331,
+    "height": 453
   },
-  "source": "bb_risk (CHELSA-driven, v3 model, no retraining)",
+  "source": "probability_ensemble_mean.tif",
   "value_range": {
     "min": 0,
     "max": 1

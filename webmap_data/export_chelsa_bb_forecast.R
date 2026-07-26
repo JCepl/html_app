@@ -28,14 +28,17 @@ periods <- list(
   list(key = "2071_2100", src = file.path(src_dir, "bb_risk_mpi_ssp585.tif"))
 )
 
-ramp_colors <- c("#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0",
-                 "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000")
+# Unified Spectral ramp, shared app-wide (see index.html RISK_RAMP).
+ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
 color_ramp <- colorRamp(ramp_colors, space = "rgb")
 fade_knee <- 0.3
 fade_floor <- 90
 
 risk_breaks <- c(0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9)
-risk_colors <- c("#00000000", "#fef08a", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026", "#800026", "#4d0000", "#1a0000")
+# 8 stops resampled off the 11-stop ramp (8 bins need 8 colors, not 11).
+risk_colors <- c("#00000000", "#5e4fa2", "#48a1b3", "#a1d9a4", "#edf8a3",
+                 "#fee99a", "#fca55d", "#e2524a", "#9e0142")
 
 to_mercator_png <- function(r, out_png, colorfun, alpha_fun) {
   r <- project(r, "EPSG:3857", method = "bilinear")

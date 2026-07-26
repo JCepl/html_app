@@ -19,8 +19,10 @@ vmax <- 1
 fade_knee <- 0.3   # low-risk end fades in across the bottom fraction
 fade_floor <- 90   # minimum alpha at zero risk (stays faintly visible)
 
-ramp_colors <- c("#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0",
-                 "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000")
+# Unified Spectral ramp, sampled from Tommaso's own QGIS wind rendering.
+# Shared with RISK_RAMP in index.html and every other export script below.
+ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
 color_ramp  <- colorRamp(ramp_colors, space = "rgb")
 
 tifs <- list.files(root, pattern = "probability_ensemble_mean\\.tif$",

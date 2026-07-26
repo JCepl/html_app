@@ -35,8 +35,8 @@ periods <- list(
   list(key = "far_mpi",    tif = "risk_of_wind_damage_2071_2100_scenario_ssp585_MPI.tif")
 )
 
-# Spectral ramp (matches Tommaso's own QGIS rendering): blue = low risk ->
-# teal/green -> yellow -> orange -> red = high risk.
+# Unified Spectral ramp, sampled from Tommaso's own QGIS wind rendering,
+# shared with every other hazard layer app-wide.
 ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
                  "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
 # sRGB interpolation matches the CSS legend gradient and the JS ramp exactly.

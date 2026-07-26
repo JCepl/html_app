@@ -1269,22 +1269,18 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20260724-chelsa-bb-layer";
+    const ASSET_VERSION = "20260726-spectral-everywhere";
 
-    // Intuitive sequential risk palette (RdYlBu reversed): blue = low ->
-    // pale yellow = mid -> red = high. Shared by the bark-beetle forecast
-    // probability and Science-paper pressure layers so probability surfaces
-    // read consistently. Avoids green so it never clashes with the map's land.
-    const RISK_RAMP = ["#14155f", "#2a45c2", "#3f7af0", "#6f74ee", "#9a5ee0",
-                       "#c94fc0", "#ec4a86", "#ff7a1f", "#f5331a", "#8f0000"];
-    const RISK_GRADIENT = "linear-gradient(to right, #14155f 0%, #2a45c2 11%, #3f7af0 22%, #6f74ee 33%, #9a5ee0 44%, #c94fc0 56%, #ec4a86 67%, #ff7a1f 78%, #f5331a 89%, #8f0000 100%)";
-
-    // Wind ramp (matches Tommaso's own QGIS "Spectral" rendering): blue = low ->
-    // teal/green -> yellow -> orange -> red = high. Kept separate from RISK_RAMP
-    // so the beetle forecast/pressure layers are unaffected.
-    const WIND_RISK_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                            "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
-    const WIND_RISK_GRADIENT = "linear-gradient(to right, #5e4fa2 0%, #3288bd 10%, #66c2a5 20%, #abdda4 30%, #e6f598 40%, #ffffbf 50%, #fee08b 60%, #fdae61 70%, #f46d43 80%, #d53e4f 90%, #9e0142 100%)";
+    // Unified risk palette, shared by every hazard/probability layer (bark
+    // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
+    // directly from Tommaso's own QGIS wind-risk rendering (2026-07 RE-
+    // ENFORCE meeting screenshot). Purple -> blue -> teal -> green -> pale
+    // yellow -> orange -> red -> dark red. Deliberately chosen over a
+    // perceptually-monotonic warm ramp for full color variety and to match
+    // the consortium's shared wind-risk convention everywhere, not just wind.
+    const RISK_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+                       "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
+    const RISK_GRADIENT = "linear-gradient(to right, #5e4fa2 0%, #3288bd 10%, #66c2a5 20%, #abdda4 30%, #e6f598 40%, #ffffbf 50%, #fee08b 60%, #fdae61 70%, #f46d43 80%, #d53e4f 90%, #9e0142 100%)";
     // Low-risk end fades across the bottom RISK_FADE_KNEE of the scale, but
     // never below RISK_FADE_FLOOR opacity, so even ~1% risk stays faintly
     // visible (kept in sync with fade_knee / fade_floor in the R exports).
@@ -1329,7 +1325,6 @@
       return lut;
     }
     const RISK_LUT = buildRiskLut(RISK_RAMP);
-    const WIND_RISK_LUT = buildRiskLut(WIND_RISK_RAMP);
 
     function makeColorToRiskFraction(lut) {
       const cache = new Map();
@@ -1349,7 +1344,6 @@
       };
     }
     const colorToRiskFraction = makeColorToRiskFraction(RISK_LUT);
-    const windColorToRiskFraction = makeColorToRiskFraction(WIND_RISK_LUT);
 
     // Load a same-origin overlay PNG, make pixels below the risk threshold
     // transparent, and return a data URL. Falls back to the original URL on
@@ -1416,8 +1410,7 @@
       };
       const fraction = effectiveRiskFraction(overlayId);
       if (fraction > 0) {
-        const fractionFn = overlayId === "wind" ? windColorToRiskFraction : colorToRiskFraction;
-        loadThresholdedImage(url, fraction, place, function() { place(url); }, fractionFn);
+        loadThresholdedImage(url, fraction, place, function() { place(url); });
       } else {
         place(url);
       }
@@ -2167,28 +2160,28 @@
         DOM.legendBar.style.display = "none";
         if (v === "gdd" && view === "abs") {
           DOM.legendBar.style.display = "block";
-          DOM.legendBar.style.background = "linear-gradient(to right,#ffffcc,#fed976,#fd8d3c,#e31a1c,#800026)";
+          DOM.legendBar.style.background = RISK_GRADIENT;
           DOM.legendMin.textContent = "0 DD";
           DOM.legendMax.textContent = "4000 DD";
         } else if (v === "gdd" && view !== "abs") {
           DOM.legendBar.style.display = "block";
-          DOM.legendBar.style.background = "linear-gradient(to right,#ffffb2,#fecc5c,#fd8d3c,#e31a1c,#800026)";
+          DOM.legendBar.style.background = RISK_GRADIENT;
           DOM.legendMin.textContent = "0 DD";
           DOM.legendMax.textContent = "+1100 DD";
         } else {
-          // generations — categorical swatches
+          // generations — categorical swatches, sampled off the same ramp
           renderLegendSwatches([
-            { color: "#ffff50", label: "1 generation" },
-            { color: "#fd571c", label: "2 generations" },
-            { color: "#8b0000", label: "3 generations" }
+            { color: "#abdda4", label: "1 generation" },
+            { color: "#fec776", label: "2 generations" },
+            { color: "#9e0142", label: "3 generations" }
           ]);
           if (view === "contrast") {
             DOM.legendMin.textContent = "Now (hist) →";
             DOM.legendMax.textContent = "near-future gain";
           } else if (view === "diff" && p !== "hist") {
             renderLegendSwatches([
-              { color: "#fd8d3c", label: "+1 generation" },
-              { color: "#800026", label: "+2 generations" }
+              { color: "#fef0a5", label: "+1 generation" },
+              { color: "#9e0142", label: "+2 generations" }
             ]);
             DOM.legendMin.textContent = "no change";
             DOM.legendMax.textContent = "max gain";
@@ -2222,7 +2215,7 @@
 
       if (topOverlayId === "wind") {
         DOM.legendBar.style.display = "block";
-        DOM.legendBar.style.background = WIND_RISK_GRADIENT;
+        DOM.legendBar.style.background = RISK_GRADIENT;
         DOM.legendMin.textContent = "0 — low";
         DOM.legendMax.textContent = "≥ 0.5 — high";
         return;
@@ -2230,11 +2223,10 @@
 
       if (topOverlayId === "bbtforecast") {
         DOM.legendBar.style.display = "block";
-        // Probability view uses the shared Windy palette; the thresholded risk
-        // view keeps its own risk-highlight scale to match its PNGs.
-        DOM.legendBar.style.background = APP.currentForecastView === "threshold"
-          ? "linear-gradient(to right,#fef08a,#fecc5c,#fd8d3c,#f03b20,#bd0026,#800026,#4d0000,#1a0000)"
-          : RISK_GRADIENT;
+        // Both views now share the same ramp (continuous 0-1 vs. the
+        // classified view's 8 discrete bins over 0.55-1.0+) so switching
+        // views no longer changes the color language, only the granularity.
+        DOM.legendBar.style.background = RISK_GRADIENT;
         if (APP.currentForecastView === "threshold") {
           DOM.legendMin.textContent = formatForecastThreshold(APP.currentForecastThreshold);
           DOM.legendMax.textContent = "1.00";

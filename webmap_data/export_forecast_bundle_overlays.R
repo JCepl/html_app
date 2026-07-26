@@ -23,14 +23,17 @@ if (!file.exists(exporter)) {
   stop("Exporter script not found: ", exporter)
 }
 
-# Intuitive risk palette RdYlBu reversed (kept in sync with RISK_RAMP in index.html):
-# blue = low probability -> pale yellow = mid -> red = high probability.
+# Unified Spectral ramp (kept in sync with RISK_RAMP in index.html and every
+# other export script), sampled from Tommaso's own QGIS wind rendering.
 prob_breaks <- "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"
-prob_colors <- "#14155f,#2a45c2,#3f7af0,#6f74ee,#9a5ee0,#c94fc0,#ec4a86,#ff7a1f,#f5331a,#8f0000"
+# 10 stops resampled off the 11-stop ramp (10 bins need 10 colors); this path
+# is superseded by colorize_prob_continuous.R anyway (run that after this).
+prob_colors <- "#5e4fa2,#388eba,#75c8a5,#bfe5a0,#f1f9a9,#feeea2,#fdbf6f,#f67b4a,#d8434e,#9e0142"
 prob_labels <- "<= 0.10,0.10-0.20,0.20-0.30,0.30-0.40,0.40-0.50,0.50-0.60,0.60-0.70,0.70-0.80,0.80-0.90,> 0.90"
 
 risk_breaks <- "0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9"
-risk_colors <- "#00000000,#fef08a,#fecc5c,#fd8d3c,#f03b20,#bd0026,#800026,#4d0000,#1a0000"
+# 8 stops resampled off the 11-stop ramp (8 bins need 8 colors, not 11).
+risk_colors <- "#00000000,#5e4fa2,#48a1b3,#a1d9a4,#edf8a3,#fee99a,#fca55d,#e2524a,#9e0142"
 risk_labels <- "<= 0.55,0.55-0.60,0.60-0.65,0.65-0.70,0.70-0.75,0.75-0.80,0.80-0.85,0.85-0.90,> 0.90"
 
 run_export <- function(input_tif, breaks_arg, colors_arg, labels_arg, max_dim = "768") {
