@@ -1,0 +1,18 @@
+{
+  "image": "probability_ensemble_mean.png",
+  "bounds": {
+    "south": 34.78412091,
+    "west": -10.48,
+    "north": 71.24,
+    "east": 31.58028476
+  },
+  "dimensions": {
+    "width": 272,
+    "height": 427
+  },
+  "source": "ensemble rcp85 multi-model mean",
+  "value_range": {
+    "min": 0,
+    "max": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "model": "ensemble",
+  "scenario": "rcp85",
+  "period": "2041_2070",
+  "gcms": [],
+  "source_probability_files": ["webmap_data/forecast_bundle/xgb/rcp85/2041_2070/probability_ensemble_mean.tif", "webmap_data/forecast_bundle/rf/rcp85/2041_2070/probability_ensemble_mean.tif", "webmap_data/forecast_bundle/gam/rcp85/2041_2070/probability_ensemble_mean.tif"],
+  "ensemble_probability_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/probability_ensemble_mean.tif",
+  "threshold_visible_tifs": {
+    "0.5": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t50.tif",
+    "0.55": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t55.tif",
+    "0.6": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t60.tif",
+    "0.65": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t65.tif",
+    "0.7": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t70.tif",
+    "0.75": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t75.tif",
+    "0.8": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t80.tif",
+    "0.85": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t85.tif",
+    "0.9": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/risk_visible_t90.tif"
+  },
+  "forecast_confusion_by_gcm": []
+}
