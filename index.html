@@ -234,6 +234,7 @@
     .radar-dot-missing { fill: #ffffff; stroke: #b9c4cf; stroke-width: 1.5; }
 
     .risk-radar-legend { margin-top: 2px; }
+    .risk-radar-loading { padding: 24px 0; text-align: center; color: #6b7f94; font-size: 11px; }
     .radar-legend-row { display: flex; align-items: center; gap: 5px; padding: 1px 0; }
     .radar-legend-swatch {
       width: 8px;
@@ -2991,15 +2992,24 @@
         + countryName + '<br>'
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
         + '<span class="map-popup-val">' + info.valueHtml + '</span>'
-        + '<button type="button" class="risk-radar-btn" data-lat="' + latlng.lat
-        + '" data-lng="' + latlng.lng + '">Risk profile ⬡</button></div>';
-      L.popup({
+        + '<button type="button" class="risk-radar-btn">Risk profile ⬡</button></div>';
+      const popup = L.popup({
         autoPan: false,
         closeButton: false,
         className: "mini-popup",
         maxWidth: 210,
         offset: [0, -4]
       }).setLatLng(latlng).setContent(html).openOn(map);
+
+      // Snapshot THIS side's config now, so the button always samples
+      // whichever side/settings were live when it was actually opened --
+      // both maps in split screen behave independently this way.
+      const radarState = snapshotRadarState(state);
+      const popupEl = popup.getElement();
+      const btn = popupEl && popupEl.querySelector(".risk-radar-btn");
+      if (btn) {
+        btn.addEventListener("click", function() { openRadarChart(latlng, radarState); });
+      }
     }
 
     // ====================================================================
@@ -3009,23 +3019,46 @@
     // (see OVERLAY_CATALOG: wildfire/drought are `available: false`, ash
     // dieback has no layer at all -- it only appears as a pilot-action hazard
     // tag). Those three axes are a fixed 0.2 placeholder until a model
-    // exists; bark beetle and wind are sampled for real.
+    // exists; bark beetle and wind are sampled for real, INCLUDING when
+    // hidden -- a hidden layer is fetched off-screen using whichever config
+    // this side currently holds (its default if never touched, or whatever
+    // was last activated if the user configured it before hiding it: hiding
+    // never resets currentRcp/currentWindPeriod/etc, so reading them already
+    // gives the right answer either way).
     const RADAR_PLACEHOLDER = 0.2;
+    const BBT_OVERLAY_IDS = ["bbtl", "bbtforecast", "bbtpast"];
 
-    // Read the actual DISPLAYED pixel color of a PNG raster overlay at a
-    // latlng from the <img> element Leaflet already loaded (no re-fetch),
-    // then reverse the shared Spectral ramp LUT to recover the risk value --
-    // the same LUT the threshold slider uses to mask pixels, just read
-    // instead of written. Returns null if the layer isn't loaded, the point
-    // falls outside its bounds, or the pixel there is transparent (no data).
-    function sampleRasterOverlayAt(overlayId, latlng) {
-      const layer = APP.layerInstances[overlayId];
-      if (!layer || !layer.getBounds || !layer.getElement) return null;
-      const img = layer.getElement();
-      if (!img || !img.complete || !img.naturalWidth) return null;
-      const b = layer.getBounds();
-      const fracX = (latlng.lng - b.getWest()) / (b.getEast() - b.getWest());
-      const fracY = (b.getNorth() - latlng.lat) / (b.getNorth() - b.getSouth());
+    // Per-session cache so repeated radar samples don't re-fetch the same
+    // off-screen image/geojson/manifest.
+    const RADAR_FETCH_CACHE = new Map();
+    function cachedFetchJson(url) {
+      if (!RADAR_FETCH_CACHE.has(url)) {
+        RADAR_FETCH_CACHE.set(url, fetch(url, { cache: "no-store" }).then(function(r) {
+          if (!r.ok) throw new Error("HTTP " + r.status + " for " + url);
+          return r.json();
+        }));
+      }
+      return RADAR_FETCH_CACHE.get(url);
+    }
+    function cachedFetchImage(url) {
+      if (!RADAR_FETCH_CACHE.has(url)) {
+        RADAR_FETCH_CACHE.set(url, new Promise(function(resolve) {
+          const img = new Image();
+          img.onload = function() { resolve(img); };
+          img.onerror = function() { resolve(null); };
+          img.src = url;
+        }));
+      }
+      return RADAR_FETCH_CACHE.get(url);
+    }
+
+    // Reverse the shared Spectral ramp LUT to recover a risk fraction (0..1)
+    // from a raster's actual pixel color -- the same LUT the threshold
+    // slider uses to mask pixels, just read instead of written.
+    function sampleImageAt(img, bounds, latlng) {
+      if (!img || !img.naturalWidth) return null;
+      const fracX = (latlng.lng - bounds.west) / (bounds.east - bounds.west);
+      const fracY = (bounds.north - latlng.lat) / (bounds.north - bounds.south);
       if (!(fracX >= 0 && fracX <= 1 && fracY >= 0 && fracY <= 1)) return null;
       const px = Math.min(img.naturalWidth - 1, Math.max(0, Math.floor(fracX * img.naturalWidth)));
       const py = Math.min(img.naturalHeight - 1, Math.max(0, Math.floor(fracY * img.naturalHeight)));
@@ -3036,30 +3069,122 @@
         ctx.drawImage(img, 0, 0);
         const d = ctx.getImageData(px, py, 1, 1).data;
         if (d[3] === 0) return null;
-        return colorToRiskFraction(d[0], d[1], d[2]) * overlayScaleCap(overlayId);
+        return colorToRiskFraction(d[0], d[1], d[2]);
       } catch (e) {
         return null; // tainted canvas or similar -- treat as "no data"
       }
     }
 
-    // Best available bark-beetle reading at a point: prefer the vector hex
-    // layer's real value (continuous historical risk), fall back to
-    // whichever bark-beetle PNG overlay is actually loaded.
-    function getBarkBeetleRiskAt(latlng) {
-      const hexFeature = findContainingFeature(APP.currentHexGeojson, latlng);
-      if (hexFeature) {
-        const val = Number(hexFeature.properties.mean);
-        if (isFinite(val)) return val;
+    // Sample a PNG raster overlay's value at a point for a given side's
+    // `state` (live APP for the active side, a parked panel snapshot for
+    // the inactive one) -- whether or not that overlay is actually visible
+    // right now. Prefers the real displayed <img> (cheap) when the layer
+    // happens to already be loaded; otherwise fetches off-screen using
+    // this side's own current model/period/threshold selection.
+    async function sampleRasterOverlayFor(overlayId, latlng, state) {
+      const liveLayer = state.layerInstances && state.layerInstances[overlayId];
+      if (liveLayer && liveLayer.getElement && liveLayer.getBounds) {
+        const img = liveLayer.getElement();
+        if (img && img.complete && img.naturalWidth) {
+          const b = liveLayer.getBounds();
+          const frac = sampleImageAt(img, { west: b.getWest(), east: b.getEast(), north: b.getNorth(), south: b.getSouth() }, latlng);
+          if (frac != null) return frac * overlayScaleCap(overlayId);
+        }
       }
-      const fromForecast = sampleRasterOverlayAt("bbtforecast", latlng);
-      if (fromForecast != null) return fromForecast;
-      return sampleRasterOverlayAt("bbtpast", latlng);
+
+      if (overlayId === "wind") {
+        let meta;
+        try { meta = await ensureWindMetaLoaded(); } catch (e) { return null; }
+        const gcm = state.currentWindPeriod === "historical" ? "default" : state.currentWindGcm;
+        const key = gcm === "mpi" ? state.currentWindPeriod + "_mpi" : state.currentWindPeriod;
+        const image = meta.images[key] || meta.images[state.currentWindPeriod] || meta.images.near;
+        if (!image) return null;
+        const img = await cachedFetchImage("webmap_data/" + image.file + "?v=" + ASSET_VERSION);
+        const frac = sampleImageAt(img, image.bounds, latlng);
+        return frac == null ? null : frac * overlayScaleCap("wind");
+      }
+
+      if (overlayId === "bbtforecast") {
+        try { await ensureForecastManifestLoaded(); } catch (e) { return null; }
+        const manifest = APP.forecastManifest;
+        if (!manifest || !manifest.entries) return null;
+        const entry = manifest.entries[state.currentForecastModel + "::" + state.currentForecastPeriod];
+        if (!entry) return null;
+        const tifPath = state.currentForecastView === "probability"
+          ? entry.ensemble_probability_tif
+          : (entry.threshold_visible_tifs || {})[state.currentForecastThreshold];
+        if (!tifPath) return null;
+        const imagePath = tifPath.replace(/\.tif$/i, ".png") + "?v=" + ASSET_VERSION;
+        const metaPath = tifPath.replace(/\.tif$/i, "_meta.json");
+        let overlayMeta;
+        try { overlayMeta = await cachedFetchJson(metaPath); } catch (e) { return null; }
+        const img = await cachedFetchImage(imagePath);
+        return sampleImageAt(img, overlayMeta.bounds, latlng); // already 0..1
+      }
+
+      if (overlayId === "bbtpast") {
+        let meta;
+        try { meta = await ensurePastOverlayMetaLoaded(); } catch (e) { return null; }
+        if (!meta.image || !meta.bounds) return null;
+        const img = await cachedFetchImage(meta.image + "?v=" + ASSET_VERSION);
+        return sampleImageAt(img, meta.bounds, latlng); // already 0..1
+      }
+
+      return null;
     }
 
-    function computeRadarValues(latlng) {
+    // Bark-beetle reading for a point, for a given side's state: the
+    // vector hex layer ("bbtl") is the default representation unless this
+    // side is currently focused on one of the other two bark-beetle views,
+    // in which case that one is used instead (fetched off-screen if hidden).
+    async function sampleBbtlHexFor(latlng, state) {
+      if (state.currentHexGeojson) {
+        const f = findContainingFeature(state.currentHexGeojson, latlng);
+        if (!f) return null;
+        const v = Number(f.properties.mean);
+        return isFinite(v) ? v : null;
+      }
+      const fileName = MAP_META.files[state.currentRcp + "_" + state.currentYear];
+      if (!fileName) return null;
+      let geojson;
+      try { geojson = await cachedFetchJson(fileName); } catch (e) { return null; }
+      const f = findContainingFeature(geojson, latlng);
+      if (!f) return null;
+      const v = Number(f.properties.mean);
+      return isFinite(v) ? v : null;
+    }
+
+    async function getBarkBeetleRiskFor(latlng, state) {
+      const preferred = BBT_OVERLAY_IDS.includes(state.focusedOverlay) ? state.focusedOverlay : "bbtl";
+      if (preferred === "bbtl") return sampleBbtlHexFor(latlng, state);
+      return sampleRasterOverlayFor(preferred, latlng, state);
+    }
+
+    // Fields relevant to radar sampling, snapshotted at click/popup time so
+    // a button's behavior stays tied to whichever side (and whatever it was
+    // configured to) it was actually opened from, even if the user keeps
+    // interacting with the map(s) afterward -- split screen included.
+    const RADAR_STATE_FIELDS = [
+      "focusedOverlay", "layerInstances", "currentHexGeojson",
+      "currentRcp", "currentYear",
+      "currentForecastModel", "currentForecastPeriod", "currentForecastView", "currentForecastThreshold",
+      "currentWindPeriod", "currentWindGcm"
+    ];
+    function snapshotRadarState(state) {
+      const snap = {};
+      RADAR_STATE_FIELDS.forEach(function(f) { snap[f] = state[f]; });
+      return snap;
+    }
+
+    async function computeRadarValues(latlng, radarState) {
+      const state = radarState || snapshotRadarState(APP);
+      const [bb, wind] = await Promise.all([
+        getBarkBeetleRiskFor(latlng, state),
+        sampleRasterOverlayFor("wind", latlng, state)
+      ]);
       return [
-        { id: "bbtl", label: "Bark beetle", value: getBarkBeetleRiskAt(latlng), placeholder: false },
-        { id: "wind", label: "Wind", value: sampleRasterOverlayAt("wind", latlng), placeholder: false },
+        { id: "bbtl", label: "Bark beetle", value: bb, placeholder: false },
+        { id: "wind", label: "Wind", value: wind, placeholder: false },
         { id: "fire", label: "Fire", value: RADAR_PLACEHOLDER, placeholder: true },
         { id: "ash", label: "Ash dieback", value: RADAR_PLACEHOLDER, placeholder: true },
         { id: "drought", label: "Drought", value: RADAR_PLACEHOLDER, placeholder: true }
@@ -3127,34 +3252,37 @@
       if (APP.radarPanelEl) APP.radarPanelEl.classList.remove("is-open");
     }
 
-    function openRadarChart(latlng) {
-      const values = computeRadarValues(latlng);
+    function radarHeaderHtml(latlng) {
+      return '<div class="risk-radar-header"><strong>Risk profile</strong>'
+        + '<span class="risk-radar-coords">' + latlng.lat.toFixed(3) + ', ' + latlng.lng.toFixed(3) + '</span>'
+        + '<button type="button" class="risk-radar-close" aria-label="Close">&times;</button></div>';
+    }
+
+    // `radarState` is a snapshot from snapshotRadarState (see attachMapClick)
+    // identifying which side's config to sample hidden layers with; falls
+    // back to the live active side if called without one.
+    async function openRadarChart(latlng, radarState) {
       const el = ensureRadarPanel();
+      el.innerHTML = radarHeaderHtml(latlng) + '<div class="risk-radar-loading">Sampling hazard layers…</div>';
+      el.classList.add("is-open");
+      el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
+
+      const values = await computeRadarValues(latlng, radarState);
+      if (!el.classList.contains("is-open")) return; // closed while sampling
+
       const rows = values.map(function(v) {
         const shown = v.value == null ? "no data" : Math.round(v.value * 100) + "%";
         const note = v.placeholder ? "placeholder — no model yet"
-          : (v.value == null ? "layer not loaded" : "");
+          : (v.value == null ? "no data at this point" : "");
         return '<div class="radar-legend-row"><span class="radar-legend-swatch'
           + (v.placeholder ? " is-placeholder" : "") + '"></span>' + v.label
           + ': <strong>' + shown + '</strong>'
           + (note ? '<span class="radar-legend-note">' + note + '</span>' : '') + '</div>';
       }).join("");
-      el.innerHTML = '<div class="risk-radar-header"><strong>Risk profile</strong>'
-        + '<span class="risk-radar-coords">' + latlng.lat.toFixed(3) + ', ' + latlng.lng.toFixed(3) + '</span>'
-        + '<button type="button" class="risk-radar-close" aria-label="Close">&times;</button></div>'
-        + renderRadarSvg(values)
+      el.innerHTML = radarHeaderHtml(latlng) + renderRadarSvg(values)
         + '<div class="risk-radar-legend">' + rows + '</div>';
-      el.classList.add("is-open");
       el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
     }
-
-    // Delegated (not per-popup) listener: popups are recreated on every
-    // click, so this is registered once and matches the button by class.
-    document.addEventListener("click", function(e) {
-      const btn = e.target.closest(".risk-radar-btn");
-      if (!btn) return;
-      openRadarChart(L.latLng(Number(btn.dataset.lat), Number(btn.dataset.lng)));
-    });
 
     // Basemap options. `build` returns a fresh tile layer (or null for the
     // plain border-only style); `bg` sets the map background behind the tiles.
