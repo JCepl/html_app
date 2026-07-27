@@ -1147,6 +1147,7 @@
                 <select id="forecastViewSelector">
                   <option value="threshold">Thresholded risk</option>
                   <option value="probability">Ensemble probability</option>
+                  <option value="delta">Δ Change vs. current (2011–2040)</option>
                 </select>
               </div>
             </div>
@@ -1423,6 +1424,12 @@
     const RISK_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
                        "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
     const RISK_GRADIENT = "linear-gradient(to right, #5e4fa2 0%, #3288bd 10%, #66c2a5 20%, #abdda4 30%, #e6f598 40%, #ffffbf 50%, #fee08b 60%, #fdae61 70%, #f46d43 80%, #d53e4f 90%, #9e0142 100%)";
+    // Diverging (ColorBrewer RdBu) ramp for the bark-beetle ensemble forecast's
+    // "delta vs. current" view -- deliberately a different family from the
+    // Spectral RISK_GRADIENT so a change map is never mistaken for an
+    // absolute-risk one. Matches DELTA_RAMP/DELTA_CAP in build_ensemble_delta.R.
+    const DELTA_GRADIENT = "linear-gradient(to right, #2166ac 0%, #4393c3 10%, #92c5de 20%, #d1e5f0 30%, #f7f7f7 40%, #f7f7f7 50%, #fddbc7 60%, #f4a582 70%, #d6604d 80%, #b2182b 90%, #67001f 100%)";
+    const DELTA_CAP = 0.30;
     // Low-risk end fades across the bottom RISK_FADE_KNEE of the scale, but
     // never below RISK_FADE_FLOOR opacity, so even ~1% risk stays faintly
     // visible (kept in sync with fade_knee / fade_floor in the R exports).
@@ -1539,6 +1546,11 @@
     // legend and slider range describe); stacked layers underneath render full.
     function effectiveRiskFraction(overlayId) {
       if (overlayId !== getTopVisibleOverlayId()) return 0;
+      // The delta view is colored with a diverging (blue/white/red) ramp, not
+      // the shared Spectral risk ramp the slider's color reversal assumes --
+      // thresholding it would reverse-match delta colors against the wrong
+      // LUT. Never mask it; it's not a "risk" surface to begin with.
+      if (overlayId === "bbtforecast" && APP.currentForecastView === "delta") return 0;
       return riskFractionFor(overlayId);
     }
 
@@ -1898,8 +1910,8 @@
     }
 
     function getForecastOverlayPaths(entry) {
-      const tifPath = APP.currentForecastView === "probability"
-        ? entry.ensemble_probability_tif
+      const tifPath = APP.currentForecastView === "probability" ? entry.ensemble_probability_tif
+        : APP.currentForecastView === "delta" ? entry.delta_from_near_tif
         : entry.threshold_visible_tifs[APP.currentForecastThreshold];
 
       if (!tifPath) {
@@ -2286,7 +2298,7 @@
         return formatForecastThreshold(value);
       });
       DOM.forecastViewSelector.value = APP.currentForecastView;
-      DOM.forecastThresholdSelector.disabled = APP.currentForecastView === "probability";
+      DOM.forecastThresholdSelector.disabled = APP.currentForecastView !== "threshold";
 
       const cutoff = Number(APP.currentForecastThreshold);
       const row = (metrics.aggregate_by_cutoff || []).find(function(item) {
@@ -2404,6 +2416,14 @@
         DOM.legendBar.style.background = RISK_GRADIENT;
         DOM.legendMin.textContent = "0 — low";
         DOM.legendMax.textContent = "≥ 0.5 — high";
+        return;
+      }
+
+      if (topOverlayId === "bbtforecast" && APP.currentForecastView === "delta") {
+        DOM.legendBar.style.display = "block";
+        DOM.legendBar.style.background = DELTA_GRADIENT;
+        DOM.legendMin.textContent = "-" + Math.round(DELTA_CAP * 100) + " pts";
+        DOM.legendMax.textContent = "+" + Math.round(DELTA_CAP * 100) + " pts";
         return;
       }
 
@@ -3165,9 +3185,12 @@
         if (!manifest || !manifest.entries) return null;
         const entry = manifest.entries[state.currentForecastModel + "::" + state.currentForecastPeriod];
         if (!entry) return null;
-        const tifPath = state.currentForecastView === "probability"
-          ? entry.ensemble_probability_tif
-          : (entry.threshold_visible_tifs || {})[state.currentForecastThreshold];
+        // The radar chart always wants an absolute risk reading (0..1), never
+        // a delta -- a negative change doesn't fit its 0-100% axis semantic
+        // -- so only the "threshold" view diverts to a classified raster.
+        const tifPath = state.currentForecastView === "threshold"
+          ? (entry.threshold_visible_tifs || {})[state.currentForecastThreshold]
+          : entry.ensemble_probability_tif;
         if (!tifPath) return null;
         const imagePath = tifPath.replace(/\.tif$/i, ".png") + "?v=" + ASSET_VERSION;
         const metaPath = tifPath.replace(/\.tif$/i, "_meta.json");

@@ -1,0 +1,23 @@
+{
+  "image": "delta_from_near.png",
+  "bounds": {
+    "south": 42.09,
+    "west": -10.48,
+    "north": 71.02,
+    "east": 31.65
+  },
+  "dimensions": {
+    "width": 383,
+    "height": 263
+  },
+  "source": "ensemble rcp26: 2041_2070 minus 2011_2040 (\"current\")",
+  "value_range": {
+    "min": -0.3,
+    "max": 0.3
+  },
+  "actual_range": {
+    "min": -0.4905,
+    "max": 0.2996
+  },
+  "baseline_period": "2011_2040"
+}
