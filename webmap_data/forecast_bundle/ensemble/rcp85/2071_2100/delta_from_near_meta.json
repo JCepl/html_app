@@ -17,9 +17,10 @@
     "unit": "percent"
   },
   "actual_range": {
-    "min": -66.9,
-    "max": 634.2
+    "min": -80,
+    "max": 1000
   },
   "baseline_period": "2011_2040",
-  "baseline_floor": 0.03
+  "baseline_floor": 0.03,
+  "method": "decoded directly from sibling probability PNGs, no resampling"
 }
