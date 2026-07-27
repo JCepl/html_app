@@ -1344,6 +1344,7 @@
       pilotLayerLeft: null,
       pilotLayerRight: null,
       radarPanelEl: null,
+      radarRequestToken: 0,
       basemapLayer: null,
       currentBasemap: "osm",
       clickMarker: null,
@@ -3038,7 +3039,7 @@
         + countryName + '<br>'
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
         + '<span class="map-popup-val">' + info.valueHtml + '</span>'
-        + '<button type="button" class="risk-radar-btn">Risk profile ⬡</button></div>';
+        + '<button type="button" class="risk-radar-btn">Hazard profile ⬡</button></div>';
       const popup = L.popup({
         autoPan: false,
         closeButton: false,
@@ -3333,7 +3334,7 @@
     }
 
     function radarHeaderHtml(latlng) {
-      return '<div class="risk-radar-header"><strong>Risk profile</strong>'
+      return '<div class="risk-radar-header"><strong>Hazard profile</strong>'
         + '<span class="risk-radar-coords">' + latlng.lat.toFixed(3) + ', ' + latlng.lng.toFixed(3) + '</span>'
         + '<button type="button" class="risk-radar-close" aria-label="Close">&times;</button></div>';
     }
@@ -3341,13 +3342,21 @@
     // `radarState` is a snapshot from snapshotRadarState (see attachMapClick)
     // identifying which side's config to sample hidden layers with; falls
     // back to the live active side if called without one.
+    //
+    // Sampling is async (off-screen fetches for hidden layers can take a
+    // moment), so clicking a second point before the first finishes must
+    // not let the slower, stale request clobber the newer one once both
+    // resolve -- guarded the same way the app's other async overlay loads
+    // already are, with a monotonic request token checked before render.
     async function openRadarChart(latlng, radarState) {
+      const token = ++APP.radarRequestToken;
       const el = ensureRadarPanel();
       el.innerHTML = radarHeaderHtml(latlng) + '<div class="risk-radar-loading">Sampling hazard layers…</div>';
       el.classList.add("is-open");
       el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
 
       const values = await computeRadarValues(latlng, radarState);
+      if (token !== APP.radarRequestToken) return; // a newer click superseded this one
       if (!el.classList.contains("is-open")) return; // closed while sampling
 
       const rows = values.map(function(v) {
