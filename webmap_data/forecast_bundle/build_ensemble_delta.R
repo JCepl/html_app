@@ -2,11 +2,10 @@
 # Bark-beetle ensemble forecast: "current vs future" delta layers, as
 # RELATIVE percent change (not absolute probability points).
 #
-# Two comparisons per future period:
-#   delta_from_near  = this period vs 2011-2040 ("current" -- no independent
-#                       historical/observed baseline exists at this
-#                       resolution, so near-future stands in for it)
-#   delta_from_prior = this period vs the PREVIOUS period (sequential change)
+# delta_from_near = each future period (2041-2070, 2071-2100) vs 2011-2040
+# ("current" -- no independent historical/observed baseline exists at this
+# resolution, so near-future stands in for it, same convention used
+# elsewhere in the app).
 #
 # CRITICAL: do NOT use probability_ensemble_mean.tif's own embedded
 # georeferencing for anything, not even as a resampling source. It does not
@@ -21,6 +20,17 @@
 # write the output on that IDENTICAL pixel grid. Zero resampling, zero
 # reliance on the tif -- the output can't be misaligned because it's the
 # same grid, pixel for pixel.
+#
+# The PNG's own colors were rendered from continuous float values via
+# piecewise-LINEAR interpolation along the 11-stop ramp (same as the app's
+# client-side rampColor()), not snapped to the 11 stops themselves -- an
+# earlier version of this script decoded against only the 11 raw stops,
+# which quantized everything to 11 discrete levels and produced blocky,
+# uniform "plateau" regions in the delta (most visible over Spain/UK) that
+# looked exactly like another alignment bug but wasn't one. Fixed by
+# decoding against a 256-step LUT built the same way the PNG's colors were
+# generated (interpolated between consecutive stops), recovering
+# near-continuous precision.
 #
 # Usage: Rscript webmap_data/forecast_bundle/build_ensemble_delta.R
 
@@ -47,7 +57,23 @@ hex2rgb01 <- function(hexvec) {
   m <- t(grDevices::col2rgb(hexvec)) / 255
   m
 }
-PROB_LUT <- hex2rgb01(PROB_RAMP)  # 11x3, rows correspond to t = 0, 0.1, ..., 1
+
+# Piecewise-linear interpolation along a hex ramp at n samples -- mirrors
+# the app's own rampColor()/buildRiskLut() (also n=256), so decoding against
+# this recovers the same continuous value the ramp was built from.
+build_fine_lut <- function(hex_ramp, n = 256) {
+  stops <- hex2rgb01(hex_ramp)
+  k <- nrow(stops)
+  out <- matrix(0, nrow = n, ncol = 3)
+  for (i in seq_len(n)) {
+    t <- (i - 1) / (n - 1) * (k - 1)  # position in stop-space, 0..(k-1)
+    lo <- floor(t); hi <- min(lo + 1, k - 1)
+    frac <- t - lo
+    out[i, ] <- stops[lo + 1, ] * (1 - frac) + stops[hi + 1, ] * frac
+  }
+  out
+}
+PROB_LUT <- build_fine_lut(PROB_RAMP, 256)
 
 # Reverse-map an RGB pixel to its nearest ramp position (0..1), vectorized.
 # alpha == 0 (fully transparent) means "no data" -> NA.
@@ -138,8 +164,6 @@ write_delta <- function(scen, later_per, earlier_per, out_name, label) {
 for (scen in scenarios) {
   write_delta(scen, "2041_2070", "2011_2040", "delta_from_near", "current")
   write_delta(scen, "2071_2100", "2011_2040", "delta_from_near", "current")
-  write_delta(scen, "2041_2070", "2011_2040", "delta_from_prior", "previous period")
-  write_delta(scen, "2071_2100", "2041_2070", "delta_from_prior", "previous period")
 }
 
 log_step("Done.")

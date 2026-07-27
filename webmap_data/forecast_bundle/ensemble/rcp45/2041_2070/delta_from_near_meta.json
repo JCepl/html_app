@@ -17,8 +17,8 @@
     "unit": "percent"
   },
   "actual_range": {
-    "min": -50,
-    "max": 200
+    "min": -30.1,
+    "max": 163.6
   },
   "baseline_period": "2011_2040",
   "baseline_floor": 0.03,
