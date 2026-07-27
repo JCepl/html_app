@@ -1,23 +1,25 @@
 {
   "image": "delta_from_near.png",
   "bounds": {
-    "south": 42.09,
+    "south": 42.122,
     "west": -10.48,
     "north": 71.02,
-    "east": 31.65
+    "east": 31.6058
   },
   "dimensions": {
     "width": 383,
     "height": 263
   },
-  "source": "ensemble rcp45: 2071_2100 minus 2011_2040 (\"current\")",
+  "source": "ensemble rcp45: % change 2071_2100 vs 2011_2040 (\"current\")",
   "value_range": {
-    "min": -0.3,
-    "max": 0.3
+    "min": -100,
+    "max": 100,
+    "unit": "percent"
   },
   "actual_range": {
-    "min": -0.2977,
-    "max": 0.3205
+    "min": -36.5,
+    "max": 185
   },
-  "baseline_period": "2011_2040"
+  "baseline_period": "2011_2040",
+  "baseline_floor": 0.03
 }

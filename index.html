@@ -1147,7 +1147,7 @@
                 <select id="forecastViewSelector">
                   <option value="threshold">Thresholded risk</option>
                   <option value="probability">Ensemble probability</option>
-                  <option value="delta">Δ Change vs. current (2011–2040)</option>
+                  <option value="delta">Δ % change vs. current (2011–2040)</option>
                 </select>
               </div>
             </div>
@@ -1429,7 +1429,7 @@
     // Spectral RISK_GRADIENT so a change map is never mistaken for an
     // absolute-risk one. Matches DELTA_RAMP/DELTA_CAP in build_ensemble_delta.R.
     const DELTA_GRADIENT = "linear-gradient(to right, #2166ac 0%, #4393c3 10%, #92c5de 20%, #d1e5f0 30%, #f7f7f7 40%, #f7f7f7 50%, #fddbc7 60%, #f4a582 70%, #d6604d 80%, #b2182b 90%, #67001f 100%)";
-    const DELTA_CAP = 0.30;
+    const DELTA_CAP = 100; // percent change, saturates the ramp at +/-100%
     // Low-risk end fades across the bottom RISK_FADE_KNEE of the scale, but
     // never below RISK_FADE_FLOOR opacity, so even ~1% risk stays faintly
     // visible (kept in sync with fade_knee / fade_floor in the R exports).
@@ -2422,8 +2422,8 @@
       if (topOverlayId === "bbtforecast" && APP.currentForecastView === "delta") {
         DOM.legendBar.style.display = "block";
         DOM.legendBar.style.background = DELTA_GRADIENT;
-        DOM.legendMin.textContent = "-" + Math.round(DELTA_CAP * 100) + " pts";
-        DOM.legendMax.textContent = "+" + Math.round(DELTA_CAP * 100) + " pts";
+        DOM.legendMin.textContent = "-" + DELTA_CAP + "%";
+        DOM.legendMax.textContent = "+" + DELTA_CAP + "%";
         return;
       }
 
