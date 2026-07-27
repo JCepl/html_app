@@ -121,24 +121,36 @@
 
     .map-popup strong { color: #0f3b73; }
 
-    /* RE-ENFORCE pilot-action markers (partner-country reference pins). */
+    /* RE-ENFORCE pilot-action markers -- matches the official BFW/Stefan
+       Ebner pilot-areas map style: a solid yellow dot with a black outline,
+       labeled with its PA-N disturbance code, on a satellite basemap. */
     .pilot-marker-icon {
-      width: 30px;
-      height: 30px;
+      width: 16px;
+      height: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.95);
-      border: 2px solid #1f1f1f;
+      background: #ffe600;
+      border: 1.5px solid #1a1a1a;
       border-radius: 50%;
-      font-size: 15px;
-      line-height: 1;
-      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
       cursor: pointer;
     }
     .pilot-marker-icon:hover {
-      background: #ffffff;
-      transform: scale(1.08);
+      background: #fff34d;
+      transform: scale(1.2);
+    }
+    .pilot-marker-label {
+      position: absolute;
+      left: 20px;
+      top: -3px;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffe600;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
+        0 0 3px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
     }
     .pilot-popup .leaflet-popup-content { margin: 8px 10px; font-size: 12px; line-height: 1.4; }
     .pilot-popup a { color: #0f3b73; font-weight: 700; }
@@ -1571,26 +1583,35 @@
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
     const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
 
-    // RE-ENFORCE pilot-action reference sites: partner-country locations,
-    // each tagged with its lead hazard and a link to the project's own
-    // write-up. Static reference layer -- same pins regardless of which
-    // model/period the hazard layers above are showing.
+    // RE-ENFORCE pilot-action reference sites. Sourced from the project's own
+    // pages, not guessed:
+    //  - site names, countries, hazard types, years: interreg-central.eu/projects/re-enforce
+    //  - PA-N disturbance codes + "ten pilot areas" total: bfw.gv.at (Stefan Ebner's
+    //    institution), whose own map plots these as plain yellow dots labeled by
+    //    PA-N -- replicated here as the marker style (see .pilot-marker-icon).
+    // Only Pilsen has a published exact coordinate; the rest are approximate
+    // (town/region centroid) since RE-ENFORCE hasn't published precise ones --
+    // marked `approx: true` so the popup is honest about precision. The BFW map
+    // shows 10 pilot areas project-wide; these are the 6 individually named and
+    // described on the project's own site.
     const PILOT_ACTIONS = [
-      { id: "cz-ash", label: "Czech pilot", type: "Ash dieback", lat: 49.80, lng: 15.50, icon: "🌿",
-        link: "https://www.interreg-central.eu/news/%F0%9F%9A%80%F0%9F%8C%B2-re-enforce-field-update-from-czech-republic/" },
-      { id: "at-bb", label: "Austria pilot", type: "Bark beetle", lat: 48.75, lng: 15.58, icon: "🪲",
-        link: "https://www.interreg-central.eu/news/%F0%9F%9A%80%F0%9F%8C%B2-re-enforce-uav-mission-update-monitoring-forest-recovery-from-above-this-time-in-austria/" },
-      { id: "pl-overview", label: "Poland pilot", type: "Storm", lat: 52.30, lng: 19.20, icon: "🌬️",
-        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
-      { id: "hu-overview", label: "Hungary pilot", type: "Ash dieback", lat: 46.30, lng: 17.50, icon: "🌿",
-        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
-      { id: "si-overview", label: "Slovenia pilot", type: "Improper management", lat: 46.05, lng: 14.85, icon: "⚠️",
-        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
-      { id: "hr-overview", label: "Croatia pilot", type: "Drought", lat: 45.75, lng: 15.65, icon: "💧",
-        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
-      { id: "es-overview", label: "Project overview", type: "Fire", lat: 43.20, lng: 9.30, icon: "🔥",
+      { id: "pl-myszyniec", label: "Myszyniec Forest District", country: "Poland", pa: "PA-3",
+        type: "Fire (stand-replacing, 2014)", lat: 53.2833, lng: 21.35, approx: true,
         link: "https://www.interreg-central.eu/projects/re-enforce/" },
-      { id: "ro-overview", label: "Project overview", type: "Improper management", lat: 45.90, lng: 25.00, icon: "⚠️",
+      { id: "pl-rytel", label: "Rytel Forest District", country: "Poland", pa: "PA-6",
+        type: "Windthrow (2017, active restoration)", lat: 53.85, lng: 17.75, approx: true,
+        link: "https://www.interreg-central.eu/projects/re-enforce/" },
+      { id: "cz-pilsen", label: "Near Pilsen (Plzeň)", country: "Czech Republic", pa: "PA-2 / PA-5",
+        type: "Drought & bark beetle (since 2018)", lat: 49.8516714, lng: 13.4085067, approx: false,
+        link: "https://www.interreg-central.eu/projects/re-enforce/" },
+      { id: "at-japons", label: "Japons", country: "Austria", pa: "PA-5",
+        type: "Bark beetle", lat: 48.62, lng: 15.19, approx: true,
+        link: "https://www.interreg-central.eu/projects/re-enforce/" },
+      { id: "de-ne", label: "Northeastern Germany", country: "Germany", pa: "PA-1 / PA-6",
+        type: "Storm & ash dieback (2022)", lat: 53.70, lng: 12.64, approx: true,
+        link: "https://www.interreg-central.eu/projects/re-enforce/" },
+      { id: "si-goriska", label: "Goriška Karst", country: "Slovenia", pa: "PA-3",
+        type: "Wildfire (2022)", lat: 45.85, lng: 13.65, approx: true,
         link: "https://www.interreg-central.eu/projects/re-enforce/" }
     ];
     const DOM = {
@@ -1656,6 +1677,17 @@
 
     function isOverlayVisible(overlayId) {
       return APP.visibleOverlays.includes(overlayId);
+    }
+
+    // Same as getTopVisibleOverlayId, but for an arbitrary state bundle (the
+    // live APP for the active split-screen side, or a parked APP.panels[...]
+    // snapshot for the inactive side) -- lets click-info be computed for
+    // either side without switching which one is "active".
+    function getTopVisibleOverlayIdFor(state) {
+      if (!state.visibleOverlays || !state.visibleOverlays.length) {
+        return state.focusedOverlay || "bbtl";
+      }
+      return state.visibleOverlays[state.visibleOverlays.length - 1];
     }
 
     function syncOverlayVisibilityFlag() {
@@ -2822,22 +2854,76 @@
       }
     }
 
+    // Computes the label + sampled value for a click, against an arbitrary
+    // state bundle -- mirrors the per-overlay branches in updatePanelFromClick
+    // but reads no DOM and mutates nothing, so it's safe to call for the
+    // inactive split-screen side too (with its own parked overlay/period).
+    function computeClickValueInfo(state, latlng) {
+      const overlayId = getTopVisibleOverlayIdFor(state);
+      const overlay = OVERLAY_CATALOG[overlayId] || {};
+      const label = overlay.label || "Layer";
+
+      if (overlayId === "phenips") {
+        const pt = samplePhenipsAt(latlng);
+        if (!pt) return { label: label, valueHtml: "—" };
+        const v    = state.currentPhenipsVar;
+        const p    = state.currentPhenisPeriod;
+        const unit = v === "gdd" ? " DD" : " gen";
+        const prec = v === "gdd" ? 0 : 2;
+        const hist = v === "gdd" ? pt.gdd_hist : pt.gen_hist;
+        const scens = ["rcp85", "rcp26", "rcp45"];
+        const labels = { rcp85: "RCP8.5", rcp26: "RCP2.6", rcp45: "RCP4.5" };
+        let lines = [];
+        if (p === "hist") {
+          lines.push("Hist: " + (hist != null ? hist.toFixed(prec) + unit : "—"));
+        } else {
+          scens.forEach(function(s) {
+            const key = (v === "gdd" ? "gdd_" : "gen_") + s + "_" + p;
+            const val = pt[key];
+            if (val == null) { lines.push(labels[s] + ": —"); return; }
+            const d = val - hist;
+            lines.push(labels[s] + ": " + val.toFixed(prec) + unit +
+              " (" + (d >= 0 ? "+" : "") + d.toFixed(prec) + ")");
+          });
+        }
+        return { label: label, valueHtml: lines.join("<br>") };
+      }
+
+      if (overlayId === "bbtforecast") return { label: label, valueHtml: "PNG overlay" };
+      if (overlayId === "bbtpast")     return { label: label, valueHtml: "Classified PNG overlay" };
+      if (overlayId === "wind")        return { label: label, valueHtml: "PNG overlay" };
+
+      const hexFeature = findContainingFeature(state.currentHexGeojson, latlng);
+      if (hexFeature) {
+        const val = Number(hexFeature.properties.mean);
+        return { label: label, valueHtml: isFinite(val) ? val.toFixed(6) : "NA" };
+      }
+      return { label: label, valueHtml: "—" };
+    }
+
     // Lightweight on-map popup mirroring the side-panel readout, so a click
     // gives an immediate value bubble at the point (like Esri map popups).
-    function openClickPopup(latlng) {
-      if (!APP.overlayVisible) return;
-      const label = (OVERLAY_CATALOG[getTopVisibleOverlayId()] || {}).label || "Layer";
-      const html = '<div class="map-popup"><strong>' + label + '</strong><br>'
-        + (DOM.country.textContent || "—") + '<br>'
+    // `state`/`map` default to the active side, but split-screen clicks also
+    // call this with the parked panel + the OTHER map so both sides get their
+    // own popup instead of only the actively-clicked one.
+    function openClickPopup(latlng, state, map) {
+      state = state || APP;
+      map = map || APP.map;
+      if (!state.overlayVisible) return;
+      const info = computeClickValueInfo(state, latlng);
+      const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
+      const countryName = countryFeature ? getCountryName(countryFeature) : "—";
+      const html = '<div class="map-popup"><strong>' + info.label + '</strong><br>'
+        + countryName + '<br>'
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
-        + '<span class="map-popup-val">' + (DOM.hexValue.innerHTML || "—") + '</span></div>';
+        + '<span class="map-popup-val">' + info.valueHtml + '</span></div>';
       L.popup({
         autoPan: false,
         closeButton: false,
         className: "mini-popup",
         maxWidth: 210,
         offset: [0, -4]
-      }).setLatLng(latlng).setContent(html).openOn(APP.map);
+      }).setLatLng(latlng).setContent(html).openOn(map);
     }
 
     // Basemap options. `build` returns a fresh tile layer (or null for the
@@ -3003,13 +3089,21 @@
       PILOT_ACTIONS.forEach(function(p) {
         const icon = L.divIcon({
           className: "",
-          html: '<div class="pilot-marker-icon" title="' + p.label + ': ' + p.type + '">' + p.icon + '</div>',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -15]
+          html: '<div style="position:relative;">'
+            + '<div class="pilot-marker-icon" title="' + p.label + ' (' + p.country + '): ' + p.type + '"></div>'
+            + '<div class="pilot-marker-label">' + p.pa + '</div>'
+            + '</div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+          popupAnchor: [0, -8]
         });
-        const popupHtml = '<strong>' + p.label + '</strong><br>' + p.type + '<br>'
-          + '<a href="' + p.link + '" target="_blank" rel="noopener noreferrer">RE-ENFORCE write-up ↗</a>';
+        const coordNote = p.approx
+          ? "Approx. location (exact coordinates not published)"
+          : "Coordinates: " + p.lat.toFixed(4) + "°N, " + p.lng.toFixed(4) + "°E";
+        const popupHtml = '<strong>' + p.label + '</strong> — ' + p.country + '<br>'
+          + p.pa + ': ' + p.type + '<br>'
+          + '<span style="color:#666;font-size:11px;">' + coordNote + '</span><br>'
+          + '<a href="' + p.link + '" target="_blank" rel="noopener noreferrer">RE-ENFORCE project page ↗</a>';
         L.marker([p.lat, p.lng], { icon: icon, keyboard: false })
           .bindPopup(popupHtml, { className: "pilot-popup", closeButton: true })
           .addTo(group);
@@ -3041,8 +3135,19 @@
       map.on("click", function(e) {
         if (APP.split && side !== APP.activeSide) setActiveSide(side);
         updatePanelFromClick(e.latlng);
-        openClickPopup(e.latlng);
+        openClickPopup(e.latlng, APP, APP.map);
         mirrorClickMarker(e.latlng, side);
+
+        // Unify the info popup across both maps in split screen: the other
+        // side keeps its own parked overlay/period settings, so sample and
+        // show its value too, not just the side that was actually clicked.
+        if (APP.split) {
+          const otherSide = side === "left" ? "right" : "left";
+          const otherPanel = APP.panels[otherSide];
+          if (otherPanel && otherPanel.map) {
+            openClickPopup(e.latlng, otherPanel, otherPanel.map);
+          }
+        }
       });
     }
 
