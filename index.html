@@ -1332,6 +1332,20 @@
     //  - Data is pre-rendered by the R scripts in webmap_data/ into PNGs +
     //    *_meta.json; bump ASSET_VERSION when those are regenerated.
     // Keep most runtime state in one object so the app remains easy to inspect in DevTools.
+    //
+    // SECTIONS IN THIS FILE, IN ORDER (search for the "====" banners):
+    //  1. RISK COLOUR SCALE, THRESHOLD SLIDER & PNG MASKING
+    //  2. OVERLAY REGISTRY HELPERS (visibility, panes, image layers)
+    //  3. BARK-BEETLE FORECAST BUNDLE (manifest, entries, metrics)
+    //  4. PHENIPS & WIND RASTER LAYERS
+    //  5. LEGEND
+    //  6. HEX / COUNTRY STYLING, CLICK MARKER & READOUT
+    //  7. LAYER LOADERS & CONTROL-PANEL SYNC
+    //  8. CLICK INSPECTION & POPUP
+    //  9. RISK RADAR CHART -- 5-hazard profile at a clicked point
+    // 10. BASEMAPS
+    // 11. SPLIT SCREEN -- two synced maps; the panel drives the ACTIVE one
+    // 12. INIT, SHAREABLE LINK & CONTROL WIRING
     const APP = {
       map: null,
       // Stable reference to the original (left) Leaflet map instance, set
@@ -3377,12 +3391,11 @@
       el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
     }
 
-    // Basemap options. `build` returns a fresh tile layer (or null for the
-    // plain border-only style); `bg` sets the map background behind the tiles.
-
     // ====================================================================
     // BASEMAPS
     // ====================================================================
+    // Basemap options. `build` returns a fresh tile layer (or null for the
+    // plain border-only style); `bg` sets the map background behind the tiles.
     const CARTO_ATTRIB = "&copy; OpenStreetMap contributors &copy; CARTO";
     const BASEMAPS = {
       osm: {
