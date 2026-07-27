@@ -1428,8 +1428,14 @@
     // Diverging (ColorBrewer RdBu) ramp for the bark-beetle ensemble forecast's
     // "delta vs. current" view -- deliberately a different family from the
     // Spectral RISK_GRADIENT so a change map is never mistaken for an
-    // absolute-risk one. Matches DELTA_RAMP/DELTA_CAP in build_ensemble_delta.R.
-    const DELTA_GRADIENT = "linear-gradient(to right, #2166ac 0%, #4393c3 10%, #92c5de 20%, #d1e5f0 30%, #f7f7f7 40%, #f7f7f7 50%, #fddbc7 60%, #f4a582 70%, #d6604d 80%, #b2182b 90%, #67001f 100%)";
+    // absolute-risk one. Matches DELTA_RAMP/PCT_CAP in build_ensemble_delta.R.
+    // Stop positions are NOT evenly spaced -- they mirror the signed-sqrt
+    // transform the R script applies before coloring (0/+-18/+-32/+-42/+-48%
+    // land at 0/18/32/42/48% etc.), so the legend bar's own color spacing
+    // shows the same "fast near zero, compressed at the extremes"
+    // sensitivity as the map -- a straight 0/10/20.../100% spacing would
+    // make the legend lie about how visible a small change actually is.
+    const DELTA_GRADIENT = "linear-gradient(to right, #053061 0%, #2166ac 18%, #4393c3 32%, #92c5de 42%, #d1e5f0 48%, #f7f7f7 50%, #fddbc7 52%, #f4a582 58%, #d6604d 68%, #b2182b 82%, #67001f 100%)";
     const DELTA_CAP = 200; // percent change, saturates the ramp at +/-200%
     // Low-risk end fades across the bottom RISK_FADE_KNEE of the scale, but
     // never below RISK_FADE_FLOOR opacity, so even ~1% risk stays faintly

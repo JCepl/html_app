@@ -44,12 +44,14 @@ scenarios <- c("rcp26", "rcp45", "rcp85")
 PROB_RAMP <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
                "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
 
-DELTA_RAMP <- c("#2166ac", "#4393c3", "#92c5de", "#d1e5f0", "#f7f7f7",
-                "#f7f7f7", "#fddbc7", "#f4a582", "#d6604d", "#b2182b", "#67001f")
+# Full 11-stop ColorBrewer RdBu with a SINGLE true center white ("#f7f7f7"
+# once, not duplicated) -- the previous version repeated the center stop,
+# which doubled the width of the "looks like no change" dead zone right
+# where sensitivity matters most.
+DELTA_RAMP <- c("#053061", "#2166ac", "#4393c3", "#92c5de", "#d1e5f0", "#f7f7f7",
+                "#fddbc7", "#f4a582", "#d6604d", "#b2182b", "#67001f")
 PCT_CAP <- 200
 PCT_BASE_FLOOR <- 0.03
-FADE_BAND <- 0.12
-FADE_FLOOR <- 40
 
 log_step <- function(...) { cat(format(Sys.time(), "%H:%M:%S"), "|", ..., "\n"); flush.console() }
 
@@ -97,17 +99,31 @@ decode_prob_png <- function(path) {
   list(values = matrix(best_t, nrow = h, ncol = w, byrow = FALSE), width = w, height = h)
 }
 
+# Signed-sqrt transform before mapping onto the ramp: a straight linear
+# mapping over +/-200% makes anything under ~20% change land on (or one
+# step from) the center white -- invisible, when the whole point of this
+# view is to show change. sqrt compresses the huge low-baseline outliers
+# (up to 1000%+) while EXPANDING resolution right around zero, so a 10%
+# change already reads as a clearly distinct light tint instead of "looks
+# like nothing happened". Matches the color's own perceptual compression
+# too (equal ramp-position steps should mean "equally noticeably more red/
+# blue", not equal percentage-point steps).
+signed_sqrt <- function(x) sign(x) * sqrt(abs(x))
+
 colorize_delta_matrix <- function(vmat, cap) {
   h <- nrow(vmat); w <- ncol(vmat)
   v <- as.vector(vmat)
   vc <- pmax(-cap, pmin(cap, v))
-  frac <- (vc + cap) / (2 * cap)
+  t_cap <- signed_sqrt(cap)
+  t_val <- signed_sqrt(vc)
+  frac <- (t_val + t_cap) / (2 * t_cap)
   idx <- round(frac * (length(DELTA_RAMP) - 1)) + 1
   idx[is.na(v)] <- NA
   rgb <- hex2rgb01(DELTA_RAMP)
-  dist_frac <- pmin(1, abs(vc) / (cap * FADE_BAND))
-  alpha_val <- (FADE_FLOOR + dist_frac * (255 - FADE_FLOOR)) / 255
-  alpha <- ifelse(is.na(v), 0, alpha_val)
+  # Constant, fully-opaque alpha wherever there's data -- no fade-toward-
+  # transparent near zero. Visibility of small change is the point now; the
+  # color itself (not transparency) carries the signal.
+  alpha <- ifelse(is.na(v), 0, 1)
 
   img <- array(0, dim = c(h, w, 4))
   rch <- rep(0, length(v)); gch <- rep(0, length(v)); bch <- rep(0, length(v))
