@@ -121,6 +121,28 @@
 
     .map-popup strong { color: #0f3b73; }
 
+    /* RE-ENFORCE pilot-action markers (partner-country reference pins). */
+    .pilot-marker-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid #1f1f1f;
+      border-radius: 50%;
+      font-size: 15px;
+      line-height: 1;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+    }
+    .pilot-marker-icon:hover {
+      background: #ffffff;
+      transform: scale(1.08);
+    }
+    .pilot-popup .leaflet-popup-content { margin: 8px 10px; font-size: 12px; line-height: 1.4; }
+    .pilot-popup a { color: #0f3b73; font-weight: 700; }
+
     /* Compact click popup. */
     .mini-popup .leaflet-popup-content-wrapper {
       border-radius: 6px;
@@ -865,6 +887,7 @@
         <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
         <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
         <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <button class="banner-link banner-button is-on" id="pilotActionsBtn" type="button">Pilot actions</button>
         <button class="banner-link banner-button" id="splitBtn" type="button">Split screen</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
       </nav>
@@ -1200,6 +1223,14 @@
     // Keep most runtime state in one object so the app remains easy to inspect in DevTools.
     const APP = {
       map: null,
+      // Stable reference to the original (left) Leaflet map instance, set
+      // once in initMap() and never reassigned -- unlike `map`, which swaps
+      // to whichever side is active. Pilot-action markers key off this so
+      // split screen never cross-adds a side's pins to the other map.
+      leftMap: null,
+      showPilotActions: true,
+      pilotLayerLeft: null,
+      pilotLayerRight: null,
       basemapLayer: null,
       currentBasemap: "osm",
       clickMarker: null,
@@ -1539,6 +1570,29 @@
 
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
     const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
+
+    // RE-ENFORCE pilot-action reference sites: partner-country locations,
+    // each tagged with its lead hazard and a link to the project's own
+    // write-up. Static reference layer -- same pins regardless of which
+    // model/period the hazard layers above are showing.
+    const PILOT_ACTIONS = [
+      { id: "cz-ash", label: "Czech pilot", type: "Ash dieback", lat: 49.80, lng: 15.50, icon: "🌿",
+        link: "https://www.interreg-central.eu/news/%F0%9F%9A%80%F0%9F%8C%B2-re-enforce-field-update-from-czech-republic/" },
+      { id: "at-bb", label: "Austria pilot", type: "Bark beetle", lat: 48.75, lng: 15.58, icon: "🪲",
+        link: "https://www.interreg-central.eu/news/%F0%9F%9A%80%F0%9F%8C%B2-re-enforce-uav-mission-update-monitoring-forest-recovery-from-above-this-time-in-austria/" },
+      { id: "pl-overview", label: "Poland pilot", type: "Storm", lat: 52.30, lng: 19.20, icon: "🌬️",
+        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
+      { id: "hu-overview", label: "Hungary pilot", type: "Ash dieback", lat: 46.30, lng: 17.50, icon: "🌿",
+        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
+      { id: "si-overview", label: "Slovenia pilot", type: "Improper management", lat: 46.05, lng: 14.85, icon: "⚠️",
+        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
+      { id: "hr-overview", label: "Croatia pilot", type: "Drought", lat: 45.75, lng: 15.65, icon: "💧",
+        link: "https://www.bfw.gv.at/en/re-enforce-transnational-cooperation/" },
+      { id: "es-overview", label: "Project overview", type: "Fire", lat: 43.20, lng: 9.30, icon: "🔥",
+        link: "https://www.interreg-central.eu/projects/re-enforce/" },
+      { id: "ro-overview", label: "Project overview", type: "Improper management", lat: 45.90, lng: 25.00, icon: "⚠️",
+        link: "https://www.interreg-central.eu/projects/re-enforce/" }
+    ];
     const DOM = {
       country: document.getElementById("country"),
       lat: document.getElementById("lat"),
@@ -1571,6 +1625,7 @@
       legendThreshMarker: document.getElementById("legendThreshMarker"),
       shareBtn: document.getElementById("shareBtn"),
       splitBtn: document.getElementById("splitBtn"),
+      pilotActionsBtn: document.getElementById("pilotActionsBtn"),
       mapCaptionLeft: document.getElementById("mapCaptionLeft"),
       mapCaptionRight: document.getElementById("mapCaptionRight"),
       yearSlider: document.getElementById("yearSlider"),
@@ -2940,6 +2995,48 @@
       return { countryHaloLayer: halo, countryLayer: line };
     }
 
+    // Build the pilot-action pins for exactly one map instance and return
+    // the layer group. Each side (left/right) gets its OWN group tied to
+    // its OWN map -- never cross-added, so split screen never duplicates.
+    function buildPilotLayer(map) {
+      const group = L.layerGroup();
+      PILOT_ACTIONS.forEach(function(p) {
+        const icon = L.divIcon({
+          className: "",
+          html: '<div class="pilot-marker-icon" title="' + p.label + ': ' + p.type + '">' + p.icon + '</div>',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -15]
+        });
+        const popupHtml = '<strong>' + p.label + '</strong><br>' + p.type + '<br>'
+          + '<a href="' + p.link + '" target="_blank" rel="noopener noreferrer">RE-ENFORCE write-up ↗</a>';
+        L.marker([p.lat, p.lng], { icon: icon, keyboard: false })
+          .bindPopup(popupHtml, { className: "pilot-popup", closeButton: true })
+          .addTo(group);
+      });
+      if (APP.showPilotActions) group.addTo(map);
+      return group;
+    }
+
+    // Apply APP.showPilotActions to whichever pilot layer groups currently
+    // exist. Shared by the toggle button and share-link restoration (which
+    // sets the flag directly rather than flipping it).
+    function syncPilotActionsVisibility() {
+      [[APP.pilotLayerLeft, APP.leftMap], [APP.pilotLayerRight, APP.panels.right && APP.panels.right.map]]
+        .forEach(function(pair) {
+          const group = pair[0], m = pair[1];
+          if (!group || !m) return;
+          if (APP.showPilotActions) { if (!m.hasLayer(group)) group.addTo(m); }
+          else if (m.hasLayer(group)) { m.removeLayer(group); }
+        });
+      if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.classList.toggle("is-on", APP.showPilotActions);
+    }
+
+    function togglePilotActions() {
+      APP.showPilotActions = !APP.showPilotActions;
+      syncPilotActionsVisibility();
+    }
+
     function attachMapClick(map, side) {
       map.on("click", function(e) {
         if (APP.split && side !== APP.activeSide) setActiveSide(side);
@@ -3012,6 +3109,7 @@
       const rb = buildCountryLayersOn(mapR);
       const rBasemap = newMapBasemapLayer(mapR);
       attachMapClick(mapR, "right");
+      APP.pilotLayerRight = buildPilotLayer(mapR);
       document.getElementById("map2").style.background = (BASEMAPS[APP.currentBasemap] || BASEMAPS.osm).bg;
 
       // The right panel starts as a clone of the left config with its own map.
@@ -3059,6 +3157,7 @@
         right.map.remove();
       }
       APP.panels.right = null;
+      APP.pilotLayerRight = null;
       APP.split = false;
       document.getElementById("app").classList.remove("compare-on");
       updateSplitHighlight();
@@ -3090,6 +3189,8 @@
         ],
         maxBoundsViscosity: 1.0
       });
+      APP.leftMap = APP.map;
+      APP.pilotLayerLeft = buildPilotLayer(APP.leftMap);
 
       addBasemapControl();
       setBasemap(APP.currentBasemap);
@@ -3146,6 +3247,7 @@
       // Per-layer opacity sliders.
       p.set("lo", LAYER_OPACITY_KEYS.map(function(k) { return APP.layerOpacity[k]; }).join(","));
       p.set("sp", APP.split ? "1" : "0");
+      p.set("pa", APP.showPilotActions ? "1" : "0");
       return location.origin + location.pathname + "#" + p.toString();
     }
 
@@ -3165,6 +3267,7 @@
       setIf("wp", "currentWindPeriod"); setIf("wg", "currentWindGcm"); setIf("rc", "currentRcp");
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
+      if (p.has("pa")) { APP.showPilotActions = p.get("pa") === "1"; syncPilotActionsVisibility(); }
 
       if (p.has("lo")) {
         const vals = p.get("lo").split(",");
@@ -3331,6 +3434,7 @@
 
       bindShareButton();
       if (DOM.splitBtn) DOM.splitBtn.addEventListener("click", toggleSplit);
+      if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.addEventListener("click", togglePilotActions);
 
       // Bark-beetle accessory layers stay collapsed until the label is clicked.
       const bbToggle = document.getElementById("bbToggle");
