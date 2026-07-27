@@ -172,6 +172,79 @@
     }
     .map-popup-val { font-weight: 600; }
 
+    .risk-radar-btn {
+      display: block;
+      width: 100%;
+      margin-top: 5px;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      color: #0f3b73;
+      background: #eef4fb;
+      border: 1px solid #b9cfe6;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .risk-radar-btn:hover { background: #dce9f7; }
+
+    .risk-radar-panel {
+      display: none;
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2000;
+      width: 240px;
+      padding: 10px 12px 8px;
+      border: 1px solid #d2deeb;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: 0 10px 28px rgba(31, 78, 121, 0.22);
+      font-size: 12px;
+      color: #102f4f;
+    }
+    .risk-radar-panel.is-open { display: block; }
+    .risk-radar-header { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .risk-radar-header strong { color: #123a62; font-size: 13px; }
+    .risk-radar-coords {
+      margin-left: auto;
+      font-size: 10px;
+      color: #6b7f94;
+      font-variant-numeric: tabular-nums;
+    }
+    .risk-radar-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      color: #6b7f94;
+      padding: 0 2px;
+      font-family: inherit;
+    }
+    .risk-radar-close:hover { color: #123a62; }
+
+    .radar-svg { display: block; margin: 0 auto; }
+    .radar-grid-ring { fill: none; stroke: #d2deeb; stroke-width: 1; }
+    .radar-spoke { stroke: #d2deeb; stroke-width: 1; }
+    .radar-axis-label { font-size: 10px; fill: #486178; font-weight: 600; }
+    .radar-value-poly { fill: rgba(15, 59, 115, 0.22); stroke: #0f3b73; stroke-width: 1.6; }
+    .radar-dot-real { fill: #0f3b73; }
+    .radar-dot-placeholder { fill: #b9c4cf; stroke: #8a97a3; stroke-width: 1; stroke-dasharray: 2 1; }
+    .radar-dot-missing { fill: #ffffff; stroke: #b9c4cf; stroke-width: 1.5; }
+
+    .risk-radar-legend { margin-top: 2px; }
+    .radar-legend-row { display: flex; align-items: center; gap: 5px; padding: 1px 0; }
+    .radar-legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0f3b73;
+      flex: 0 0 auto;
+    }
+    .radar-legend-swatch.is-placeholder { background: #b9c4cf; }
+    .radar-legend-note { color: #8a97a3; font-size: 10px; margin-left: 4px; }
+
     .eu-note {
       font-size: 11px;
       color: #4a627d;
@@ -1243,6 +1316,7 @@
       showPilotActions: true,
       pilotLayerLeft: null,
       pilotLayerRight: null,
+      radarPanelEl: null,
       basemapLayer: null,
       currentBasemap: "osm",
       clickMarker: null,
@@ -2916,7 +2990,9 @@
       const html = '<div class="map-popup"><strong>' + info.label + '</strong><br>'
         + countryName + '<br>'
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
-        + '<span class="map-popup-val">' + info.valueHtml + '</span></div>';
+        + '<span class="map-popup-val">' + info.valueHtml + '</span>'
+        + '<button type="button" class="risk-radar-btn" data-lat="' + latlng.lat
+        + '" data-lng="' + latlng.lng + '">Risk profile ⬡</button></div>';
       L.popup({
         autoPan: false,
         closeButton: false,
@@ -2925,6 +3001,160 @@
         offset: [0, -4]
       }).setLatLng(latlng).setContent(html).openOn(map);
     }
+
+    // ====================================================================
+    // RISK RADAR CHART -- 5-hazard profile at a clicked point
+    // ====================================================================
+    // Bark beetle and wind are the only hazards with a real model right now
+    // (see OVERLAY_CATALOG: wildfire/drought are `available: false`, ash
+    // dieback has no layer at all -- it only appears as a pilot-action hazard
+    // tag). Those three axes are a fixed 0.2 placeholder until a model
+    // exists; bark beetle and wind are sampled for real.
+    const RADAR_PLACEHOLDER = 0.2;
+
+    // Read the actual DISPLAYED pixel color of a PNG raster overlay at a
+    // latlng from the <img> element Leaflet already loaded (no re-fetch),
+    // then reverse the shared Spectral ramp LUT to recover the risk value --
+    // the same LUT the threshold slider uses to mask pixels, just read
+    // instead of written. Returns null if the layer isn't loaded, the point
+    // falls outside its bounds, or the pixel there is transparent (no data).
+    function sampleRasterOverlayAt(overlayId, latlng) {
+      const layer = APP.layerInstances[overlayId];
+      if (!layer || !layer.getBounds || !layer.getElement) return null;
+      const img = layer.getElement();
+      if (!img || !img.complete || !img.naturalWidth) return null;
+      const b = layer.getBounds();
+      const fracX = (latlng.lng - b.getWest()) / (b.getEast() - b.getWest());
+      const fracY = (b.getNorth() - latlng.lat) / (b.getNorth() - b.getSouth());
+      if (!(fracX >= 0 && fracX <= 1 && fracY >= 0 && fracY <= 1)) return null;
+      const px = Math.min(img.naturalWidth - 1, Math.max(0, Math.floor(fracX * img.naturalWidth)));
+      const py = Math.min(img.naturalHeight - 1, Math.max(0, Math.floor(fracY * img.naturalHeight)));
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const d = ctx.getImageData(px, py, 1, 1).data;
+        if (d[3] === 0) return null;
+        return colorToRiskFraction(d[0], d[1], d[2]) * overlayScaleCap(overlayId);
+      } catch (e) {
+        return null; // tainted canvas or similar -- treat as "no data"
+      }
+    }
+
+    // Best available bark-beetle reading at a point: prefer the vector hex
+    // layer's real value (continuous historical risk), fall back to
+    // whichever bark-beetle PNG overlay is actually loaded.
+    function getBarkBeetleRiskAt(latlng) {
+      const hexFeature = findContainingFeature(APP.currentHexGeojson, latlng);
+      if (hexFeature) {
+        const val = Number(hexFeature.properties.mean);
+        if (isFinite(val)) return val;
+      }
+      const fromForecast = sampleRasterOverlayAt("bbtforecast", latlng);
+      if (fromForecast != null) return fromForecast;
+      return sampleRasterOverlayAt("bbtpast", latlng);
+    }
+
+    function computeRadarValues(latlng) {
+      return [
+        { id: "bbtl", label: "Bark beetle", value: getBarkBeetleRiskAt(latlng), placeholder: false },
+        { id: "wind", label: "Wind", value: sampleRasterOverlayAt("wind", latlng), placeholder: false },
+        { id: "fire", label: "Fire", value: RADAR_PLACEHOLDER, placeholder: true },
+        { id: "ash", label: "Ash dieback", value: RADAR_PLACEHOLDER, placeholder: true },
+        { id: "drought", label: "Drought", value: RADAR_PLACEHOLDER, placeholder: true }
+      ];
+    }
+
+    function radarPolarPoint(cx, cy, r, angleDeg) {
+      const a = (angleDeg - 90) * Math.PI / 180;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    }
+
+    function renderRadarSvg(values) {
+      const cx = 120, cy = 112, R = 82;
+      const n = values.length;
+      const step = 360 / n;
+      const rings = [0.2, 0.4, 0.6, 0.8, 1.0];
+
+      let svg = '<svg viewBox="0 0 240 224" width="240" height="224" class="radar-svg">';
+
+      rings.forEach(function(frac) {
+        const pts = values.map(function(_, i) {
+          const p = radarPolarPoint(cx, cy, R * frac, i * step);
+          return p[0].toFixed(1) + "," + p[1].toFixed(1);
+        }).join(" ");
+        svg += '<polygon points="' + pts + '" class="radar-grid-ring" />';
+      });
+
+      values.forEach(function(v, i) {
+        const p = radarPolarPoint(cx, cy, R, i * step);
+        svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1)
+          + '" y2="' + p[1].toFixed(1) + '" class="radar-spoke" />';
+        const lp = radarPolarPoint(cx, cy, R + 20, i * step);
+        svg += '<text x="' + lp[0].toFixed(1) + '" y="' + lp[1].toFixed(1)
+          + '" class="radar-axis-label" text-anchor="middle">' + v.label + '</text>';
+      });
+
+      const frac = function(v) { return v.value == null ? 0 : Math.max(0, Math.min(1, v.value)); };
+      const poly = values.map(function(v, i) {
+        const p = radarPolarPoint(cx, cy, R * frac(v), i * step);
+        return p[0].toFixed(1) + "," + p[1].toFixed(1);
+      }).join(" ");
+      svg += '<polygon points="' + poly + '" class="radar-value-poly" />';
+
+      values.forEach(function(v, i) {
+        const p = radarPolarPoint(cx, cy, R * frac(v), i * step);
+        const cls = v.placeholder ? "radar-dot-placeholder" : (v.value == null ? "radar-dot-missing" : "radar-dot-real");
+        svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4" class="radar-dot ' + cls + '" />';
+      });
+
+      svg += '</svg>';
+      return svg;
+    }
+
+    function ensureRadarPanel() {
+      if (APP.radarPanelEl) return APP.radarPanelEl;
+      const el = document.createElement("div");
+      el.id = "riskRadarPanel";
+      el.className = "risk-radar-panel";
+      document.body.appendChild(el);
+      APP.radarPanelEl = el;
+      return el;
+    }
+
+    function closeRadarChart() {
+      if (APP.radarPanelEl) APP.radarPanelEl.classList.remove("is-open");
+    }
+
+    function openRadarChart(latlng) {
+      const values = computeRadarValues(latlng);
+      const el = ensureRadarPanel();
+      const rows = values.map(function(v) {
+        const shown = v.value == null ? "no data" : Math.round(v.value * 100) + "%";
+        const note = v.placeholder ? "placeholder — no model yet"
+          : (v.value == null ? "layer not loaded" : "");
+        return '<div class="radar-legend-row"><span class="radar-legend-swatch'
+          + (v.placeholder ? " is-placeholder" : "") + '"></span>' + v.label
+          + ': <strong>' + shown + '</strong>'
+          + (note ? '<span class="radar-legend-note">' + note + '</span>' : '') + '</div>';
+      }).join("");
+      el.innerHTML = '<div class="risk-radar-header"><strong>Risk profile</strong>'
+        + '<span class="risk-radar-coords">' + latlng.lat.toFixed(3) + ', ' + latlng.lng.toFixed(3) + '</span>'
+        + '<button type="button" class="risk-radar-close" aria-label="Close">&times;</button></div>'
+        + renderRadarSvg(values)
+        + '<div class="risk-radar-legend">' + rows + '</div>';
+      el.classList.add("is-open");
+      el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
+    }
+
+    // Delegated (not per-popup) listener: popups are recreated on every
+    // click, so this is registered once and matches the button by class.
+    document.addEventListener("click", function(e) {
+      const btn = e.target.closest(".risk-radar-btn");
+      if (!btn) return;
+      openRadarChart(L.latLng(Number(btn.dataset.lat), Number(btn.dataset.lng)));
+    });
 
     // Basemap options. `build` returns a fresh tile layer (or null for the
     // plain border-only style); `bg` sets the map background behind the tiles.
