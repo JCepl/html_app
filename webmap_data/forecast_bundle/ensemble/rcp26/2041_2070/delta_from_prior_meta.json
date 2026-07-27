@@ -1,5 +1,5 @@
 {
-  "image": "delta_from_near.png",
+  "image": "delta_from_prior.png",
   "bounds": {
     "south": 42.122,
     "west": -10.48,
@@ -10,15 +10,15 @@
     "width": 279,
     "height": 371
   },
-  "source": "ensemble rcp45: % change 2041_2070 vs 2011_2040 (current)",
+  "source": "ensemble rcp26: % change 2041_2070 vs 2011_2040 (previous period)",
   "value_range": {
     "min": -200,
     "max": 200,
     "unit": "percent"
   },
   "actual_range": {
-    "min": -23.1,
-    "max": 127.5
+    "min": -43,
+    "max": 115.4
   },
   "baseline_period": "2011_2040",
   "baseline_floor": 0.03

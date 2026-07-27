@@ -2498,7 +2498,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_prior.tif"
     },
     "ensemble::2041_2070": {
       "model": "ensemble",
@@ -2528,7 +2529,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_prior.tif"
     },
     "ensemble::rcp26::2071_2100": {
       "model": "ensemble",
@@ -2558,7 +2560,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_prior.tif"
     },
     "ensemble::2071_2100": {
       "model": "ensemble",
@@ -2588,7 +2591,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_prior.tif"
     },
     "ensemble::rcp45::2011_2040": {
       "model": "ensemble",
@@ -2646,7 +2650,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_prior.tif"
     },
     "ensemble::rcp45::2071_2100": {
       "model": "ensemble",
@@ -2676,7 +2681,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_prior.tif"
     },
     "xgb_rcp26::rcp26::2011_2040": {
       "model": "xgb_rcp26",
@@ -6148,7 +6154,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp26::2041_2070": {
       "model": "ensemble_rcp26",
@@ -6178,7 +6185,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp26::rcp26::2071_2100": {
       "model": "ensemble_rcp26",
@@ -6208,7 +6216,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_prior.tif"
     },
     "ensemble_rcp26::2071_2100": {
       "model": "ensemble_rcp26",
@@ -6238,7 +6247,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp26/2071_2100/delta_from_prior.tif"
     },
     "ensemble_rcp45::rcp45::2011_2040": {
       "model": "ensemble_rcp45",
@@ -6324,7 +6334,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp45::2041_2070": {
       "model": "ensemble_rcp45",
@@ -6354,7 +6365,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp45::rcp45::2071_2100": {
       "model": "ensemble_rcp45",
@@ -6384,7 +6396,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_prior.tif"
     },
     "ensemble_rcp45::2071_2100": {
       "model": "ensemble_rcp45",
@@ -6414,7 +6427,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp45/2071_2100/delta_from_prior.tif"
     },
     "chelsa_mpi_ssp585::1981_2010": {
       "model": "chelsa_mpi_ssp585",
@@ -6510,7 +6524,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp85::rcp85::2041_2070": {
       "model": "ensemble",
@@ -6536,7 +6551,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2041_2070/delta_from_prior.tif"
     },
     "ensemble_rcp85::2071_2100": {
       "model": "ensemble",
@@ -6562,7 +6578,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2071_2100/delta_from_prior.tif"
     },
     "ensemble_rcp85::rcp85::2071_2100": {
       "model": "ensemble",
@@ -6588,7 +6605,8 @@
       },
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2071_2100/delta_from_near.tif",
-      "delta_baseline_period": "2011_2040"
+      "delta_baseline_period": "2011_2040",
+      "delta_from_prior_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2071_2100/delta_from_prior.tif"
     }
   }
 }

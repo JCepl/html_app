@@ -7,18 +7,18 @@
     "east": 31.6058
   },
   "dimensions": {
-    "width": 383,
-    "height": 263
+    "width": 279,
+    "height": 371
   },
-  "source": "ensemble rcp26: % change 2041_2070 vs 2011_2040 (\"current\")",
+  "source": "ensemble rcp26: % change 2041_2070 vs 2011_2040 (current)",
   "value_range": {
-    "min": -100,
-    "max": 100,
+    "min": -200,
+    "max": 200,
     "unit": "percent"
   },
   "actual_range": {
-    "min": -100,
-    "max": 127.5
+    "min": -43,
+    "max": 115.4
   },
   "baseline_period": "2011_2040",
   "baseline_floor": 0.03
