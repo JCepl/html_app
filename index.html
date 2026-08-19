@@ -996,7 +996,6 @@
         <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
         <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
         <button class="banner-link banner-button is-on" id="pilotActionsBtn" type="button">Pilot actions</button>
-        <button class="banner-link banner-button is-on" id="catalogueEventsBtn" type="button">Catalogue events</button>
         <button class="banner-link banner-button" id="splitBtn" type="button">Split screen</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
       </nav>
@@ -1046,7 +1045,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Historical bark beetle disturbance footprint.</span>
+          <span class="overlay-card-copy">Historical bark beetle disturbance footprint, plus 149 individually-sourced documented outbreak events (barkbeetle-catalogue) as clickable points, colour-coded by severity.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
@@ -1357,7 +1356,9 @@
       showPilotActions: true,
       pilotLayerLeft: null,
       pilotLayerRight: null,
-      showCatalogueEvents: true,
+      // Derived from bbtpast (Past disturbance) visibility, not user-toggled
+      // directly -- see syncCatalogueEventsFromPastDisturbance().
+      showCatalogueEvents: false,
       catalogueLayerLeft: null,
       catalogueLayerRight: null,
       radarPanelEl: null,
@@ -1792,7 +1793,6 @@
       shareBtn: document.getElementById("shareBtn"),
       splitBtn: document.getElementById("splitBtn"),
       pilotActionsBtn: document.getElementById("pilotActionsBtn"),
-      catalogueEventsBtn: document.getElementById("catalogueEventsBtn"),
       mapCaptionLeft: document.getElementById("mapCaptionLeft"),
       mapCaptionRight: document.getElementById("mapCaptionRight"),
       yearSlider: document.getElementById("yearSlider"),
@@ -1847,6 +1847,7 @@
       APP.visibleOverlays.push(overlayId);
       syncOverlayVisibilityFlag();
       updateOverlayPaneOrder();
+      syncCatalogueEventsFromPastDisturbance();
     }
 
     function hideOverlay(overlayId) {
@@ -1855,6 +1856,7 @@
       });
       syncOverlayVisibilityFlag();
       updateOverlayPaneOrder();
+      syncCatalogueEventsFromPastDisturbance();
     }
 
     function getVisibleOverlay() {
@@ -3674,7 +3676,11 @@
       return group;
     }
 
-    // Mirrors syncPilotActionsVisibility -- same toggle/restore pattern.
+    // Mirrors syncPilotActionsVisibility's addTo/removeLayer mechanics, but
+    // there is no independent toggle button -- catalogue-event markers are
+    // an accessory of the "Past disturbance" (bbtpast) layer card, not a
+    // standalone layer, so their visibility is derived from bbtpast's own
+    // display state rather than stored/toggled separately.
     function syncCatalogueEventsVisibility() {
       [[APP.catalogueLayerLeft, APP.leftMap], [APP.catalogueLayerRight, APP.panels.right && APP.panels.right.map]]
         .forEach(function(pair) {
@@ -3683,11 +3689,16 @@
           if (APP.showCatalogueEvents) { if (!m.hasLayer(group)) group.addTo(m); }
           else if (m.hasLayer(group)) { m.removeLayer(group); }
         });
-      if (DOM.catalogueEventsBtn) DOM.catalogueEventsBtn.classList.toggle("is-on", APP.showCatalogueEvents);
     }
 
-    function toggleCatalogueEvents() {
-      APP.showCatalogueEvents = !APP.showCatalogueEvents;
+    // Called whenever any overlay is shown/hidden (see showOverlay/
+    // hideOverlay) and after share-URL overlay-visibility restoration --
+    // recomputes catalogue-marker visibility from bbtpast's current state
+    // rather than requiring a dedicated event for it.
+    function syncCatalogueEventsFromPastDisturbance() {
+      const shouldShow = isOverlayVisible("bbtpast");
+      if (shouldShow === APP.showCatalogueEvents) return;
+      APP.showCatalogueEvents = shouldShow;
       syncCatalogueEventsVisibility();
     }
 
@@ -3916,7 +3927,8 @@
       p.set("lo", LAYER_OPACITY_KEYS.map(function(k) { return APP.layerOpacity[k]; }).join(","));
       p.set("sp", APP.split ? "1" : "0");
       p.set("pa", APP.showPilotActions ? "1" : "0");
-      p.set("ce", APP.showCatalogueEvents ? "1" : "0");
+      // No "ce" param -- catalogue-event visibility is derived from "ov"
+      // (whether bbtpast is in it), not stored independently.
       return location.origin + location.pathname + "#" + p.toString();
     }
 
@@ -3937,7 +3949,6 @@
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
       if (p.has("pa")) { APP.showPilotActions = p.get("pa") === "1"; syncPilotActionsVisibility(); }
-      if (p.has("ce")) { APP.showCatalogueEvents = p.get("ce") === "1"; syncCatalogueEventsVisibility(); }
 
       if (p.has("lo")) {
         const vals = p.get("lo").split(",");
@@ -3967,6 +3978,7 @@
           return OVERLAY_CATALOG[id] && OVERLAY_CATALOG[id].available;
         });
         syncOverlayVisibilityFlag();
+        syncCatalogueEventsFromPastDisturbance();
       }
       if (p.has("fo") && OVERLAY_CATALOG[p.get("fo")]) APP.focusedOverlay = p.get("fo");
 
@@ -4105,7 +4117,6 @@
       bindShareButton();
       if (DOM.splitBtn) DOM.splitBtn.addEventListener("click", toggleSplit);
       if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.addEventListener("click", togglePilotActions);
-      if (DOM.catalogueEventsBtn) DOM.catalogueEventsBtn.addEventListener("click", toggleCatalogueEvents);
 
       // Bark-beetle accessory layers stay collapsed until the label is clicked.
       const bbToggle = document.getElementById("bbToggle");
