@@ -1,0 +1,14 @@
+{
+  "model": "chelsa_phenips_gdd",
+  "notes": "CHELSA PHENIPS GDD (bark-temperature degree-days) -- a CHELSA-native climate PREDICTOR (input to the bark-beetle models), not a disturbance-risk forecast itself. No precision/recall/F1 applies. Same source pipeline as chelsa_fixed25_monotone / chelsa_*_efda; see CHELSA_NATIVE_TRAINING/PROJECT_REFERENCE_bark_beetle_model.md. Reference period is the CHELSA-observed mean of years 1984-2010 (not a single-year snapshot); future is the single SSP5-8.5/MPI-ESM1-2-HR 2071-2100 climatological-normal snapshot.",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "2800",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "F1": "NA",
+      "red_fraction": "NA"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "model": "chelsa_efda_gam",
+  "notes": "CHELSA-native training, EFDA label, GAM learner. Real held-out spatial-block CV (200km EPSG:3035 tiles, 80/20, 5 seeds, forward direction = deployable): AUC 0.527, F1@0.5 0.131, F1max 0.415 (recall@F1max 0.948). NOT monotone-constrained -- per PROJECT_REFERENCE_bark_beetle_model.md section 4-5, this learner showed an out-of-training-envelope extrapolation artifact when projected to 2071-2100 (future risk understated relative to the monotone variant); compare against chelsa_fixed25_monotone before treating this future map as the primary read. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series. Full provenance: CHELSA_NATIVE_TRAINING/PROJECT_REFERENCE_bark_beetle_model.md section 9.",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "0.5",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "F1": 0.131,
+      "red_fraction": "NA"
+    },
+    {
+      "cutoff": "F1max",
+      "precision": "NA",
+      "recall": 0.948,
+      "specificity": "NA",
+      "F1": 0.415,
+      "red_fraction": "NA"
+    }
+  ]
+}

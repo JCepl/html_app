@@ -1,0 +1,22 @@
+{
+  "model": "chelsa_fixed25_monotone",
+  "notes": "CHELSA-native training (observed climate, 1983-1997+2000-2020), fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV (200km EPSG:3035 tiles, 80/20, 5 seeds, forward direction = deployable): AUC 0.663, F1@0.5 0.408. At the CV-calibrated operating threshold 0.25: precision 0.368, recall 0.580, F1 0.441 (forward); backward-direction AUC 0.782 (robustness check, confounded by unequal training-set size, see the reference doc). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series. Full provenance: REENFOCE_LOCAL_MODEL_WIEN/CHELSA_NATIVE_TRAINING/ PROJECT_REFERENCE_bark_beetle_model.md",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "0.25",
+      "precision": 0.368,
+      "recall": 0.58,
+      "specificity": "NA",
+      "F1": 0.441,
+      "red_fraction": "NA"
+    },
+    {
+      "cutoff": "0.5",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "F1": "NA",
+      "red_fraction": "NA"
+    }
+  ]
+}

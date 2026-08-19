@@ -1,0 +1,18 @@
+{
+  "image": "risk_visible_t50.png",
+  "bounds": {
+    "south": 34.42319258,
+    "west": -10.7001396,
+    "north": 71.5748605,
+    "east": 38.67410447
+  },
+  "dimensions": {
+    "width": 547,
+    "height": 748
+  },
+  "source": "CHELSA PHENIPS GDD (bark-temperature degree-days) (above midpoint 2800)",
+  "value_range": {
+    "min": 2800,
+    "max": 6100
+  }
+}

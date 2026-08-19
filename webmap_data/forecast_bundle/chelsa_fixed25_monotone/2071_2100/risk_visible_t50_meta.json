@@ -1,0 +1,18 @@
+{
+  "image": "risk_visible_t50.png",
+  "bounds": {
+    "south": 42.10672847,
+    "west": -10.48347293,
+    "north": 71.01652717,
+    "east": 31.65660177
+  },
+  "dimensions": {
+    "width": 527,
+    "height": 700
+  },
+  "source": "CHELSA-native fixed25/monotone-XGB",
+  "value_range": {
+    "min": 0.55,
+    "max": 1
+  }
+}

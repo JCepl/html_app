@@ -171,6 +171,116 @@
         "2041_2070",
         "2071_2100"
       ]
+    },
+    "chelsa_fixed25_monotone": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/metrics_confusion.json",
+      "label": "CHELSA-native fixed25 (monotone XGB)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_fixed25_xgb": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_fixed25_xgb/metrics_confusion.json",
+      "label": "CHELSA-native fixed25 (XGB)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_fixed25_rf": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_fixed25_rf/metrics_confusion.json",
+      "label": "CHELSA-native fixed25 (RF)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_fixed25_gam": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_fixed25_gam/metrics_confusion.json",
+      "label": "CHELSA-native fixed25 (GAM)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_efda_xgb": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_efda_xgb/metrics_confusion.json",
+      "label": "CHELSA-native EFDA (XGB)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_efda_rf": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_efda_rf/metrics_confusion.json",
+      "label": "CHELSA-native EFDA (RF)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_efda_gam": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_efda_gam/metrics_confusion.json",
+      "label": "CHELSA-native EFDA (GAM)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_efda_xgb_monotone": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_efda_xgb_monotone/metrics_confusion.json",
+      "label": "CHELSA-native EFDA (monotone XGB)",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1983_2010",
+        "2071_2100"
+      ]
+    },
+    "chelsa_phenips_gdd": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_phenips_gdd/metrics_confusion.json",
+      "label": "CHELSA PHENIPS GDD (degree-days) [predictor, not risk]",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "reference_1984_2010",
+        "future_2071_2100"
+      ]
+    },
+    "chelsa_phenips_gen": {
+      "metrics_file": "webmap_data/forecast_bundle/chelsa_phenips_gen/metrics_confusion.json",
+      "label": "CHELSA PHENIPS generations/year [predictor, not risk]",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "reference_1984_2010",
+        "future_2071_2100"
+      ]
     }
   },
   "entries": {
@@ -6589,6 +6699,266 @@
       "forecast_confusion_by_gcm": [],
       "delta_from_near_tif": "webmap_data/forecast_bundle/ensemble/rcp85/2071_2100/delta_from_near.tif",
       "delta_baseline_period": "2011_2040"
+    },
+    "chelsa_fixed25_monotone::1983_2010": {
+      "model": "chelsa_fixed25_monotone",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md §5-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_monotone::2071_2100": {
+      "model": "chelsa_fixed25_monotone",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md §5-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_xgb::1983_2010": {
+      "model": "chelsa_fixed25_xgb",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, fixed25 label, XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_xgb/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_xgb/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_xgb::2071_2100": {
+      "model": "chelsa_fixed25_xgb",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, fixed25 label, XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_xgb/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_xgb/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_rf::1983_2010": {
+      "model": "chelsa_fixed25_rf",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, fixed25 label, RF learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_rf/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_rf/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_rf::2071_2100": {
+      "model": "chelsa_fixed25_rf",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, fixed25 label, RF learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_rf/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_rf/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_gam::1983_2010": {
+      "model": "chelsa_fixed25_gam",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, fixed25 label, GAM learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_gam/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_gam/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_fixed25_gam::2071_2100": {
+      "model": "chelsa_fixed25_gam",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, fixed25 label, GAM learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_gam/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_gam/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_xgb::1983_2010": {
+      "model": "chelsa_efda_xgb",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, EFDA label, XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_xgb/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_xgb/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_xgb::2071_2100": {
+      "model": "chelsa_efda_xgb",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, EFDA label, XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_xgb/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_xgb/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_rf::1983_2010": {
+      "model": "chelsa_efda_rf",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, EFDA label, RF learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_rf/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_rf/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_rf::2071_2100": {
+      "model": "chelsa_efda_rf",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, EFDA label, RF learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_rf/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_rf/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_gam::1983_2010": {
+      "model": "chelsa_efda_gam",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, EFDA label, GAM learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_gam/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_gam/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_gam::2071_2100": {
+      "model": "chelsa_efda_gam",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, EFDA label, GAM learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_gam/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_gam/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_xgb_monotone::1983_2010": {
+      "model": "chelsa_efda_xgb_monotone",
+      "period": "1983_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA-native training, EFDA label, monotone XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_xgb_monotone/1983_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_xgb_monotone/1983_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_efda_xgb_monotone::2071_2100": {
+      "model": "chelsa_efda_xgb_monotone",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA-native training, EFDA label, monotone XGB learner. Real held-out spatial-block CV exists (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md section 9). Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year series.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_efda_xgb_monotone/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_efda_xgb_monotone/2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_phenips_gdd::reference_1984_2010": {
+      "model": "chelsa_phenips_gdd",
+      "period": "reference_1984_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA PHENIPS GDD (degree-days) -- a CHELSA-native climate PREDICTOR (input to the bark-beetle models), not a disturbance-risk forecast. No precision/recall/F1 applies. Same source pipeline as the chelsa_* bark-beetle models; see PROJECT_REFERENCE_bark_beetle_model.md.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_phenips_gdd/reference_1984_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_phenips_gdd/reference_1984_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_phenips_gdd::future_2071_2100": {
+      "model": "chelsa_phenips_gdd",
+      "period": "future_2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA PHENIPS GDD (degree-days) -- a CHELSA-native climate PREDICTOR (input to the bark-beetle models), not a disturbance-risk forecast. No precision/recall/F1 applies. Same source pipeline as the chelsa_* bark-beetle models; see PROJECT_REFERENCE_bark_beetle_model.md.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_phenips_gdd/future_2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_phenips_gdd/future_2071_2100/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_phenips_gen::reference_1984_2010": {
+      "model": "chelsa_phenips_gen",
+      "period": "reference_1984_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA observed climatology"
+      ],
+      "note": "CHELSA PHENIPS generations/year -- a CHELSA-native climate PREDICTOR (input to the bark-beetle models), not a disturbance-risk forecast. No precision/recall/F1 applies. Same source pipeline as the chelsa_* bark-beetle models; see PROJECT_REFERENCE_bark_beetle_model.md.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_phenips_gen/reference_1984_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_phenips_gen/reference_1984_2010/risk_visible_t50.tif"
+      }
+    },
+    "chelsa_phenips_gen::future_2071_2100": {
+      "model": "chelsa_phenips_gen",
+      "period": "future_2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "CHELSA PHENIPS generations/year -- a CHELSA-native climate PREDICTOR (input to the bark-beetle models), not a disturbance-risk forecast. No precision/recall/F1 applies. Same source pipeline as the chelsa_* bark-beetle models; see PROJECT_REFERENCE_bark_beetle_model.md.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_phenips_gen/future_2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_phenips_gen/future_2071_2100/risk_visible_t50.tif"
+      }
     }
   }
 }
