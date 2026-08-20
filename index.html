@@ -494,34 +494,39 @@
     .overlay-group:first-child { padding-left: 0; }
     .overlay-group:last-child { border-right: none; }
 
+    /* Every driver (Bark beetle / Wind / Wildfire / Drought) gets the same
+       pill treatment, so "this is a hazard-driver header, not a layer" reads
+       as one consistent visual language across the whole ribbon -- whether
+       or not that particular driver currently has accessory layers to expand. */
     .overlay-group-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #8095a8;
-      white-space: nowrap;
-    }
-
-    .overlay-group-cards { display: flex; gap: 5px; }
-    .overlay-group-cards.bb-grid { display: flex; gap: 5px; align-items: stretch; }
-
-    /* Bark-beetle group: core (Predictions) always shown; the accessory layers
-       (PHENIPS, Past disturbance, Pressure) appear only after clicking the label.
-       Styled as a distinct pill (not plain text like the other group labels)
-       so the expand affordance reads clearly instead of blending in. */
-    .bb-toggle {
-      cursor: pointer;
+      cursor: default;
       user-select: none;
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: #0f3b73;
       background: #eef4fb;
       border: 1px solid #b9cfe6;
       border-radius: 10px;
       padding: 3px 9px 3px 8px;
+      white-space: nowrap;
       transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .overlay-group-cards { display: flex; gap: 5px; }
+    .overlay-group-cards.bb-grid { display: flex; gap: 5px; align-items: stretch; }
+
+    /* Drivers that actually have accessory layers to reveal (currently just
+       Bark beetle) get the click affordance + arrow on top of the shared
+       pill above; drivers with only one layer (Wind) stay non-interactive --
+       there's nothing to expand, so no fake affordance is added for it. */
+    .bb-toggle {
+      cursor: pointer;
+      color: #0f3b73;
     }
     .bb-toggle:hover { background: #dce9f7; border-color: #8fb3d9; }
     .bb-toggle:focus-visible { outline: 2px solid #0f3b73; outline-offset: 1px; }
@@ -533,8 +538,64 @@
       transition: transform 0.15s ease;
     }
     .bb-toggle.open::after { transform: rotate(90deg); }
+    .bb-toggle-count {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #ffffff;
+      background: #d3852b;
+      border-radius: 8px;
+      padding: 1px 5px;
+      letter-spacing: 0;
+    }
+    .bb-toggle.open .bb-toggle-count { display: none; }
     .bb-accessories { display: flex; gap: 5px; }
     .bb-accessories[hidden] { display: none; }
+
+    /* Hazard vs. auxiliary card hierarchy: the actual risk/forecast layer a
+       user is looking for (Predictions, Wind) is visually the loudest thing
+       in its group; everything else (climate predictors, historical
+       footprint, an external pressure index) is explanatory context and
+       recedes -- smaller, muted, tagged, so the eye lands on the hazard
+       layer first without reading every card's copy. */
+    .overlay-card-eyebrow {
+      display: block;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .overlay-card.hazard-primary {
+      border: 2px solid #d3852b;
+      background: rgba(255, 247, 233, 0.85);
+      box-shadow: 0 1px 4px rgba(211, 133, 43, 0.18);
+    }
+    .overlay-card.hazard-primary:hover { border-color: #b96c19; background: #fff1dc; }
+    .overlay-card.hazard-primary .overlay-card-eyebrow { color: #b96c19; }
+    .overlay-card.hazard-primary .overlay-card-title { font-size: 12.5px; }
+    .overlay-card.hazard-primary.active {
+      background: #173f69;
+      border-color: #d3852b;
+    }
+    .overlay-card.hazard-primary.active .overlay-card-eyebrow { color: #f3b970; }
+
+    .overlay-card.hazard-auxiliary {
+      border-style: dashed;
+      background: rgba(244, 247, 250, 0.55);
+      opacity: 0.88;
+    }
+    .overlay-card.hazard-auxiliary .overlay-card-title { font-size: 10px; color: #5c7085; }
+    .overlay-card.hazard-auxiliary .overlay-card-copy { font-size: 9px; }
+    .overlay-card.hazard-auxiliary .overlay-card-eyebrow { color: #8fa0b3; }
+    .overlay-card.hazard-auxiliary:hover { opacity: 1; }
+    .overlay-card.hazard-auxiliary.active {
+      background: #3d5876;
+      border-color: #3d5876;
+      border-style: solid;
+      opacity: 1;
+    }
+    .overlay-card.hazard-auxiliary.active .overlay-card-eyebrow { color: #c3d2e2; }
 
     .overlay-card {
       min-width: 110px;
@@ -1008,12 +1069,12 @@
       <div id="overlayCardStrip" class="overlay-card-strip" aria-label="Overlay choices">
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="bbToggle" role="button" tabindex="0"
-               title="Show more bark beetle layers (PHENIPS climate, past disturbance, pressure index)"
-               aria-expanded="false">Bark beetle</div>
+               title="Show 3 more bark beetle layers (PHENIPS climate, past disturbance, pressure index) -- for context, not risk forecasts"
+               aria-expanded="false">Bark beetle <span class="bb-toggle-count">+3</span></div>
           <div class="overlay-group-cards bb-grid">
-        <div class="overlay-card" data-overlay="bbtforecast">
+        <div class="overlay-card hazard-primary" data-overlay="bbtforecast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">Predictions</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Predictions</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
             </span>
@@ -1025,9 +1086,9 @@
           </span>
         </div>
         <div class="bb-accessories" id="bbAccessories" hidden>
-        <div class="overlay-card" data-overlay="phenips">
+        <div class="overlay-card hazard-auxiliary" data-overlay="phenips">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">PHENIPS climate</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>PHENIPS climate</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="phenips">Display</button>
             </span>
@@ -1038,9 +1099,9 @@
             <span class="overlay-tool-value" data-opacity-value="phenips">0.85</span>
           </span>
         </div>
-        <div class="overlay-card" data-overlay="bbtpast">
+        <div class="overlay-card hazard-auxiliary" data-overlay="bbtpast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">Past disturbance</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past disturbance</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
             </span>
@@ -1051,9 +1112,9 @@
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
           </span>
         </div>
-        <div class="overlay-card" data-overlay="bbtl">
+        <div class="overlay-card hazard-auxiliary" data-overlay="bbtl">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">Bark Beetle Pressure</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Bark Beetle Pressure</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
             </span>
@@ -1070,9 +1131,9 @@
         <div class="overlay-group">
           <div class="overlay-group-label">Wind</div>
           <div class="overlay-group-cards">
-        <div class="overlay-card" data-overlay="wind">
+        <div class="overlay-card hazard-primary" data-overlay="wind">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">Wind</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Wind</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wind">Display</button>
             </span>
