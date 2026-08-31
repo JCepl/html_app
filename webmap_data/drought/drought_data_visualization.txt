@@ -1,0 +1,47 @@
+# Reference data - MYD
+
+# Layer “presence_2yr”
+
+cols_occ <- c(
+  "#F7F7F7", # No event detected
+  "#8c2d04"  # ≥2 consecutive years
+)
+
+# Layer “n_events_2yr”
+
+cols_freq <- c(
+  "#F7F7F7", # 0 events
+  "#fee391", # 1 event
+  "#fe9929", # 2 events
+  "#8c2d04"  # 3 events
+)
+
+# Layer "max_duration"
+
+cols_duration <- c(
+  "#F7F7F7", # No MYD
+  "#fee391", # 2 years
+  "#fe9929", # 3 years
+  "#cc4c02", # 4 years
+  "#8c2d04"  # 5 years
+)
+
+# Layer "total_duration"
+
+cols_sumduration <- c(
+  "#F7F7F7", # No MYD
+  "#fee391", # 2 years
+  "#fe9929", # 3 years
+  "#ec7014", # 4 years
+  "#cc4c02", # 5 years
+  "#8c2d04"  # 6–7 years
+)
+
+# Future data - SPEI-equivalent
+
+cols <- c(
+  "#B2182B",   # SPEI-e < -2.0
+  "#EF8A62",   # -2.0 ≤ SPEI-e < -1.5
+  "#FDDBC7",   # -1.5 ≤ SPEI-e < -1.0
+  "#F7F7F7"    # SPEI-e ≥ -1.0
+)

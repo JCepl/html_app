@@ -12,6 +12,7 @@
     "2071_2100"
   ],
   "thresholds": [
+    0.25,
     0.5,
     0.55,
     0.6,
@@ -2699,10 +2700,11 @@
       "gcms": [
         "CHELSA observed climatology"
       ],
-      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md §5-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
+      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md \u00a75-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/risk_visible_t50.tif"
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/1983_2010/risk_visible_t25.tif"
       }
     },
     "chelsa_fixed25_monotone::2071_2100": {
@@ -2712,10 +2714,11 @@
       "gcms": [
         "MPI-ESM1-2-HR"
       ],
-      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md §5-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
+      "note": "CHELSA-native TRAINING (not just scoring) on observed climate, fixed25 (literature catalogue, 25km buffer) label, monotone-constrained XGBoost. Real held-out spatial-block CV exists for this model (see metrics_confusion.json and PROJECT_REFERENCE_bark_beetle_model.md \u00a75-9) -- unlike chelsa_mpi_ssp585, which has no held-out evaluation of its own. Future period is a single climatological-normal snapshot (SSP5-8.5/MPI-ESM1-2-HR 2071-2100), not a multi-year forecast series.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
-        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/risk_visible_t50.tif"
+        "0.5": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_fixed25_monotone/2071_2100/risk_visible_t25.tif"
       }
     },
     "chelsa_fixed25_xgb::1983_2010": {

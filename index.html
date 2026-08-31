@@ -228,7 +228,15 @@
     .radar-grid-ring { fill: none; stroke: #d2deeb; stroke-width: 1; }
     .radar-spoke { stroke: #d2deeb; stroke-width: 1; }
     .radar-axis-label { font-size: 10px; fill: #486178; font-weight: 600; }
-    .radar-value-poly { fill: rgba(15, 59, 115, 0.22); stroke: #0f3b73; stroke-width: 1.6; }
+    /* Fill only -- the outline is drawn per-segment below (radar-seg-*) so
+       the shape's edge itself, not just each dot, shows which parts of the
+       profile are real vs. placeholder/unmeasured. A single solid outline
+       through fabricated placeholder values (fire/ash) and real ones
+       (bark beetle/wind/drought) would read as "one equally-trustworthy
+       measured profile," which it isn't. */
+    .radar-value-poly { fill: rgba(15, 59, 115, 0.16); stroke: none; }
+    .radar-seg-confident { stroke: #0f3b73; stroke-width: 1.6; fill: none; }
+    .radar-seg-unconfident { stroke: #b9c4cf; stroke-width: 1.4; stroke-dasharray: 3 2; fill: none; }
     .radar-dot-real { fill: #0f3b73; }
     .radar-dot-placeholder { fill: #b9c4cf; stroke: #8a97a3; stroke-width: 1; stroke-dasharray: 2 1; }
     .radar-dot-missing { fill: #ffffff; stroke: #b9c4cf; stroke-width: 1.5; }
@@ -382,6 +390,27 @@
       border-color: #29465b;
     }
 
+    /* Split-screen toggle lives on the map itself (top-right, above the
+       basemap switcher) -- it changes what's ON the map, so it belongs next
+       to the map, not in the header row alongside About/Database/GitHub. */
+    .split-screen-control { margin-bottom: 6px; }
+    .split-screen-control .banner-button {
+      display: block;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.10);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      padding: 5px 10px;
+      font: 700 11px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #29465b;
+      cursor: pointer;
+    }
+    .split-screen-control .banner-button:hover { background: #eef3f7; }
+    .split-screen-control .banner-button.is-on {
+      background: #29465b;
+      color: #fff;
+    }
+
     /* Highlight the map the panel currently controls. */
     #map.compare-active::after,
     #map2.compare-active::after {
@@ -480,56 +509,59 @@
       overflow-x: auto;
       padding-bottom: 1px;
       scrollbar-width: thin;
-      align-items: center;
+      /* stretch, not center -- every driver box should be the same height
+         (the tallest one in the row), not sized to its own content and
+         vertically centered next to boxes of a different height. */
+      align-items: stretch;
     }
 
+    /* Every driver (Bark beetle / Wind / Wildfire / Drought) is ONE bordered
+       box: a dark header strip carrying the driver name (+ an expand count
+       if it has accessory layers) sits directly on top of its primary
+       risk/forecast card, so the name and the layer it labels read as a
+       single unit instead of a floating pill beside an unrelated card. */
     .overlay-group {
       display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 6px;
-      padding: 0 10px;
-      border-right: 1px solid #dde7f2;
+      flex-direction: column;
+      border: 1px solid #c3d4e6;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #eef4fb;
+      margin-right: 8px;
+      flex: 0 0 auto;
     }
-    .overlay-group:first-child { padding-left: 0; }
-    .overlay-group:last-child { border-right: none; }
+    .overlay-group:last-child { margin-right: 0; }
 
-    /* Every driver (Bark beetle / Wind / Wildfire / Drought) gets the same
-       pill treatment, so "this is a hazard-driver header, not a layer" reads
-       as one consistent visual language across the whole ribbon -- whether
-       or not that particular driver currently has accessory layers to expand. */
     .overlay-group-label {
       cursor: default;
       user-select: none;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 4px;
+      justify-content: space-between;
+      gap: 6px;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #0f3b73;
-      background: #eef4fb;
-      border: 1px solid #b9cfe6;
-      border-radius: 10px;
-      padding: 3px 9px 3px 8px;
+      color: #eaf1fa;
+      background: #244166;
+      padding: 5px 8px;
       white-space: nowrap;
-      transition: background 0.15s ease, border-color 0.15s ease;
+      transition: background 0.15s ease;
     }
 
-    .overlay-group-cards { display: flex; gap: 5px; }
+    .overlay-group-cards { display: flex; gap: 5px; padding: 5px; flex: 1; align-items: stretch; }
     .overlay-group-cards.bb-grid { display: flex; gap: 5px; align-items: stretch; }
 
-    /* Drivers that actually have accessory layers to reveal (currently just
-       Bark beetle) get the click affordance + arrow on top of the shared
-       pill above; drivers with only one layer (Wind) stay non-interactive --
-       there's nothing to expand, so no fake affordance is added for it. */
+    /* Drivers that actually have accessory layers to reveal (Bark beetle,
+       Drought) get the click affordance + arrow on the header strip above;
+       drivers with only one layer (Wind) or none yet (Wildfire) stay
+       non-interactive -- there's nothing to expand, so no fake affordance. */
     .bb-toggle {
       cursor: pointer;
-      color: #0f3b73;
     }
-    .bb-toggle:hover { background: #dce9f7; border-color: #8fb3d9; }
-    .bb-toggle:focus-visible { outline: 2px solid #0f3b73; outline-offset: 1px; }
+    .bb-toggle:hover { background: #2f5480; }
+    .bb-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
     .bb-toggle::after {
       content: "▸";
       font-size: 11px;
@@ -567,16 +599,15 @@
     }
 
     .overlay-card.hazard-primary {
-      border: 2px solid #d3852b;
-      background: rgba(255, 247, 233, 0.85);
-      box-shadow: 0 1px 4px rgba(211, 133, 43, 0.18);
+      border: 1px solid rgba(211, 133, 43, 0.4);
+      background: rgba(255, 247, 233, 0.9);
     }
-    .overlay-card.hazard-primary:hover { border-color: #b96c19; background: #fff1dc; }
+    .overlay-card.hazard-primary:hover { border-color: #d3852b; background: #fff1dc; }
     .overlay-card.hazard-primary .overlay-card-eyebrow { color: #b96c19; }
     .overlay-card.hazard-primary .overlay-card-title { font-size: 12.5px; }
     .overlay-card.hazard-primary.active {
       background: #173f69;
-      border-color: #d3852b;
+      border-color: #173f69;
     }
     .overlay-card.hazard-primary.active .overlay-card-eyebrow { color: #f3b970; }
 
@@ -799,6 +830,8 @@
       background: #fbfdff;
     }
 
+    .cm-pct { color: #7488a0; font-size: 10px; }
+
     .cm-head,
     .cm-side {
       font-weight: 700;
@@ -849,6 +882,18 @@
       line-height: 1.35;
     }
 
+    /* Model-level documentation (e.g. "this model has real held-out CV,
+       AUC 0.663") vs. the per-cutoff note below it (about the currently
+       selected threshold specifically) -- italic to read as "about the
+       model", not "about this number". */
+    #forecastModelNote {
+      font-style: italic;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    #forecastModelNote:empty { display: none; }
+
     .legend-box {
       margin-top: 5px;
       padding: 5px 7px;
@@ -869,13 +914,13 @@
       height: 12px;
       border-radius: 3px;
       border: 1px solid #aaa;
-      background: linear-gradient(
-        to right,
-        #14155f 0%, #2a45c2 11%, #3f7af0 22%,
-        #6f74ee 33%, #9a5ee0 44%, #c94fc0 56%,
-        #ec4a86 67%, #ff7a1f 78%, #f5331a 89%,
-        #8f0000 100%
-      );
+      /* Neutral placeholder only -- setLegendLabels() always sets an
+         explicit inline background (BARK_BEETLE_GRADIENT/WIND_GRADIENT/
+         DELTA_GRADIENT, built from buildGradientCss()) before this bar is
+         ever shown, so this value is never actually visible. It used to be
+         a THIRD hand-typed ramp copy that didn't match either JS ramp --
+         replaced with a plain placeholder so nothing here can drift again. */
+      background: #cfd8e3;
     }
 
     #legendThreshMarker {
@@ -959,6 +1004,16 @@
       font-size: 12px;
       font-weight: 700;
       color: #123a62;
+    }
+
+    /* The legend/citation describe the top VISIBLE layer, which can differ
+       from whichever card's controls are currently focused/open above --
+       this makes that explicit instead of leaving it an unlabeled mismatch. */
+    .legend-for-layer {
+      font-weight: 400;
+      font-size: 11px;
+      color: #7488a0;
+      margin-left: 5px;
     }
 
     .citation-item {
@@ -1056,8 +1111,6 @@
         <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
         <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
         <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <button class="banner-link banner-button is-on" id="pilotActionsBtn" type="button">Pilot actions</button>
-        <button class="banner-link banner-button" id="splitBtn" type="button">Split screen</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
       </nav>
       <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
@@ -1068,7 +1121,7 @@
     <div class="ribbon-inner">
       <div id="overlayCardStrip" class="overlay-card-strip" aria-label="Overlay choices">
         <div class="overlay-group">
-          <div class="overlay-group-label bb-toggle" id="bbToggle" role="button" tabindex="0"
+          <div class="overlay-group-label bb-toggle" id="bbToggle" data-toggle-target="bbAccessories" role="button" tabindex="0"
                title="Show 3 more bark beetle layers (PHENIPS climate, past disturbance, pressure index) -- for context, not risk forecasts"
                aria-expanded="false">Bark beetle <span class="bb-toggle-count">+3</span></div>
           <div class="overlay-group-cards bb-grid">
@@ -1158,13 +1211,48 @@
           </div>
         </div>
         <div class="overlay-group">
-          <div class="overlay-group-label">Drought</div>
+          <div class="overlay-group-label">Ash dieback</div>
           <div class="overlay-group-cards">
-        <div class="overlay-card coming-soon" data-overlay="drought">
+        <div class="overlay-card coming-soon" data-overlay="ashDieback">
           <span class="overlay-card-head">
-            <span class="overlay-card-title">Drought</span>
+            <span class="overlay-card-title">Ash dieback</span>
           </span>
           <span class="overlay-card-copy">Coming soon.</span>
+        </div>
+          </div>
+        </div>
+        <div class="overlay-group">
+          <div class="overlay-group-label bb-toggle" id="droughtToggle" data-toggle-target="droughtAccessories" role="button" tabindex="0"
+               title="Show 1 more drought layer (reference-period MYD indicators) -- for context, not a risk forecast"
+               aria-expanded="false">Drought <span class="bb-toggle-count">+1</span></div>
+          <div class="overlay-group-cards">
+        <div class="overlay-card hazard-primary" data-overlay="droughtFuture">
+          <span class="overlay-card-head">
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Future SPEI classes</span>
+            <span class="overlay-card-tools">
+              <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtFuture">Display</button>
+            </span>
+          </span>
+          <span class="overlay-card-copy">December SPEI-12-equivalent: projected climatic water balance relative to the 1981–2010 reference climate. 4 future scenario/period combinations.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="droughtFuture" />
+            <span class="overlay-tool-value" data-opacity-value="droughtFuture">0.85</span>
+          </span>
+        </div>
+        <div class="bb-accessories" id="droughtAccessories" hidden>
+        <div class="overlay-card hazard-auxiliary" data-overlay="droughtRef">
+          <span class="overlay-card-head">
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Reference indicators (MYD)</span>
+            <span class="overlay-card-tools">
+              <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtRef">Display</button>
+            </span>
+          </span>
+          <span class="overlay-card-copy">Multi-year-drought (MYD) indicators, reference period 1981–2010: number of events, max duration, cumulative duration.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="droughtRef" />
+            <span class="overlay-tool-value" data-opacity-value="droughtRef">0.85</span>
+          </span>
+        </div>
         </div>
           </div>
         </div>
@@ -1184,7 +1272,7 @@
 
         <div class="button-row">
           <button id="toggleOverlayBtn" type="button">Hide overlay</button>
-          <button id="fitOverlayBtn" type="button">Fit data</button>
+          <button id="fitOverlayBtn" type="button" title="Zoom/pan the map to this layer's extent">Zoom to extent</button>
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
@@ -1208,7 +1296,7 @@
                 <select id="forecastViewSelector">
                   <option value="threshold">Thresholded risk</option>
                   <option value="probability">Ensemble probability</option>
-                  <option value="delta">Δ % change vs. current (2011–2040)</option>
+                  <option value="delta" id="forecastViewDeltaOption">Δ % change vs. current (2011–2040)</option>
                 </select>
               </div>
             </div>
@@ -1221,6 +1309,7 @@
           </div>
           <div id="forecastMetricsBox" class="metric-box">
             <p class="metric-title">Historical Evaluation At Selected Cutoff</p>
+            <div id="forecastModelNote" class="small"></div>
             <div id="forecastMetricsGrid" class="metric-grid"></div>
             <div id="forecastConfusionMatrix" class="confusion-matrix"></div>
             <div id="forecastMetricsNote" class="small"></div>
@@ -1284,6 +1373,33 @@
           <div class="small">Probability of forest wind damage (0–1). Threshold 0.5 = damage. Color scale saturates at 0.5 = high risk. Scenario RCP8.5 (SSP5-8.5). Historical baseline is model-independent (GCM choice has no effect).</div>
         </div>
 
+        <div id="droughtFuturePanel" class="nested-panel" hidden>
+          <p class="nested-title">Future Drought Class Controls</p>
+          <div class="label">Scenario / period</div>
+          <div class="row">
+            <select id="droughtFuturePeriodSelector">
+              <option value="2041_2070_ssp370" selected>2041–2070, SSP3-7.0</option>
+              <option value="2041_2070_ssp585">2041–2070, SSP5-8.5</option>
+              <option value="2071_2100_ssp370">2071–2100, SSP3-7.0</option>
+              <option value="2071_2100_ssp585">2071–2100, SSP5-8.5</option>
+            </select>
+          </div>
+          <div class="small">December SPEI-12-equivalent values, indicating projected climatic water balance relative to the historical reference climate (1981–2010). Negative = drier, positive = wetter than reference. Source: Stefan Ebner (BFW). Scenario/period labelling for the 4 bands is inferred, not embedded in the source file — flagged for confirmation.</div>
+        </div>
+
+        <div id="droughtRefPanel" class="nested-panel" hidden>
+          <p class="nested-title">Reference Drought Indicator (MYD) Controls</p>
+          <div class="label">Metric</div>
+          <div class="row">
+            <select id="droughtRefMetricSelector">
+              <option value="n_events_2yr" selected>Number of multi-year droughts</option>
+              <option value="max_duration">Maximum duration of multi-year droughts</option>
+              <option value="total_duration">Cumulative duration of multi-year droughts</option>
+            </select>
+          </div>
+          <div class="small">A multi-year drought (MYD) event is SPEI-12 ≤ −1.1 for ≥2 consecutive years, historical reference period 1981–2010, CHELSA-native ~1km. Source: Stefan Ebner (BFW).</div>
+        </div>
+
         <div id="hexControlPanel" class="nested-panel">
           <p id="hexControlTitle" class="nested-title">Bark Beetle Pressure Controls</p>
 
@@ -1305,7 +1421,7 @@
       </section>
 
       <section class="panel-card">
-        <p class="panel-card-title">Legend and source</p>
+        <p class="panel-card-title">Legend and source<span id="legendForLayer" class="legend-for-layer"></span></p>
         <div class="legend-box">
           <div class="legend-title">Value scale</div>
           <div class="legend-bar"><span id="legendThreshMarker"></span></div>
@@ -1323,7 +1439,7 @@
         </div>
 
         <div id="citationBox" class="citation-box">
-          <p class="citation-title">Data source and citation</p>
+          <p class="citation-title">Data source and citation <span class="legend-for-layer">— Bark Beetle Pressure layer</span></p>
           <p class="citation-item">
             <a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Science paper (DOI)</a><br>
             Grunig, M., Rammer, W., Senf, C., Albrich, K., Andre, K., Augustynczik, A. L. D., et al. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789). https://doi.org/10.1126/science.adx6329
@@ -1355,7 +1471,6 @@
             <div id="hexValue" class="value">—</div>
           </div>
         </div>
-        <div class="small">Click anywhere on the map to inspect the top visible layer.</div>
       </section>
 
       <section class="panel-card">
@@ -1363,6 +1478,11 @@
         <div id="status" class="value">Loading map...</div>
       </section>
     </div>
+
+    <!-- Moved into a Leaflet control on the map itself at init (see
+         addSplitScreenControl) -- kept here, off-screen, only so it exists
+         in the DOM before script-load-time element caching runs. -->
+    <button class="banner-button" id="splitBtn" type="button" hidden>Split screen</button>
 
     <div id="map"><div class="map-caption" id="mapCaptionLeft"></div></div>
     <div id="map2"><div class="map-caption" id="mapCaptionRight"></div></div>
@@ -1414,7 +1534,7 @@
       // to whichever side is active. Pilot-action markers key off this so
       // split screen never cross-adds a side's pins to the other map.
       leftMap: null,
-      showPilotActions: true,
+      showPilotActions: false,
       pilotLayerLeft: null,
       pilotLayerRight: null,
       // Derived from bbtpast (Past disturbance) visibility, not user-toggled
@@ -1451,7 +1571,9 @@
         bbtforecast: 0.85,
         phenips: 0.85,
         bbtpast: 0.85,
-        wind: 0.85
+        wind: 0.85,
+        droughtFuture: 0.85,
+        droughtRef: 0.85
       },
       currentPhenipsScen: "rcp45",
       currentPhenisPeriod: "hist",
@@ -1464,6 +1586,8 @@
       currentForecastThreshold: "0.75",
       currentWindPeriod: "near",
       currentWindGcm: "default",
+      currentDroughtFuturePeriod: "2041_2070_ssp370",
+      currentDroughtRefMetric: "n_events_2yr",
       currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
@@ -1473,7 +1597,9 @@
         bbtforecast: 0,
         phenips: 0,
         bbtpast: 0,
-        wind: 0
+        wind: 0,
+        droughtFuture: 0,
+        droughtRef: 0
       },
       overlayVisible: true,
       currentHexGeojson: null,
@@ -1483,17 +1609,21 @@
         bbtforecast: null,
         phenips: null,
         bbtpast: null,
-        wind: null
+        wind: null,
+        droughtFuture: null,
+        droughtRef: null
       }
     };
 
-    const RASTER_OVERLAYS = ["phenips", "bbtforecast", "bbtpast", "wind"];
+    const RASTER_OVERLAYS = ["phenips", "bbtforecast", "bbtpast", "wind", "droughtFuture", "droughtRef"];
     const WIND_DATA_URL = "webmap_data/wind/wind_meta.json";
+    const DROUGHT_FUTURE_DATA_URL = "webmap_data/drought/drought_future_meta.json";
+    const DROUGHT_REF_DATA_URL = "webmap_data/drought/drought_ref_meta.json";
     // Wind colour scale saturates at this probability (risk_cap in the R export),
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20260819-chelsa-fixed25-monotone";
+    const ASSET_VERSION = "20260825-drought-layer";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -1502,12 +1632,34 @@
     // yellow -> orange -> red -> dark red. Deliberately chosen over a
     // perceptually-monotonic warm ramp for full color variety and to match
     // the consortium's shared wind-risk convention everywhere, not just wind.
-    const RISK_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+    // Builds a CSS linear-gradient string from a ramp array so there is only
+    // ONE place gradient strings get generated -- previously RISK_GRADIENT
+    // was a second, hand-typed copy of RISK_RAMP that had already drifted
+    // out of sync with it (and with the .legend-bar CSS default below).
+    function buildGradientCss(ramp) {
+      const n = ramp.length - 1;
+      return "linear-gradient(to right, " + ramp.map(function(hex, i) {
+        return hex + " " + Math.round((i / n) * 100) + "%";
+      }).join(", ") + ")";
+    }
+
+    // Bark beetle's own scale -- see webmap_data/color_scales.R
+    // (BARK_BEETLE_RAMP); PNGs are pre-rendered from that same file so these
+    // must stay in sync with it, not with WIND_RAMP below.
+    const BARK_BEETLE_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
                        "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
-    const RISK_GRADIENT = "linear-gradient(to right, #5e4fa2 0%, #3288bd 10%, #66c2a5 20%, #abdda4 30%, #e6f598 40%, #ffffbf 50%, #fee08b 60%, #fdae61 70%, #f46d43 80%, #d53e4f 90%, #9e0142 100%)";
+    const BARK_BEETLE_GRADIENT = buildGradientCss(BARK_BEETLE_RAMP);
+
+    // Wind's own scale (Tommaso's QGIS rendering) -- see WIND_RAMP in
+    // webmap_data/color_scales.R. An independent copy: historically this and
+    // BARK_BEETLE_RAMP were the same array (wind's ramp reused everywhere),
+    // now split so either can change without touching the other.
+    const WIND_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
+                       "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
+    const WIND_GRADIENT = buildGradientCss(WIND_RAMP);
     // Diverging (ColorBrewer RdBu) ramp for the bark-beetle ensemble forecast's
     // "delta vs. current" view -- deliberately a different family from the
-    // Spectral RISK_GRADIENT so a change map is never mistaken for an
+    // Spectral BARK_BEETLE_GRADIENT so a change map is never mistaken for an
     // absolute-risk one. Matches DELTA_RAMP/PCT_CAP in build_ensemble_delta.R.
     // Stop positions are NOT evenly spaced -- they mirror the signed-sqrt
     // transform the R script applies before coloring (0/+-18/+-32/+-42/+-48%
@@ -1560,7 +1712,7 @@
       }
       return lut;
     }
-    const RISK_LUT = buildRiskLut(RISK_RAMP);
+    const BARK_BEETLE_LUT = buildRiskLut(BARK_BEETLE_RAMP);
 
     function makeColorToRiskFraction(lut) {
       const cache = new Map();
@@ -1579,7 +1731,27 @@
         return bt;
       };
     }
-    const colorToRiskFraction = makeColorToRiskFraction(RISK_LUT);
+    // Default/bark-beetle sampler (bbtl, bbtforecast, bbtpast). Wind gets its
+    // own colorToWindFraction below since it now has its own palette -- do
+    // not use this one for wind, it would nearest-match against the wrong LUT.
+    const colorToRiskFraction = makeColorToRiskFraction(BARK_BEETLE_LUT);
+    const WIND_LUT = buildRiskLut(WIND_RAMP);
+    const colorToWindFraction = makeColorToRiskFraction(WIND_LUT);
+
+    // The drought future-classes layer uses its own 4-colour classified
+    // palette (see export_drought_overlay.R fut_colors), unrelated to either
+    // ramp above -- matching its pixels against colorToRiskFraction's LUT
+    // would produce meaningless nearest-neighbour noise. This is the same
+    // "match a sampled pixel back to a scale position" trick, but built
+    // against drought's own 4 known colours mapped onto severity (Extreme=1
+    // .. Low=0), so the radar chart can plot a real severity reading.
+    const DROUGHT_SEVERITY_LUT = [
+      { r: 0xB2, g: 0x18, b: 0x2B, t: 1.00 }, // Extreme drought hazard
+      { r: 0xEF, g: 0x8A, b: 0x62, t: 0.67 }, // High
+      { r: 0xFD, g: 0xDB, b: 0xC7, t: 0.33 }, // Moderate
+      { r: 0xF7, g: 0xF7, b: 0xF7, t: 0.00 }  // Low
+    ];
+    const colorToDroughtSeverity = makeColorToRiskFraction(DROUGHT_SEVERITY_LUT);
 
     // Load a same-origin overlay PNG, make pixels below the risk threshold
     // transparent, and return a data URL. Falls back to the original URL on
@@ -1651,7 +1823,12 @@
       };
       const fraction = effectiveRiskFraction(overlayId);
       if (fraction > 0) {
-        loadThresholdedImage(url, fraction, place, function() { place(url); });
+        // Wind now has its own palette (WIND_RAMP) distinct from bark
+        // beetle's -- loadThresholdedImage's default colorFractionFn is the
+        // bark-beetle LUT, so wind must explicitly pass its own or the
+        // threshold mask reverse-matches wind's pixels against the wrong ramp.
+        const colorFn = overlayId === "wind" ? colorToWindFraction : undefined;
+        loadThresholdedImage(url, fraction, place, function() { place(url); }, colorFn);
       } else {
         place(url);
       }
@@ -1756,13 +1933,37 @@
         usesYear: true,
         meta: null
       },
-      drought: {
-        label: "Drought stress",
-        description: "Planned overlay for drought stress and climate exposure.",
+      ashDieback: {
+        label: "Ash dieback",
+        description: "Planned overlay for ash dieback disturbance risk. Currently only referenced as an event-marker tag (Pilot actions), no model/layer exists yet.",
         available: false,
         usesRcp: true,
         usesYear: true,
         meta: null
+      },
+      droughtFuture: {
+        label: "Future SPEI drought classes",
+        description: "December SPEI-12-equivalent values, indicating projected climatic water balance relative to the historical reference climate (1981-2010), across 4 future scenario/period combinations. Negative = drier, positive = wetter than reference. Data: Stefan Ebner (BFW).",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: {
+          metaUrl: "webmap_data/drought/drought_future_meta.json",
+          bounds: null,
+          images: null
+        }
+      },
+      droughtRef: {
+        label: "Reference drought indicators (MYD)",
+        description: "Multi-year-drought (MYD) indicators, historical reference period 1981-2010: number of events, max event duration, cumulative duration. A MYD event is SPEI-12 <= -1.1 for >=2 consecutive years. CHELSA-native ~1km. Data: Stefan Ebner (BFW).",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: {
+          metaUrl: "webmap_data/drought/drought_ref_meta.json",
+          bounds: null,
+          images: null
+        }
       },
       wind: {
         label: "Wind damage risk",
@@ -1841,13 +2042,19 @@
       forecastModelSelector: document.getElementById("forecastModelSelector"),
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
       forecastViewSelector: document.getElementById("forecastViewSelector"),
+      forecastViewDeltaOption: document.getElementById("forecastViewDeltaOption"),
       forecastThresholdSelector: document.getElementById("forecastThresholdSelector"),
       forecastMetricsGrid: document.getElementById("forecastMetricsGrid"),
       forecastConfusionMatrix: document.getElementById("forecastConfusionMatrix"),
       forecastMetricsNote: document.getElementById("forecastMetricsNote"),
+      forecastModelNote: document.getElementById("forecastModelNote"),
       windPanel: document.getElementById("windPanel"),
       windPeriodSelector: document.getElementById("windPeriodSelector"),
       windGcmSelector: document.getElementById("windGcmSelector"),
+      droughtFuturePanel: document.getElementById("droughtFuturePanel"),
+      droughtFuturePeriodSelector: document.getElementById("droughtFuturePeriodSelector"),
+      droughtRefPanel: document.getElementById("droughtRefPanel"),
+      droughtRefMetricSelector: document.getElementById("droughtRefMetricSelector"),
       riskSlider: document.getElementById("riskSlider"),
       riskValue: document.getElementById("riskValue"),
       legendThreshMarker: document.getElementById("legendThreshMarker"),
@@ -1861,6 +2068,7 @@
       toggleOverlayBtn: document.getElementById("toggleOverlayBtn"),
       fitOverlayBtn: document.getElementById("fitOverlayBtn"),
       legendBar: document.querySelector(".legend-bar"),
+      legendForLayer: document.getElementById("legendForLayer"),
       legendMin: document.getElementById("legendMin"),
       legendMax: document.getElementById("legendMax"),
       legendSwatches: document.getElementById("legendSwatches"),
@@ -2080,6 +2288,8 @@
       DOM.forecastPanel.hidden = APP.focusedOverlay !== "bbtforecast";
       DOM.phenipsPanel.hidden = APP.focusedOverlay !== "phenips";
       DOM.windPanel.hidden = APP.focusedOverlay !== "wind";
+      DOM.droughtFuturePanel.hidden = APP.focusedOverlay !== "droughtFuture";
+      DOM.droughtRefPanel.hidden = APP.focusedOverlay !== "droughtRef";
     }
 
 
@@ -2183,6 +2393,66 @@
       DOM.windGcmSelector.value = APP.currentWindGcm;
     }
 
+    // ====================================================================
+    // DROUGHT LAYERS (Stefan Ebner, BFW) — classified, categorical rasters,
+    // so no risk-threshold masking (addImageOverlayLayer, not addRiskImageOverlay).
+    // ====================================================================
+    async function ensureDroughtFutureMetaLoaded() {
+      const overlay = OVERLAY_CATALOG.droughtFuture;
+      if (overlay.meta.images) return overlay.meta;
+      const response = await fetch(DROUGHT_FUTURE_DATA_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status + " for " + DROUGHT_FUTURE_DATA_URL);
+      overlay.meta.images = (await response.json()).images;
+      return overlay.meta;
+    }
+
+    async function ensureDroughtRefMetaLoaded() {
+      const overlay = OVERLAY_CATALOG.droughtRef;
+      if (overlay.meta.images) return overlay.meta;
+      const response = await fetch(DROUGHT_REF_DATA_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status + " for " + DROUGHT_REF_DATA_URL);
+      overlay.meta.images = (await response.json()).images;
+      return overlay.meta;
+    }
+
+    async function updateDroughtFutureLayer() {
+      if (!isOverlayVisible("droughtFuture")) return;
+      const requestToken = beginOverlayLoad("droughtFuture");
+      setStatus("Loading future drought classes...");
+      try {
+        const meta = await ensureDroughtFutureMetaLoaded();
+        if (!isCurrentOverlayLoad("droughtFuture", requestToken)) return;
+        const image = meta.images[APP.currentDroughtFuturePeriod];
+        if (!image) throw new Error("No drought image for " + APP.currentDroughtFuturePeriod);
+        addImageOverlayLayer("droughtFuture", "webmap_data/" + image.file + "?v=" + ASSET_VERSION, image.bounds);
+        updateOverlayPaneOrder();
+        setLegendLabels();
+        setStatus("Loaded future SPEI drought classes — " + APP.currentDroughtFuturePeriod.replace(/_/g, " "));
+      } catch (error) {
+        console.error(error);
+        setStatus("Drought future overlay could not be loaded");
+      }
+    }
+
+    async function updateDroughtRefLayer() {
+      if (!isOverlayVisible("droughtRef")) return;
+      const requestToken = beginOverlayLoad("droughtRef");
+      setStatus("Loading reference drought indicators...");
+      try {
+        const meta = await ensureDroughtRefMetaLoaded();
+        if (!isCurrentOverlayLoad("droughtRef", requestToken)) return;
+        const image = meta.images[APP.currentDroughtRefMetric];
+        if (!image) throw new Error("No drought image for " + APP.currentDroughtRefMetric);
+        addImageOverlayLayer("droughtRef", "webmap_data/" + image.file + "?v=" + ASSET_VERSION, image.bounds);
+        updateOverlayPaneOrder();
+        setLegendLabels();
+        setStatus("Loaded reference drought indicator — " + APP.currentDroughtRefMetric);
+      } catch (error) {
+        console.error(error);
+        setStatus("Drought reference overlay could not be loaded");
+      }
+    }
+
     function populateSelectOptions(select, values, selectedValue, labelFn) {
       select.innerHTML = "";
       values.forEach(function(value) {
@@ -2225,22 +2495,27 @@
       return isFinite(n) ? n.toFixed(decimals) : "N/A";
     }
 
-    function renderForecastPerformance(row, cutoff) {
+    function renderForecastPerformance(row, cutoff, auc) {
+      // AUC is threshold-independent (ranks predictions across ALL cutoffs,
+      // not just the selected one) -- show it whenever the model has one,
+      // even if the specific cutoff's row is missing/NA.
+      const aucItem = isFinite(Number(auc)) ? [{ label: "AUC", value: fmtMetricNum(auc, 3) }] : [];
+
       if (!row) {
-        renderForecastMetricsGrid([]);
+        renderForecastMetricsGrid(aucItem);
         renderForecastConfusionMatrix(null);
         DOM.forecastMetricsNote.textContent = "No matching historical evaluation row is available for cutoff " + formatForecastThreshold(cutoff) + ".";
         return;
       }
 
-      renderForecastMetricsGrid([
+      renderForecastMetricsGrid(aucItem.concat([
         { label: "Precision", value: fmtMetricNum(row.precision, 3) },
         { label: "Recall", value: fmtMetricNum(row.recall, 3) },
         { label: "Specificity", value: fmtMetricNum(row.specificity, 3) },
         { label: "F1", value: fmtMetricNum(row.F1, 3) },
         { label: "Red fraction", value: fmtMetricNum(row.red_fraction, 3) },
         { label: "Cutoff", value: formatForecastThreshold(cutoff) }
-      ]);
+      ]));
       renderForecastConfusionMatrix(row);
       DOM.forecastMetricsNote.textContent = isFinite(Number(row.precision))
         ? "Historical evaluation summary aggregated across available GCMs at cutoff " + formatForecastThreshold(cutoff) + "."
@@ -2252,17 +2527,39 @@
       if (!row) {
         return;
       }
+      // Only the older, currently-hidden CORDEX models have real TP/FP/FN/TN
+      // counts -- every model actually selectable today has none, so a grid
+      // of "N/A" boxes would show for every single one. Skip it cleanly
+      // instead, rather than rendering cells that never have data.
+      const hasCounts = ["TP", "FP", "FN", "TN"].some(function(k) { return isFinite(Number(row[k])); });
+      if (!hasCounts) {
+        return;
+      }
+
+      // Show each cell as a share of all classified pixels (the standard
+      // way to read a confusion matrix at a glance), alongside the raw
+      // count -- percentage alone would lose the actual scale.
+      const total = ["TP", "FP", "FN", "TN"].reduce(function(sum, k) {
+        const n = Number(row[k]);
+        return sum + (isFinite(n) ? n : 0);
+      }, 0);
+      const cellHtml = function(label, key) {
+        const n = Number(row[key]);
+        if (!isFinite(n)) return "<strong>" + label + "</strong>N/A";
+        const pct = total > 0 ? Math.round((n / total) * 100) + "%" : "N/A";
+        return "<strong>" + label + "</strong>" + n.toLocaleString() + " <span class=\"cm-pct\">(" + pct + ")</span>";
+      };
 
       const cells = [
         { className: "cm-corner", html: "" },
         { className: "cm-head", html: "Observed +<br>disturbance" },
         { className: "cm-head", html: "Observed -<br>no disturbance" },
         { className: "cm-side", html: "Predicted +" },
-        { className: "cm-cell", html: "<strong>TP</strong>" + (isFinite(Number(row.TP)) ? Number(row.TP).toLocaleString() : "N/A") },
-        { className: "cm-cell", html: "<strong>FP</strong>" + (isFinite(Number(row.FP)) ? Number(row.FP).toLocaleString() : "N/A") },
+        { className: "cm-cell", html: cellHtml("TP", "TP") },
+        { className: "cm-cell", html: cellHtml("FP", "FP") },
         { className: "cm-side", html: "Predicted -" },
-        { className: "cm-cell", html: "<strong>FN</strong>" + (isFinite(Number(row.FN)) ? Number(row.FN).toLocaleString() : "N/A") },
-        { className: "cm-cell", html: "<strong>TN</strong>" + (isFinite(Number(row.TN)) ? Number(row.TN).toLocaleString() : "N/A") }
+        { className: "cm-cell", html: cellHtml("FN", "FN") },
+        { className: "cm-cell", html: cellHtml("TN", "TN") }
       ];
 
       cells.forEach(function(item) {
@@ -2381,6 +2678,30 @@
         APP.currentForecastThreshold = thresholds.includes("0.75") ? "0.75" : thresholds[0];
       }
 
+      // Most models (all but "ensemble") have no delta_from_near_tif at all --
+      // selecting "delta" view for one used to fail silently (blank map, a
+      // console error, and a status-bar line the user would have to notice).
+      // Disable the option up front instead, and fall back off it if it was
+      // already selected (e.g. switching FROM ensemble TO a model without one).
+      const modelSupportsDelta = periods.some(function(p) {
+        const e = manifest.entries[APP.currentForecastModel + "::" + p];
+        return e && e.delta_from_near_tif;
+      });
+      if (DOM.forecastViewDeltaOption) {
+        DOM.forecastViewDeltaOption.disabled = !modelSupportsDelta;
+      }
+      if (!modelSupportsDelta && APP.currentForecastView === "delta") {
+        APP.currentForecastView = "probability";
+      }
+
+      // The per-cutoff note (below, for the currently selected threshold) can
+      // be misleadingly generic when NA -- this model-level note is the real,
+      // model-specific documentation already written into metrics_confusion.json
+      // (e.g. explaining that a model IS validated, just not at every cutoff).
+      if (DOM.forecastModelNote) {
+        DOM.forecastModelNote.textContent = metrics.notes || "";
+      }
+
       const manifestModels = manifest.models || {};
       populateSelectOptions(DOM.forecastModelSelector, modelKeys, APP.currentForecastModel, function(value) {
         if (manifestModels[value] && manifestModels[value].label) {
@@ -2403,7 +2724,7 @@
         return Number(item.cutoff) === cutoff;
       });
 
-      renderForecastPerformance(row, cutoff);
+      renderForecastPerformance(row, cutoff, metrics.auc);
     }
 
     function renderLegendSwatches(items) {
@@ -2439,6 +2760,7 @@
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "NA";
         DOM.legendMax.textContent = "NA";
+        if (DOM.legendForLayer) DOM.legendForLayer.textContent = "";
         return;
       }
 
@@ -2446,9 +2768,22 @@
       const overlay = getVisibleOverlay();
       renderLegendSwatches([]);
       DOM.legendBar.style.display = "block";
-      DOM.legendBar.style.background = RISK_GRADIENT;
+      DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
+      DOM.legendMin.parentElement.style.display = "";
       updateRiskSliderRange(topOverlayId);
       updateLegendThreshMarker(topOverlayId);
+
+      // The legend describes the top VISIBLE layer, which is deliberately
+      // independent of whichever card's controls are focused above (so you
+      // can browse a layer's description while a different one stays
+      // displayed) -- when the two differ, say so, or the numbers below
+      // silently belong to something other than what "Focused layer" says.
+      if (DOM.legendForLayer) {
+        const topLabel = topOverlayId && OVERLAY_CATALOG[topOverlayId] && OVERLAY_CATALOG[topOverlayId].label;
+        DOM.legendForLayer.textContent = (topOverlayId && topOverlayId !== APP.focusedOverlay && topLabel)
+          ? "— showing: " + topLabel
+          : "";
+      }
       if (topOverlayId === "phenips") {
         const v = APP.currentPhenipsVar;
         const view = APP.currentPhenipsView;
@@ -2456,12 +2791,12 @@
         DOM.legendBar.style.display = "none";
         if (v === "gdd" && view === "abs") {
           DOM.legendBar.style.display = "block";
-          DOM.legendBar.style.background = RISK_GRADIENT;
+          DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
           DOM.legendMin.textContent = "0 DD";
           DOM.legendMax.textContent = "4000 DD";
         } else if (v === "gdd" && view !== "abs") {
           DOM.legendBar.style.display = "block";
-          DOM.legendBar.style.background = RISK_GRADIENT;
+          DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
           DOM.legendMin.textContent = "0 DD";
           DOM.legendMax.textContent = "+1100 DD";
         } else {
@@ -2509,9 +2844,27 @@
         return;
       }
 
+      if (topOverlayId === "droughtFuture" || topOverlayId === "droughtRef") {
+        const key = topOverlayId === "droughtFuture" ? APP.currentDroughtFuturePeriod : APP.currentDroughtRefMetric;
+        const image = overlay.meta && overlay.meta.images && overlay.meta.images[key];
+        DOM.legendBar.style.display = "none";
+        // The min/max summary row is redundant here (and the full label
+        // text is too long for it) -- the swatch list below already shows
+        // every class with its own label.
+        DOM.legendMin.parentElement.style.display = "none";
+        if (!image) {
+          renderLegendSwatches([]);
+          return;
+        }
+        renderLegendSwatches(image.legend.labels.map(function(label, index) {
+          return { color: image.legend.colors[index], label: label };
+        }));
+        return;
+      }
+
       if (topOverlayId === "wind") {
         DOM.legendBar.style.display = "block";
-        DOM.legendBar.style.background = RISK_GRADIENT;
+        DOM.legendBar.style.background = WIND_GRADIENT;
         DOM.legendMin.textContent = "0 — low";
         DOM.legendMax.textContent = "≥ 0.5 — high";
         return;
@@ -2530,7 +2883,7 @@
         // Both views now share the same ramp (continuous 0-1 vs. the
         // classified view's 8 discrete bins over 0.55-1.0+) so switching
         // views no longer changes the color language, only the granularity.
-        DOM.legendBar.style.background = RISK_GRADIENT;
+        DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
         if (APP.currentForecastView === "threshold") {
           DOM.legendMin.textContent = formatForecastThreshold(APP.currentForecastThreshold);
           DOM.legendMax.textContent = "1.00";
@@ -2577,11 +2930,11 @@
       const zmax = Number(overlay.meta.valueRange.zmax);
 
       if (zmax <= zmin) {
-        return RISK_RAMP[0];
+        return BARK_BEETLE_RAMP[0];
       }
 
       const t = (value - zmin) / (zmax - zmin);
-      return rampColor(RISK_RAMP, t);
+      return rampColor(BARK_BEETLE_RAMP, t);
     }
 
     function baseHexStyle(feature) {
@@ -2885,7 +3238,9 @@
       phenips: updatePhenipsLayer,
       bbtpast: updateClassifiedImageOverlay,
       bbtforecast: updateForecastOverlay,
-      wind: updateWindLayer
+      wind: updateWindLayer,
+      droughtFuture: updateDroughtFutureLayer,
+      droughtRef: updateDroughtRefLayer
     };
 
     function syncOverlayControls(refreshTarget) {
@@ -3036,21 +3391,27 @@
         return;
       }
 
+      // These are pre-rendered images, not queryable data -- one clear
+      // statement in the readout itself, not also duplicated into the
+      // Status line below (that line is for operational feedback --
+      // loading/loaded/error -- not a second copy of the same fact).
       if (getTopVisibleOverlayId() === "bbtforecast") {
-        DOM.hexValue.textContent = "PNG overlay";
-        setStatus("Forecast overlay is visualization-only");
+        DOM.hexValue.textContent = "Visualization only";
         return;
       }
 
       if (getTopVisibleOverlayId() === "bbtpast") {
-        DOM.hexValue.textContent = "Classified PNG overlay";
-        setStatus("Historical overlay is visualization-only");
+        DOM.hexValue.textContent = "Visualization only";
         return;
       }
 
       if (getTopVisibleOverlayId() === "wind") {
-        DOM.hexValue.textContent = "PNG overlay";
-        setStatus("Wind damage risk overlay is visualization-only");
+        DOM.hexValue.textContent = "Visualization only";
+        return;
+      }
+
+      if (getTopVisibleOverlayId() === "droughtFuture" || getTopVisibleOverlayId() === "droughtRef") {
+        DOM.hexValue.textContent = "Visualization only";
         return;
       }
 
@@ -3157,16 +3518,20 @@
     // ====================================================================
     // RISK RADAR CHART -- 5-hazard profile at a clicked point
     // ====================================================================
-    // Bark beetle and wind are the only hazards with a real model right now
-    // (see OVERLAY_CATALOG: wildfire/drought are `available: false`, ash
-    // dieback has no layer at all -- it only appears as a pilot-action hazard
-    // tag). Those three axes are a fixed 0.2 placeholder until a model
-    // exists; bark beetle and wind are sampled for real, INCLUDING when
-    // hidden -- a hidden layer is fetched off-screen using whichever config
-    // this side currently holds (its default if never touched, or whatever
-    // was last activated if the user configured it before hiding it: hiding
-    // never resets currentRcp/currentWindPeriod/etc, so reading them already
-    // gives the right answer either way).
+    // Bark beetle, wind, and drought are the hazards with a real model/
+    // classification right now (see OVERLAY_CATALOG: wildfire is still
+    // `available: false`, ash dieback has no layer at all -- it only
+    // appears as a pilot-action hazard tag). Those two remaining axes are a
+    // fixed 0.2 placeholder until a model exists; the other three are
+    // sampled for real, INCLUDING when hidden -- a hidden layer is fetched
+    // off-screen using whichever config this side currently holds (its
+    // default if never touched, or whatever was last activated if the user
+    // configured it before hiding it: hiding never resets
+    // currentRcp/currentWindPeriod/currentDroughtFuturePeriod/etc, so
+    // reading them already gives the right answer either way). Drought is a
+    // classified severity tier (Extreme..Low), not a modelled probability
+    // like the other two -- colorToDroughtSeverity maps it onto the same
+    // 0..1 axis for comparability, it isn't literally "risk %".
     const RADAR_PLACEHOLDER = 0.2;
     const BBT_OVERLAY_IDS = ["bbtl", "bbtforecast", "bbtpast"];
 
@@ -3211,7 +3576,7 @@
     // a point that very much has data. img.decode() is the reliable signal;
     // await it (falling back to drawing anyway if it rejects) before
     // reading any pixels.
-    async function sampleImageAt(img, bounds, latlng) {
+    async function sampleImageAt(img, bounds, latlng, colorFn) {
       if (!img || !img.naturalWidth) return null;
       const fracX = (latlng.lng - bounds.west) / (bounds.east - bounds.west);
       const fracY = (bounds.north - latlng.lat) / (bounds.north - bounds.south);
@@ -3242,7 +3607,7 @@
           }
         }
         if (!best) return null;
-        return colorToRiskFraction(best.r, best.g, best.b);
+        return (colorFn || colorToRiskFraction)(best.r, best.g, best.b);
       } catch (e) {
         return null; // tainted canvas or similar -- treat as "no data"
       }
@@ -3255,13 +3620,22 @@
     // happens to already be loaded; otherwise fetches off-screen using
     // this side's own current model/period/threshold selection.
     async function sampleRasterOverlayFor(overlayId, latlng, state) {
+      // droughtFuture's severity is already a native 0..1 reading (see
+      // colorToDroughtSeverity above) -- unlike the other overlays here, it
+      // isn't a colour-ramp fraction that still needs an overlayScaleCap.
+      // wind has its own palette (WIND_RAMP) since it was split from bark
+      // beetle's -- must use colorToWindFraction, not the default LUT.
+      const isDrought = overlayId === "droughtFuture";
+      const colorFn = isDrought ? colorToDroughtSeverity
+        : overlayId === "wind" ? colorToWindFraction
+        : colorToRiskFraction;
       const liveLayer = state.layerInstances && state.layerInstances[overlayId];
       if (liveLayer && liveLayer.getElement && liveLayer.getBounds) {
         const img = liveLayer.getElement();
         if (img && img.complete && img.naturalWidth) {
           const b = liveLayer.getBounds();
-          const frac = await sampleImageAt(img, { west: b.getWest(), east: b.getEast(), north: b.getNorth(), south: b.getSouth() }, latlng);
-          if (frac != null) return frac * overlayScaleCap(overlayId);
+          const frac = await sampleImageAt(img, { west: b.getWest(), east: b.getEast(), north: b.getNorth(), south: b.getSouth() }, latlng, colorFn);
+          if (frac != null) return isDrought ? frac : frac * overlayScaleCap(overlayId);
         }
       }
 
@@ -3273,7 +3647,7 @@
         const image = meta.images[key] || meta.images[state.currentWindPeriod] || meta.images.near;
         if (!image) return null;
         const img = await cachedFetchImage("webmap_data/" + image.file + "?v=" + ASSET_VERSION);
-        const frac = await sampleImageAt(img, image.bounds, latlng);
+        const frac = await sampleImageAt(img, image.bounds, latlng, colorToWindFraction);
         return frac == null ? null : frac * overlayScaleCap("wind");
       }
 
@@ -3304,6 +3678,15 @@
         if (!meta.image || !meta.bounds) return null;
         const img = await cachedFetchImage(meta.image + "?v=" + ASSET_VERSION);
         return await sampleImageAt(img, meta.bounds, latlng); // already 0..1
+      }
+
+      if (overlayId === "droughtFuture") {
+        let meta;
+        try { meta = await ensureDroughtFutureMetaLoaded(); } catch (e) { return null; }
+        const image = meta.images[state.currentDroughtFuturePeriod];
+        if (!image) return null;
+        const img = await cachedFetchImage("webmap_data/" + image.file + "?v=" + ASSET_VERSION);
+        return await sampleImageAt(img, image.bounds, latlng, colorToDroughtSeverity); // already 0..1 severity
       }
 
       return null;
@@ -3344,7 +3727,7 @@
       "focusedOverlay", "layerInstances", "currentHexGeojson",
       "currentRcp", "currentYear",
       "currentForecastModel", "currentForecastPeriod", "currentForecastView", "currentForecastThreshold",
-      "currentWindPeriod", "currentWindGcm"
+      "currentWindPeriod", "currentWindGcm", "currentDroughtFuturePeriod"
     ];
     function snapshotRadarState(state) {
       const snap = {};
@@ -3354,16 +3737,21 @@
 
     async function computeRadarValues(latlng, radarState) {
       const state = radarState || snapshotRadarState(APP);
-      const [bb, wind] = await Promise.all([
+      const [bb, wind, drought] = await Promise.all([
         getBarkBeetleRiskFor(latlng, state),
-        sampleRasterOverlayFor("wind", latlng, state)
+        sampleRasterOverlayFor("wind", latlng, state),
+        sampleRasterOverlayFor("droughtFuture", latlng, state)
       ]);
       return [
         { id: "bbtl", label: "Bark beetle", value: bb, placeholder: false },
         { id: "wind", label: "Wind", value: wind, placeholder: false },
         { id: "fire", label: "Fire", value: RADAR_PLACEHOLDER, placeholder: true },
         { id: "ash", label: "Ash dieback", value: RADAR_PLACEHOLDER, placeholder: true },
-        { id: "drought", label: "Drought", value: RADAR_PLACEHOLDER, placeholder: true }
+        {
+          id: "drought", label: "Drought",
+          value: drought == null ? RADAR_PLACEHOLDER : drought,
+          placeholder: drought == null
+        }
       ];
     }
 
@@ -3398,11 +3786,24 @@
       });
 
       const frac = function(v) { return v.value == null ? 0 : Math.max(0, Math.min(1, v.value)); };
-      const poly = values.map(function(v, i) {
-        const p = radarPolarPoint(cx, cy, R * frac(v), i * step);
-        return p[0].toFixed(1) + "," + p[1].toFixed(1);
-      }).join(" ");
+      const points = values.map(function(v, i) { return radarPolarPoint(cx, cy, R * frac(v), i * step); });
+      const poly = points.map(function(p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
+      // Fill is one shape (fine as a rough gestalt), but the OUTLINE is drawn
+      // as separate segments below: a solid line only where both endpoints
+      // are real measurements, dashed/muted wherever it touches a
+      // placeholder (no model exists, e.g. fire/ash) or missing (a model
+      // exists but this point has no data) value -- a single solid outline
+      // through fabricated and real numbers alike would misrepresent
+      // placeholder guesses as equally-measured.
       svg += '<polygon points="' + poly + '" class="radar-value-poly" />';
+      const isConfident = function(v) { return !v.placeholder && v.value != null; };
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const segCls = (isConfident(values[i]) && isConfident(values[j])) ? "radar-seg-confident" : "radar-seg-unconfident";
+        svg += '<line x1="' + points[i][0].toFixed(1) + '" y1="' + points[i][1].toFixed(1)
+          + '" x2="' + points[j][0].toFixed(1) + '" y2="' + points[j][1].toFixed(1)
+          + '" class="' + segCls + '" />';
+      }
 
       values.forEach(function(v, i) {
         const p = radarPolarPoint(cx, cy, R * frac(v), i * step);
@@ -3463,8 +3864,12 @@
           + ': <strong>' + shown + '</strong>'
           + (note ? '<span class="radar-legend-note">' + note + '</span>' : '') + '</div>';
       }).join("");
+      const hasUnconfident = values.some(function(v) { return v.placeholder || v.value == null; });
+      const edgeNote = hasUnconfident
+        ? '<div class="radar-legend-note">Dashed edges connect placeholder or no-data values — not a measured reading, don’t compare them to the solid segments.</div>'
+        : "";
       el.innerHTML = radarHeaderHtml(latlng) + renderRadarSvg(values)
-        + '<div class="risk-radar-legend">' + rows + '</div>';
+        + '<div class="risk-radar-legend">' + rows + edgeNote + '</div>';
       el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
     }
 
@@ -3564,6 +3969,25 @@
       control.addTo(APP.map);
     }
 
+    // Split-screen toggle belongs next to the thing it splits (the map),
+    // not in the header row of unrelated project/info links. Moves the
+    // existing #splitBtn node (with all its listeners already wired) into
+    // a Leaflet control instead of recreating it.
+    function addSplitScreenControl() {
+      const control = L.control({ position: "topright" });
+      control.onAdd = function() {
+        const el = L.DomUtil.create("div", "split-screen-control");
+        L.DomEvent.disableClickPropagation(el);
+        L.DomEvent.disableScrollPropagation(el);
+        if (DOM.splitBtn) {
+          DOM.splitBtn.hidden = false;
+          el.appendChild(DOM.splitBtn);
+        }
+        return el;
+      };
+      control.addTo(APP.map);
+    }
+
     // --- Split screen: two real maps; the panel drives the ACTIVE one -------
     // The active side's state lives directly on APP (map, layerInstances, all
     // settings). Switching side parks the current state in `panels` and loads
@@ -3580,6 +4004,7 @@
       "currentPhenipsScen", "currentPhenisPeriod", "currentPhenipsVar",
       "currentPhenipsView", "currentForecastModel", "currentForecastPeriod",
       "currentForecastView", "currentForecastThreshold", "currentWindPeriod", "currentWindGcm",
+      "currentDroughtFuturePeriod", "currentDroughtRefMetric",
       "currentForecastRasterRange", "overlayLoadTokens", "overlayVisible",
       "currentHexGeojson", "layerInstances"
     ];
@@ -3799,6 +4224,8 @@
       if (DOM.phenipsViewSelector) DOM.phenipsViewSelector.value = APP.currentPhenipsView;
       if (DOM.windPeriodSelector) DOM.windPeriodSelector.value = APP.currentWindPeriod;
       updateWindGcmAvailability();
+      if (DOM.droughtFuturePeriodSelector) DOM.droughtFuturePeriodSelector.value = APP.currentDroughtFuturePeriod;
+      if (DOM.droughtRefMetricSelector) DOM.droughtRefMetricSelector.value = APP.currentDroughtRefMetric;
       if (DOM.riskSlider) DOM.riskSlider.value = Math.round(APP.riskThreshold * 100);
       if (DOM.riskValue) DOM.riskValue.textContent = Math.round(APP.riskThreshold * 100) + "%";
       if (APP.focusedOverlay === "bbtforecast") {
@@ -3863,9 +4290,10 @@
         currentForecastModel: APP.currentForecastModel, currentForecastPeriod: APP.currentForecastPeriod,
         currentForecastView: APP.currentForecastView, currentForecastThreshold: APP.currentForecastThreshold,
         currentWindPeriod: APP.currentWindPeriod, currentWindGcm: APP.currentWindGcm, currentForecastRasterRange: null,
-        overlayLoadTokens: { bbtl: 0, bbtforecast: 0, phenips: 0, bbtpast: 0, wind: 0 },
+        currentDroughtFuturePeriod: APP.currentDroughtFuturePeriod, currentDroughtRefMetric: APP.currentDroughtRefMetric,
+        overlayLoadTokens: { bbtl: 0, bbtforecast: 0, phenips: 0, bbtpast: 0, wind: 0, droughtFuture: 0, droughtRef: 0 },
         overlayVisible: APP.overlayVisible, currentHexGeojson: null,
-        layerInstances: { bbtl: null, bbtforecast: null, phenips: null, bbtpast: null, wind: null }
+        layerInstances: { bbtl: null, bbtforecast: null, phenips: null, bbtpast: null, wind: null, droughtFuture: null, droughtRef: null }
       };
 
       if (APP.map.sync) { APP.map.sync(mapR); mapR.sync(APP.map); }
@@ -3934,6 +4362,7 @@
       APP.catalogueLayerLeft = buildCatalogueLayer(APP.leftMap);
 
       addBasemapControl();
+      addSplitScreenControl();
       setBasemap(APP.currentBasemap);
 
       // Place search (Nominatim) — type a town/region and fly there.
@@ -3957,7 +4386,7 @@
     // Encode the meaningful view so a link reproduces what the user sees.
     // Fixed key order for the compact "lo" (layer opacity) param -- must match
     // the order restored in applyStateFromUrl.
-    const LAYER_OPACITY_KEYS = ["bbtl", "bbtforecast", "phenips", "bbtpast", "wind"];
+    const LAYER_OPACITY_KEYS = ["bbtl", "bbtforecast", "phenips", "bbtpast", "wind", "droughtFuture", "droughtRef"];
 
     function buildShareUrl() {
       const p = new URLSearchParams();
@@ -3974,6 +4403,8 @@
       p.set("pw", APP.currentPhenipsView);
       p.set("wp", APP.currentWindPeriod);
       p.set("wg", APP.currentWindGcm);
+      p.set("dp", APP.currentDroughtFuturePeriod);
+      p.set("dm", APP.currentDroughtRefMetric);
       p.set("rc", APP.currentRcp);
       if (APP.currentYear != null) p.set("yr", String(APP.currentYear));
       p.set("th", String(Math.round(APP.riskThreshold * 100)));
@@ -4007,6 +4438,7 @@
       setIf("ps", "currentPhenipsScen"); setIf("pp", "currentPhenisPeriod");
       setIf("pv", "currentPhenipsVar"); setIf("pw", "currentPhenipsView");
       setIf("wp", "currentWindPeriod"); setIf("wg", "currentWindGcm"); setIf("rc", "currentRcp");
+      setIf("dp", "currentDroughtFuturePeriod"); setIf("dm", "currentDroughtRefMetric");
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
       if (p.has("pa")) { APP.showPilotActions = p.get("pa") === "1"; syncPilotActionsVisibility(); }
@@ -4030,6 +4462,8 @@
       setSel(DOM.phenipsViewSelector, APP.currentPhenipsView);
       setSel(DOM.windPeriodSelector, APP.currentWindPeriod);
       updateWindGcmAvailability();
+      setSel(DOM.droughtFuturePeriodSelector, APP.currentDroughtFuturePeriod);
+      setSel(DOM.droughtRefMetricSelector, APP.currentDroughtRefMetric);
       setSel(DOM.rcpSelector, APP.currentRcp);
       if (DOM.riskSlider) DOM.riskSlider.value = Math.round(APP.riskThreshold * 100);
       if (DOM.riskValue) DOM.riskValue.textContent = Math.round(APP.riskThreshold * 100) + "%";
@@ -4165,6 +4599,18 @@
         else setLegendLabels();
       });
 
+      DOM.droughtFuturePeriodSelector.addEventListener("change", function() {
+        APP.currentDroughtFuturePeriod = DOM.droughtFuturePeriodSelector.value;
+        if (isOverlayVisible("droughtFuture")) updateDroughtFutureLayer();
+        else setLegendLabels();
+      });
+
+      DOM.droughtRefMetricSelector.addEventListener("change", function() {
+        APP.currentDroughtRefMetric = DOM.droughtRefMetricSelector.value;
+        if (isOverlayVisible("droughtRef")) updateDroughtRefLayer();
+        else setLegendLabels();
+      });
+
       DOM.riskSlider.addEventListener("input", function() {
         DOM.riskValue.textContent = DOM.riskSlider.value + "%";
       });
@@ -4179,20 +4625,21 @@
       if (DOM.splitBtn) DOM.splitBtn.addEventListener("click", toggleSplit);
       if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.addEventListener("click", togglePilotActions);
 
-      // Bark-beetle accessory layers stay collapsed until the label is clicked.
-      const bbToggle = document.getElementById("bbToggle");
-      const bbAccessories = document.getElementById("bbAccessories");
-      if (bbToggle && bbAccessories) {
-        const toggleBB = function() {
-          bbAccessories.hidden = !bbAccessories.hidden;
-          bbToggle.classList.toggle("open", !bbAccessories.hidden);
-          bbToggle.setAttribute("aria-expanded", String(!bbAccessories.hidden));
+      // Any driver box's accessory layers stay collapsed until its header
+      // strip is clicked (currently Bark beetle +3, Drought +1).
+      document.querySelectorAll(".bb-toggle[data-toggle-target]").forEach(function(toggle) {
+        const accessories = document.getElementById(toggle.dataset.toggleTarget);
+        if (!accessories) return;
+        const toggleGroup = function() {
+          accessories.hidden = !accessories.hidden;
+          toggle.classList.toggle("open", !accessories.hidden);
+          toggle.setAttribute("aria-expanded", String(!accessories.hidden));
         };
-        bbToggle.addEventListener("click", toggleBB);
-        bbToggle.addEventListener("keydown", function(e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleBB(); }
+        toggle.addEventListener("click", toggleGroup);
+        toggle.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleGroup(); }
         });
-      }
+      });
 
       DOM.rcpSelector.value = APP.currentRcp;
       DOM.rcpSelector.addEventListener("change", function() {

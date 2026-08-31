@@ -2,8 +2,9 @@
 # Export the CHELSA/MPI-ESM1-2-HR bark-beetle risk rasters (built in
 # FINAL_MODEL/CHELSA_DELIVERABLE/ by build_chelsa_predict.R + build_chelsa_
 # apply_model.R) as a new "chelsa_mpi_ssp585" forecast-bundle model: same
-# continuous-probability rendering as colorize_prob_continuous.R (shared
-# RISK_RAMP), plus one classified risk_visible_t50 so the app's existing
+# continuous-probability rendering as colorize_prob_continuous.R
+# (BARK_BEETLE_RAMP, see color_scales.R), plus one classified
+# risk_visible_t50 so the app's existing
 # threshold-availability check (hydrateForecastControls) has something to
 # match against.
 #
@@ -18,6 +19,7 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 src_dir <- "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/FINAL_MODEL/CHELSA_DELIVERABLE"
 out_root <- "webmap_data/forecast_bundle/chelsa_mpi_ssp585"
@@ -28,17 +30,14 @@ periods <- list(
   list(key = "2071_2100", src = file.path(src_dir, "bb_risk_mpi_ssp585.tif"))
 )
 
-# Unified Spectral ramp, shared app-wide (see index.html RISK_RAMP).
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Bark beetle's own scale -- see color_scales.R.
+ramp_colors <- BARK_BEETLE_RAMP
 color_ramp <- colorRamp(ramp_colors, space = "rgb")
 fade_knee <- 0.3
 fade_floor <- 90
 
-risk_breaks <- c(0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9)
-# 8 stops resampled off the 11-stop ramp (8 bins need 8 colors, not 11).
-risk_colors <- c("#00000000", "#5e4fa2", "#48a1b3", "#a1d9a4", "#edf8a3",
-                 "#fee99a", "#fca55d", "#e2524a", "#9e0142")
+risk_breaks <- BARK_BEETLE_CLASSIFIED_BREAKS
+risk_colors <- BARK_BEETLE_CLASSIFIED_COLORS
 
 to_mercator_png <- function(r, out_png, colorfun, alpha_fun) {
   r <- project(r, "EPSG:3857", method = "bilinear")

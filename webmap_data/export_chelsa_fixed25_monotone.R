@@ -20,6 +20,7 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 src_dir  <- "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/CHELSA_NATIVE_TRAINING/anna_deliverable"
 out_root <- "webmap_data/forecast_bundle/chelsa_fixed25_monotone"
@@ -31,16 +32,14 @@ periods <- list(
   list(key = "2071_2100", src = file.path(src_dir, "barkbeetle_CZU_fixed25_monotone_future_continuous_2071_2100.tif"))
 )
 
-# Unified Spectral ramp, shared app-wide (see index.html RISK_RAMP).
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Bark beetle's own scale -- see color_scales.R.
+ramp_colors <- BARK_BEETLE_RAMP
 color_ramp <- colorRamp(ramp_colors, space = "rgb")
 fade_knee  <- 0.3
 fade_floor <- 90
 
-risk_breaks <- c(0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9)
-risk_colors <- c("#00000000", "#5e4fa2", "#48a1b3", "#a1d9a4", "#edf8a3",
-                 "#fee99a", "#fca55d", "#e2524a", "#9e0142")
+risk_breaks <- BARK_BEETLE_CLASSIFIED_BREAKS
+risk_colors <- BARK_BEETLE_CLASSIFIED_COLORS
 
 downsample_then_mercator <- function(r) {
   fact <- ceiling(max(ncol(r), nrow(r)) / max_dim)
@@ -126,6 +125,11 @@ for (p in periods) {
 # other models.
 metrics <- list(
   model = "chelsa_fixed25_monotone",
+  # Threshold-independent, forward direction (= deployable; backward is a
+  # confounded robustness check, see notes below and PROJECT_REFERENCE
+  # bark_beetle_model.md). Displayed in the app's metrics grid alongside
+  # the per-cutoff precision/recall/F1 below.
+  auc = 0.663,
   notes = paste(
     "CHELSA-native training (observed climate, 1983-1997+2000-2020), fixed25",
     "(literature catalogue, 25km buffer) label, monotone-constrained XGBoost.",

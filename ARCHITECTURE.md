@@ -13,7 +13,8 @@ step: open `index.html` and it runs.
 It is a **multi-stress** DSS. Stresses are grouped in the top ribbon:
 - **Bark beetle** (the mature stress, several layers — see below)
 - **Wind** (forest wind-damage probability)
-- **Wildfire**, **Drought** — placeholders ("Coming soon")
+- **Drought** (SPEI-based, 2 layers — see below)
+- **Wildfire** — placeholder ("Coming soon")
 
 ## 2. Files
 
@@ -25,6 +26,7 @@ html_app/
   webmap_data/            # all map data + the R scripts that build it
     map_meta.js           # global: bbox, value range, bbtl (Science) hex geojson file list
     wind/                 # wind_<period>.png + wind_meta.json (RCP8.5, 3 periods)        ~11 MB
+    drought/              # drought_{future,ref}_meta.json + classified PNGs (Stefan Ebner, BFW) ~0.5 MB
     phenips/              # phenips_*.png + phenips_data.json (GDD / generations)          ~4 MB
     forecast_bundle/      # bark-beetle forecast: manifest.json + per-model/scenario/period ~46 MB
     geojson/              # bbtl pressure hexes (Grünig et al. 2026 Science) per rcp+year
@@ -56,7 +58,9 @@ once everything moved to pre-rendered PNGs + the dual-map compare.)
 | `bbtpast` | Past disturbance | **PNG** (classified) | historical 1985–2023 footprint |
 | `bbtl` | Bark Beetle Pressure | **vector hexes (GeoJSON)** | Grünig et al. 2026, *Science*; per RCP × year |
 | `wind` | Wind | **PNG** raster | wind-damage probability, RCP8.5, 3 periods |
-| `wildfire`,`drought` | — | not available | placeholders |
+| `droughtFuture` | Future SPEI classes | **PNG** raster (classified) | December SPEI-equivalent-12, 4 classes, 4 scenario/period combos |
+| `droughtRef` | Reference indicators (MYD) | **PNG** raster (classified) | multi-year-drought indicators, 1981-2010 reference period, 3 selectable metrics |
+| `wildfire` | — | not available | placeholder |
 
 All raster layers are **pre-rendered RGBA PNGs + a `*_meta.json`** (bounds, value range)
 and drawn as `L.imageOverlay`. The only vector layer is `bbtl`.
@@ -124,6 +128,7 @@ statically. The browser never reads TIFFs.
 | `export_web_overlay_from_tif.R` | generic classified TIF→PNG exporter (used by the others) |
 | `build_ensemble_rcp85.R` | builds the RCP8.5 forecast **ensemble** (multi-model mean of xgb/rf/gam) — probability + threshold layers + entry.json |
 | `build_gdd_*.R` | PHENIPS GDD/generation rasters |
+| `export_drought_overlay.R` | Drought layers from Stefan Ebner's (BFW) 2 multi-band GeoTIFFs (`~/REENFOCE_LOCAL_MODEL_WIEN/Stefan_DSS_data/`) — 7 of the 8 bands used (occurrence/presence dropped per Stefan's spec), classified by exact categorical value (not continuous breaks) into `drought/`. **The future-classes band→scenario/period mapping is inferred, not embedded in the source file — confirm with Stefan before treating it as authoritative.** |
 
 ### Forecast bundle layout
 `forecast_bundle/manifest.json` defines `scenarios`, `periods`, `thresholds`, `models`
@@ -137,10 +142,34 @@ The **ensemble** is a GCM-mean (rcp26/45) or a multi-model mean of available rcp
 (rcp85, built here). Evaluation metrics are historical/scenario-independent, so all
 ensembles reuse `ensemble/metrics_confusion.json`.
 
-### CRITICAL invariant: the colour ramp must stay in sync
-`RISK_RAMP` (index.html JS), the `.legend-bar` CSS gradient (index.html), and `ramp_colors`
-/ `prob_colors` in **every** R script must be the **same 10 hex stops**. The current ramp is
-a "bold cool→hot": `#14155f #2a45c2 #3f7af0 #6f74ee #9a5ee0 #c94fc0 #ec4a86 #ff7a1f #f5331a #8f0000`.
+### Colour scales: one per driver, centralized (2026-08-28 refactor)
+Each hazard driver owns its own scale, not a single scale shared app-wide. This
+replaced an actual bug: the old single "shared" ramp was hand-copied into 9+ R
+scripts, the JS, and the CSS separately, and two of those copies had already
+silently drifted apart (the CSS `.legend-bar` gradient didn't match the JS/R
+ramp it was rendering data for; `export_forecast_bundle_overlays.R`'s
+`prob_colors` had drifted from `ramp_colors` elsewhere).
+
+- **R side**: `webmap_data/color_scales.R` is the one canonical source —
+  `WIND_RAMP` (Tommaso's own QGIS choice — the original ramp, historically
+  reused everywhere else too), `BARK_BEETLE_RAMP` +
+  `BARK_BEETLE_CLASSIFIED_COLORS`/`_BREAKS`. Every export/build script
+  `source()`s this file instead of retyping hex lists. Drought (Stefan Ebner)
+  and Past-disturbance already had their own independent palettes defined
+  where they're used — nothing to centralize for those.
+- **JS side**: `WIND_RAMP`/`BARK_BEETLE_RAMP` are separate arrays (same
+  values as their R counterparts — keep them in sync by eye, there's no build
+  step to do it automatically). `buildGradientCss(ramp)` generates the CSS
+  gradient string from whichever ramp is active, so there is no second
+  hand-typed gradient copy to drift. `WIND_LUT`/`colorToWindFraction` and
+  `BARK_BEETLE_LUT`/`colorToRiskFraction` are separate reverse-color-match
+  LUTs (see `sampleImageAt`/`sampleRasterOverlayFor`) — **use the one that
+  matches the layer's actual palette**, or click-sampling (radar chart,
+  threshold slider) silently nearest-matches against the wrong ramp.
+- **`.legend-bar`'s CSS `background`** is a plain neutral placeholder,
+  never actually shown — `setLegendLabels()` always sets an explicit inline
+  background before the bar becomes visible.
+
 Low-risk end fades but keeps a floor (`fade_floor`/`RISK_FADE_FLOOR`) so ~1% risk stays
 faintly visible.
 

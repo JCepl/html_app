@@ -25,12 +25,15 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 src_dir <- "webmap_data/phenips_chelsa"
 max_dim <- 768
 
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Bark beetle's own scale -- see color_scales.R (this reuses it visually
+# since PHENIPS shares the "Predictions" model dropdown, per the header
+# comment above; the value range is GDD/generations, not a 0-1 probability).
+ramp_colors <- BARK_BEETLE_RAMP
 color_ramp <- colorRamp(ramp_colors, space = "rgb")
 fade_floor <- 90
 

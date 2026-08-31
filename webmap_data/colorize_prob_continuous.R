@@ -2,8 +2,9 @@
 
 # Re-render all forecast `probability_ensemble_mean.tif` files as CONTINUOUS
 # sRGB overlays (instead of 10 discrete classes) so the on-map colors match the
-# smooth legend gradient exactly. Probability is mapped 0..1 over the shared
-# RISK_RAMP, identical interpolation to the CSS legend and the JS ramp.
+# smooth legend gradient exactly. Probability is mapped 0..1 over
+# BARK_BEETLE_RAMP (color_scales.R), identical interpolation to the CSS
+# legend and the JS ramp.
 #
 # Usage: Rscript webmap_data/colorize_prob_continuous.R
 
@@ -11,6 +12,7 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 root <- "webmap_data/forecast_bundle"
 max_dim <- 768
@@ -19,10 +21,8 @@ vmax <- 1
 fade_knee <- 0.3   # low-risk end fades in across the bottom fraction
 fade_floor <- 90   # minimum alpha at zero risk (stays faintly visible)
 
-# Unified Spectral ramp, sampled from Tommaso's own QGIS wind rendering.
-# Shared with RISK_RAMP in index.html and every other export script below.
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Bark beetle's own scale -- see color_scales.R.
+ramp_colors <- BARK_BEETLE_RAMP
 color_ramp  <- colorRamp(ramp_colors, space = "rgb")
 
 tifs <- list.files(root, pattern = "probability_ensemble_mean\\.tif$",

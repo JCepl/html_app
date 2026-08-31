@@ -1,0 +1,45 @@
+{
+  "source": "myd_SPEI-12_reference_DSS.tif (Stefan Ebner, BFW)",
+  "note": "Multi-year-drought (MYD) indicators, historical reference period 1981-2010, CHELSA-native ~1km. A MYD event is SPEI-12 <= -1.1 for >=2 consecutive years.",
+  "images": {
+    "n_events_2yr": {
+      "file": "drought/ref_n_events_2yr.png",
+      "bounds": {
+        "south": 34.5015,
+        "west": -10.7001,
+        "north": 71.5999,
+        "east": 38.6022
+      },
+      "legend": {
+        "labels": ["0 events", "1 event", "2 events", "3 events"],
+        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#8c2d04"]
+      }
+    },
+    "max_duration": {
+      "file": "drought/ref_max_duration.png",
+      "bounds": {
+        "south": 34.5015,
+        "west": -10.7001,
+        "north": 71.5999,
+        "east": 38.6022
+      },
+      "legend": {
+        "labels": ["No MYD", "2 years", "3 years", "4 years", "5 years"],
+        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#cc4c02", "#8c2d04"]
+      }
+    },
+    "total_duration": {
+      "file": "drought/ref_total_duration.png",
+      "bounds": {
+        "south": 34.5015,
+        "west": -10.7001,
+        "north": 71.5999,
+        "east": 38.6022
+      },
+      "legend": {
+        "labels": ["No MYD", "2 years", "3 years", "4 years", "5 years", "6-7 years"],
+        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#ec7014", "#cc4c02", "#8c2d04"]
+      }
+    }
+  }
+}

@@ -15,6 +15,7 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 # --- configuration ----------------------------------------------------------
 src_dir   <- "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/Tommaso"
@@ -35,10 +36,8 @@ periods <- list(
   list(key = "far_mpi",    tif = "risk_of_wind_damage_2071_2100_scenario_ssp585_MPI.tif")
 )
 
-# Unified Spectral ramp, sampled from Tommaso's own QGIS wind rendering,
-# shared with every other hazard layer app-wide.
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Wind's own scale (Tommaso's QGIS rendering) -- see color_scales.R.
+ramp_colors <- WIND_RAMP
 # sRGB interpolation matches the CSS legend gradient and the JS ramp exactly.
 color_ramp  <- colorRamp(ramp_colors, space = "rgb")
 

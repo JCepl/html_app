@@ -5,13 +5,14 @@
 #   - probability_ensemble_mean -> classified probability tiles. SUPERSEDED:
 #     the app's probability view is now rendered CONTINUOUSLY by
 #     colorize_prob_continuous.R, so re-run THAT (not this) for probability.
-# The RdYlBu "bold" ramp below must stay in sync with RISK_RAMP in index.html
-# and ramp_colors in colorize_prob_continuous.R / export_wind_overlays.R.
+# The ramp below is bark beetle's own scale (BARK_BEETLE_RAMP in
+# color_scales.R -- see that file for how it relates to wind's WIND_RAMP).
 # Usage: Rscript webmap_data/export_forecast_bundle_overlays.R
 
 suppressPackageStartupMessages({
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 root <- "webmap_data/forecast_bundle"
 exporter <- "webmap_data/export_web_overlay_from_tif.R"
@@ -23,17 +24,18 @@ if (!file.exists(exporter)) {
   stop("Exporter script not found: ", exporter)
 }
 
-# Unified Spectral ramp (kept in sync with RISK_RAMP in index.html and every
-# other export script), sampled from Tommaso's own QGIS wind rendering.
 prob_breaks <- "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"
-# 10 stops resampled off the 11-stop ramp (10 bins need 10 colors); this path
-# is superseded by colorize_prob_continuous.R anyway (run that after this).
+# NOTE: this 10-stop resample of BARK_BEETLE_RAMP had already drifted from
+# it (different intermediate hex values) before this refactor -- left as
+# its pre-existing historical value rather than silently reharmonized,
+# since this path is SUPERSEDED (colorize_prob_continuous.R is what
+# actually runs now) and re-resampling dead code isn't worth the risk of
+# a surprise visual change if it's ever revived. Fix explicitly if reviving.
 prob_colors <- "#5e4fa2,#388eba,#75c8a5,#bfe5a0,#f1f9a9,#feeea2,#fdbf6f,#f67b4a,#d8434e,#9e0142"
 prob_labels <- "<= 0.10,0.10-0.20,0.20-0.30,0.30-0.40,0.40-0.50,0.50-0.60,0.60-0.70,0.70-0.80,0.80-0.90,> 0.90"
 
-risk_breaks <- "0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9"
-# 8 stops resampled off the 11-stop ramp (8 bins need 8 colors, not 11).
-risk_colors <- "#00000000,#5e4fa2,#48a1b3,#a1d9a4,#edf8a3,#fee99a,#fca55d,#e2524a,#9e0142"
+risk_breaks <- ramp_to_csv(BARK_BEETLE_CLASSIFIED_BREAKS)
+risk_colors <- ramp_to_csv(BARK_BEETLE_CLASSIFIED_COLORS)
 risk_labels <- "<= 0.55,0.55-0.60,0.60-0.65,0.65-0.70,0.70-0.75,0.75-0.80,0.80-0.85,0.85-0.90,> 0.90"
 
 run_export <- function(input_tif, breaks_arg, colors_arg, labels_arg, max_dim = "768") {

@@ -15,6 +15,7 @@ suppressPackageStartupMessages({
   library(terra)
   library(jsonlite)
 })
+source("webmap_data/color_scales.R")
 
 root        <- "webmap_data/forecast_bundle"
 out_dir     <- file.path(root, "ensemble", "rcp85")
@@ -26,15 +27,14 @@ max_dim     <- 768
 fade_knee   <- 0.3
 fade_floor  <- 90
 
-# Unified Spectral ramp (kept in sync with RISK_RAMP in index.html).
-ramp_colors <- c("#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
-                 "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142")
+# Bark beetle's own scale -- see color_scales.R.
+ramp_colors <- BARK_BEETLE_RAMP
 color_ramp  <- colorRamp(ramp_colors, space = "rgb")
 
 # Classified "risk highlight" scale for the thresholded view (matches
-# export_forecast_bundle_overlays.R). 8 stops resampled off the 11-stop ramp.
-risk_breaks <- "0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9"
-risk_colors <- "#00000000,#5e4fa2,#48a1b3,#a1d9a4,#edf8a3,#fee99a,#fca55d,#e2524a,#9e0142"
+# export_forecast_bundle_overlays.R).
+risk_breaks <- ramp_to_csv(BARK_BEETLE_CLASSIFIED_BREAKS)
+risk_colors <- ramp_to_csv(BARK_BEETLE_CLASSIFIED_COLORS)
 risk_labels <- "<= 0.55,0.55-0.60,0.60-0.65,0.65-0.70,0.70-0.75,0.75-0.80,0.80-0.85,0.85-0.90,> 0.90"
 
 # Render a continuous probability raster to an RGBA web PNG + meta JSON,
