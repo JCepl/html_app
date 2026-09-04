@@ -210,6 +210,58 @@
         0 0 3px rgba(255, 255, 255, 0.9);
       pointer-events: none;
     }
+    /* Curated comment bubbles -- a short always-visible teaser next to a
+       small speech-bubble badge, expanding to the full note on click (same
+       .pilot-popup/.map-popup-head/.map-popup-body pattern as everything
+       else clickable on the map). Distinct amber accent so a hand-written
+       note reads as editorial, not official site data like Natura 2000
+       or Pilot Action pins. */
+    .comment-marker-hit {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.15s ease;
+    }
+    .comment-marker-hit:hover {
+      background: rgba(211, 133, 43, 0.25);
+    }
+    .comment-marker-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff7e9;
+      border: 1.5px solid #b96c19;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease;
+    }
+    .comment-marker-hit:hover .comment-marker-icon {
+      transform: scale(1.15);
+    }
+    .comment-marker-icon svg { width: 12px; height: 12px; display: block; }
+    .comment-marker-label {
+      position: absolute;
+      left: 24px;
+      top: 6px;
+      max-width: 170px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 11px;
+      font-style: italic;
+      font-weight: 700;
+      color: #7a4413;
+      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 0 3px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+    }
     .pilot-popup .leaflet-popup-content-wrapper {
       border-radius: 8px;
       border: 1px solid #c3d4e6;
@@ -1387,14 +1439,14 @@
       </span>
       <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Available below</span>
     </div>
-    <div class="dss-pillar is-soon dss-pillar-detail-toggle" data-pillar="ecosystem" role="button" tabindex="0"
-         title="Ecosystem-service maps -- click for details.">
+    <div class="dss-pillar is-toggle" id="dssPillarNatura2000" role="button" tabindex="0"
+         title="Natura 2000 protected-area boundaries (SAC + SPA) across the 7 RE-ENFORCE countries, ~12,400 sites (EEA, 2024/25). Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
       <span class="dss-pillar-num">2</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Ecosystem services</span>
-        <span class="dss-pillar-copy">Ecosystem-service maps</span>
+        <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">Natura 2000 protected areas</span>
       </span>
-      <span class="dss-pillar-status">Coming soon</span>
+      <span class="dss-pillar-status" id="dssPillarNatura2000Status">Show on map</span>
     </div>
     <div class="dss-pillar is-soon dss-pillar-detail-toggle" data-pillar="restoration" role="button" tabindex="0"
          title="Maps of delineated priority areas for restoration -- click for details.">
@@ -1822,6 +1874,12 @@
       showPilotActions: false,
       pilotLayerLeft: null,
       pilotLayerRight: null,
+      // Natura 2000: fetched once (11MB, lazy) and cached here; each side
+      // gets its own Leaflet layer built from the same cached GeoJSON.
+      showNatura2000: false,
+      natura2000Data: null,
+      natura2000LayerLeft: null,
+      natura2000LayerRight: null,
       // Derived from bbtpast (Past disturbance) visibility, not user-toggled
       // directly -- see syncCatalogueEventsFromPastDisturbance().
       showCatalogueEvents: false,
@@ -2376,6 +2434,8 @@
       pilotActionsBtn: document.getElementById("pilotActionsBtn"),
       dssPillarPilotActions: document.getElementById("dssPillarPilotActions"),
       dssPillarPilotActionsStatus: document.getElementById("dssPillarPilotActionsStatus"),
+      dssPillarNatura2000: document.getElementById("dssPillarNatura2000"),
+      dssPillarNatura2000Status: document.getElementById("dssPillarNatura2000Status"),
       dssPillarDetail: document.getElementById("dssPillarDetail"),
       dssPillarRiskDrivers: document.getElementById("dssPillarRiskDrivers"),
       dssPillarRiskDriversStatus: document.getElementById("dssPillarRiskDriversStatus"),
@@ -4301,6 +4361,10 @@
       map.getPane("countryHaloPane").style.zIndex = 700;
       map.createPane("countryPane");
       map.getPane("countryPane").style.zIndex = 710;
+      // Natura 2000 polygons hit the same country-border click-theft bug as
+      // everything else interactive on this map -- own pane above it.
+      map.createPane("natura2000Pane");
+      map.getPane("natura2000Pane").style.zIndex = 712;
       // Catalogue-event dots must sit above the (interactive) country-border
       // pane, or the border layer's SVG intercepts their clicks -- this bit
       // hardest near dense multi-country borders (e.g. Germany), where many
@@ -4312,6 +4376,10 @@
       // countryPane's 710) -- same fix, own pane above it.
       map.createPane("pilotActionsPane");
       map.getPane("pilotActionsPane").style.zIndex = 716;
+      // Curated comment bubbles sit above everything else point-like, so a
+      // note is never hidden under a pilot pin or catalogue dot at the same spot.
+      map.createPane("commentsPane");
+      map.getPane("commentsPane").style.zIndex = 717;
       // Keep click popups above the country borders.
       if (map.getPane("popupPane")) map.getPane("popupPane").style.zIndex = 800;
     }
@@ -4327,6 +4395,45 @@
         style: function() { return { color: "#29465b", weight: 1.05, opacity: 0.95, fillOpacity: 0, lineCap: "round", lineJoin: "round" }; }
       }).addTo(map);
       return { countryHaloLayer: halo, countryLayer: line };
+    }
+
+    // ====================================================================
+    // COMMENT BUBBLES -- small curated editorial notes, independent of any
+    // official dataset. Always on (no toggle -- the point is a handful of
+    // hand-picked call-outs, not a browsable layer); a short teaser is
+    // always visible on the map, the full note shows on click. Add entries
+    // here as the team wants specific things called out -- there's no
+    // official source for these, they're written by hand.
+    // ====================================================================
+    const COMMENT_BUBBLE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#b96c19" stroke-width="2" '
+      + 'stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v11H8l-4 4V4z"/></svg>';
+
+    const MAP_COMMENTS = [
+      { id: "example-1", lat: 50.5, lng: 12.0,
+        teaser: "Example note — edit me",
+        full: "This is a placeholder demonstrating the comment-bubble mechanism (MAP_COMMENTS in index.html). Replace or add entries with real commentary." }
+    ];
+
+    function buildCommentsLayer(map) {
+      const group = L.layerGroup();
+      MAP_COMMENTS.forEach(function(c) {
+        const icon = L.divIcon({
+          className: "",
+          html: '<div class="comment-marker-hit" title="' + c.teaser + '">'
+            + '<span class="comment-marker-icon">' + COMMENT_BUBBLE_SVG + '</span>'
+            + '<span class="comment-marker-label">' + c.teaser + '</span>'
+            + '</div>',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -6]
+        });
+        const popupHtml = '<div class="map-popup"><div class="map-popup-head">Note</div>'
+          + '<div class="map-popup-body">' + c.full + '</div></div>';
+        L.marker([c.lat, c.lng], { icon: icon, keyboard: false, pane: "commentsPane" })
+          .bindPopup(popupHtml, { className: "pilot-popup", closeButton: true })
+          .addTo(group);
+      });
+      return group;
     }
 
     // Build the pilot-action pins for exactly one map instance and return
@@ -4384,15 +4491,88 @@
       syncPilotActionsVisibility();
     }
 
-    // Pillars 2/3 (Ecosystem services, Restoration priorities) have no real
-    // layer yet -- clicking one reveals what's planned, inline in this same
-    // top strip (never a panel floating over the map, unlike the hazard
-    // radar). Wording matches D.3.1.1 (Report on Concept of Web-based DSS).
+    // ====================================================================
+    // NATURA 2000 (EEA) -- ~12,400 SAC/SPA site boundaries across the 7
+    // RE-ENFORCE countries. Server-side generalised (maxAllowableOffset)
+    // at source via the EEA ArcGIS REST API rather than shipping full-detail
+    // boundaries -- the raw geometry for even one country (Austria, 306
+    // sites) was 18.5MB; generalised, the whole 7-country set is ~11MB.
+    // Lazy-loaded on first toggle-on, not on page load, and rendered with
+    // Leaflet's canvas renderer (not SVG) since 12k+ DOM paths would be the
+    // real performance problem, not the fetch.
+    // ====================================================================
+    const NATURA2000_URL = "webmap_data/natura2000/natura2000_re-enforce.geojson";
+
+    function buildNatura2000LayerOn(map) {
+      return L.geoJSON(APP.natura2000Data, {
+        pane: "natura2000Pane",
+        renderer: L.canvas({ pane: "natura2000Pane" }),
+        style: function() {
+          return { color: "#1b5e20", weight: 1, opacity: 0.55, fillColor: "#66bb6a", fillOpacity: 0.12 };
+        },
+        onEachFeature: function(feature, layer) {
+          const p = feature.properties;
+          const designationLabel = p.designation === "SPA"
+            ? "SPA — Birds Directive"
+            : "SAC — Habitats Directive";
+          const html = '<div class="map-popup">'
+            + '<div class="map-popup-head">' + p.name + '</div>'
+            + '<div class="map-popup-body">'
+            + designationLabel + '<br>'
+            + p.country + ' &middot; ' + p.code + '<br>'
+            + Number(p.area_ha).toLocaleString() + ' ha'
+            + '</div></div>';
+          layer.bindPopup(html, { className: "pilot-popup", closeButton: true });
+          // Path layers bubble clicks to the map by default -- without this,
+          // clicking a site also fires the app's own click-inspection popup
+          // on top of this one (same fix already applied to catalogue dots).
+          layer.on("click", function(evt) { L.DomEvent.stopPropagation(evt); });
+        }
+      });
+    }
+
+    function syncNatura2000Visibility() {
+      [["natura2000LayerLeft", APP.leftMap], ["natura2000LayerRight", APP.panels.right && APP.panels.right.map]]
+        .forEach(function(pair) {
+          const key = pair[0], m = pair[1];
+          if (!m) return;
+          if (APP.showNatura2000 && APP.natura2000Data) {
+            if (!APP[key]) APP[key] = buildNatura2000LayerOn(m);
+            if (!m.hasLayer(APP[key])) APP[key].addTo(m);
+          } else if (APP[key] && m.hasLayer(APP[key])) {
+            m.removeLayer(APP[key]);
+          }
+        });
+      if (DOM.dssPillarNatura2000) DOM.dssPillarNatura2000.classList.toggle("is-on", APP.showNatura2000);
+      if (DOM.dssPillarNatura2000Status) {
+        DOM.dssPillarNatura2000Status.textContent = APP.showNatura2000 ? "Shown on map" : "Show on map";
+      }
+    }
+
+    async function toggleNatura2000() {
+      APP.showNatura2000 = !APP.showNatura2000;
+      if (APP.showNatura2000 && !APP.natura2000Data) {
+        if (DOM.dssPillarNatura2000Status) DOM.dssPillarNatura2000Status.textContent = "Loading…";
+        try {
+          const response = await fetch(NATURA2000_URL, { cache: "no-store" });
+          if (!response.ok) throw new Error("HTTP " + response.status + " for " + NATURA2000_URL);
+          APP.natura2000Data = await response.json();
+        } catch (error) {
+          console.error(error);
+          APP.showNatura2000 = false;
+          if (DOM.dssPillarNatura2000Status) DOM.dssPillarNatura2000Status.textContent = "Failed to load";
+          return;
+        }
+      }
+      syncNatura2000Visibility();
+    }
+
+    // Pillar 3 (Restoration priorities) has no real layer yet -- clicking it
+    // reveals what's planned, inline in this same top strip (never a panel
+    // floating over the map, unlike the hazard radar). Wording matches
+    // D.3.1.1 (Report on Concept of Web-based DSS). Pillar 2 (Ecosystem
+    // services) graduated out of this -- it's a real toggle now (Natura 2000).
     const DSS_PILLAR_DETAIL = {
-      ecosystem: "<strong>Ecosystem services</strong> — part of the RE-ENFORCE DSS concept "
-        + "(Deliverable 3.1.1) but not yet built in this app. Planned: ecosystem-service maps "
-        + "showing which services (e.g. carbon storage, water regulation, biodiversity) are "
-        + "affected wherever the risk-driver layers above show degradation risk.",
       restoration: "<strong>Restoration priorities</strong> — part of the RE-ENFORCE DSS concept "
         + "(Deliverable 3.1.1) but not yet built in this app. Planned: maps of delineated "
         + "priority areas for restoration, combining the risk-driver and ecosystem-service "
@@ -4592,6 +4772,7 @@
       attachMapClick(mapR, "right");
       APP.pilotLayerRight = buildPilotLayer(mapR);
       APP.catalogueLayerRight = buildCatalogueLayer(mapR);
+      buildCommentsLayer(mapR).addTo(mapR);
       document.getElementById("map2").style.background = (BASEMAPS[APP.currentBasemap] || BASEMAPS.osm).bg;
 
       // The right panel starts as a clone of the left config with its own map.
@@ -4614,6 +4795,7 @@
       };
 
       if (APP.map.sync) { APP.map.sync(mapR); mapR.sync(APP.map); }
+      syncNatura2000Visibility();
 
       // Render the right map: become right, render its overlays, return to left.
       savePanel("left");
@@ -4642,6 +4824,7 @@
       APP.panels.right = null;
       APP.pilotLayerRight = null;
       APP.catalogueLayerRight = null;
+      APP.natura2000LayerRight = null;
       APP.split = false;
       document.getElementById("app").classList.remove("compare-on");
       updateSplitHighlight();
@@ -4677,6 +4860,7 @@
       createMapPanes(APP.map);
       APP.pilotLayerLeft = buildPilotLayer(APP.leftMap);
       APP.catalogueLayerLeft = buildCatalogueLayer(APP.leftMap);
+      buildCommentsLayer(APP.leftMap).addTo(APP.leftMap);
 
       addBasemapControl();
       addSplitScreenControl();
@@ -4946,6 +5130,12 @@
         DOM.dssPillarPilotActions.addEventListener("click", togglePilotActions);
         DOM.dssPillarPilotActions.addEventListener("keydown", function(e) {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePilotActions(); }
+        });
+      }
+      if (DOM.dssPillarNatura2000) {
+        DOM.dssPillarNatura2000.addEventListener("click", toggleNatura2000);
+        DOM.dssPillarNatura2000.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleNatura2000(); }
         });
       }
       document.querySelectorAll(".dss-pillar-detail-toggle").forEach(function(toggleEl) {
