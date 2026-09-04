@@ -176,12 +176,25 @@
     .pilot-marker-hit:hover {
       background: rgba(211, 133, 43, 0.25);
     }
+    /* Circle clip lives here in CSS, not just in the source PNG's own alpha
+       mask -- guarantees a clean badge with no square/artifact fringe
+       showing at small render sizes, regardless of crop imperfections in
+       the extracted icon. */
     .pilot-marker-icon {
-      width: 22px;
-      height: 22px;
-      display: block;
-      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
       transition: transform 0.15s ease;
+    }
+    .pilot-marker-icon img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.12);
     }
     .pilot-marker-hit:hover .pilot-marker-icon {
       transform: scale(1.25);
@@ -4327,7 +4340,7 @@
         const icon = L.divIcon({
           className: "",
           html: '<div class="pilot-marker-hit" title="' + titleText + '">'
-            + '<img class="pilot-marker-icon" src="webmap_data/pilot_icons/' + p.hazard + '.png?v=' + ASSET_VERSION + '" alt="' + p.pa + '" />'
+            + '<div class="pilot-marker-icon"><img src="webmap_data/pilot_icons/' + p.hazard + '.png?v=' + ASSET_VERSION + '" alt="' + p.pa + '" /></div>'
             + '<div class="pilot-marker-label">' + p.pa + '</div>'
             + '</div>',
           iconSize: [36, 36],
