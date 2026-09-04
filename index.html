@@ -210,27 +210,18 @@
         0 0 3px rgba(255, 255, 255, 0.9);
       pointer-events: none;
     }
-    /* Curated comment bubbles -- a short always-visible teaser next to a
-       small speech-bubble badge, expanding to the full note on click (same
-       .pilot-popup/.map-popup-head/.map-popup-body pattern as everything
-       else clickable on the map). Distinct amber accent so a hand-written
-       note reads as editorial, not official site data like Natura 2000
-       or Pilot Action pins. */
-    .comment-marker-hit {
-      position: relative;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border-radius: 50%;
-      transition: background 0.15s ease;
+    /* UI comment bubbles -- a small badge pinned to the corner of a specific
+       UI element (a pillar, a card, a control), not a map marker. Hover
+       shows the short teaser as a tooltip; click expands the full note in
+       a small panel anchored to the badge. Amber accent so a hand-written
+       developmental note reads as editorial, distinct from the app's own
+       navy/orange chrome. */
+    .ui-comment {
+      position: absolute;
+      z-index: 50;
     }
-    .comment-marker-hit:hover {
-      background: rgba(211, 133, 43, 0.25);
-    }
-    .comment-marker-icon {
+    .ui-comment-top-right { top: -8px; right: -8px; }
+    .ui-comment-badge {
       width: 20px;
       height: 20px;
       border-radius: 50%;
@@ -240,27 +231,73 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
       transition: transform 0.15s ease;
     }
-    .comment-marker-hit:hover .comment-marker-icon {
+    .ui-comment-badge:hover, .ui-comment-badge:focus-visible {
       transform: scale(1.15);
     }
-    .comment-marker-icon svg { width: 12px; height: 12px; display: block; }
-    .comment-marker-label {
+    .ui-comment-badge svg { width: 11px; height: 11px; display: block; }
+    .ui-comment-label {
       position: absolute;
-      left: 24px;
-      top: 6px;
-      max-width: 170px;
+      top: 50%;
+      right: calc(100% + 6px);
+      transform: translateY(-50%);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 11px;
-      font-style: italic;
-      font-weight: 700;
-      color: #7a4413;
-      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
-        0 0 3px rgba(255, 255, 255, 0.9);
+      background: #2b1a06;
+      color: #fff7e9;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 5px;
+      opacity: 0;
       pointer-events: none;
+      transition: opacity 0.12s ease;
+    }
+    .ui-comment-badge:hover + .ui-comment-label,
+    .ui-comment-badge:focus-visible + .ui-comment-label {
+      opacity: 1;
+    }
+    .ui-comment-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 220px;
+      background: #ffffff;
+      border: 1px solid #d9b48a;
+      border-radius: 8px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+      font-size: 12px;
+      color: #2b4a68;
+      z-index: 60;
+    }
+    .ui-comment-panel[hidden] { display: none; }
+    .ui-comment-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #b96c19;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 8px 8px 0 0;
+    }
+    .ui-comment-close {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 0 2px;
+      font-family: inherit;
+    }
+    .ui-comment-panel-body {
+      padding: 7px 9px 8px;
+      line-height: 1.4;
     }
     .pilot-popup .leaflet-popup-content-wrapper {
       border-radius: 8px;
@@ -1440,11 +1477,11 @@
       <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Available below</span>
     </div>
     <div class="dss-pillar is-toggle" id="dssPillarNatura2000" role="button" tabindex="0"
-         title="Natura 2000 protected-area boundaries (SAC + SPA) across the 7 RE-ENFORCE countries, ~12,400 sites (EEA, 2024/25). Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
+         title="Natura 2000 protected-area boundaries (SAC + SPA) within 50km of a RE-ENFORCE Pilot Action site, 440 sites (EEA, 2024/25) -- not every Natura 2000 site in these 7 countries, just the ones actually near project sites. Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
       <span class="dss-pillar-num">2</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Ecosystem services</span>
-        <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">Natura 2000 protected areas</span>
+        <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">Natura 2000 near pilot sites</span>
       </span>
       <span class="dss-pillar-status" id="dssPillarNatura2000Status">Show on map</span>
     </div>
@@ -4376,10 +4413,6 @@
       // countryPane's 710) -- same fix, own pane above it.
       map.createPane("pilotActionsPane");
       map.getPane("pilotActionsPane").style.zIndex = 716;
-      // Curated comment bubbles sit above everything else point-like, so a
-      // note is never hidden under a pilot pin or catalogue dot at the same spot.
-      map.createPane("commentsPane");
-      map.getPane("commentsPane").style.zIndex = 717;
       // Keep click popups above the country borders.
       if (map.getPane("popupPane")) map.getPane("popupPane").style.zIndex = 800;
     }
@@ -4398,42 +4431,65 @@
     }
 
     // ====================================================================
-    // COMMENT BUBBLES -- small curated editorial notes, independent of any
-    // official dataset. Always on (no toggle -- the point is a handful of
-    // hand-picked call-outs, not a browsable layer); a short teaser is
-    // always visible on the map, the full note shows on click. Add entries
-    // here as the team wants specific things called out -- there's no
-    // official source for these, they're written by hand.
+    // UI COMMENT BUBBLES -- small developmental notes attached to specific
+    // UI elements (not map geography): a caveat, a WIP flag, something worth
+    // a viewer's attention or feedback on that particular control/card.
+    // Always on (no toggle -- a handful of call-outs, not a browsable
+    // layer). Short teaser always visible next to the target element,
+    // expands to the full note in place on click. `target` is a CSS
+    // selector resolved once at render time; entries silently no-op if
+    // their target isn't found (e.g. a card that got renamed/removed) --
+    // add real entries here as the team wants specific things flagged.
     // ====================================================================
-    const COMMENT_BUBBLE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#b96c19" stroke-width="2" '
+    const UI_COMMENT_BUBBLE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#b96c19" stroke-width="2" '
       + 'stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v11H8l-4 4V4z"/></svg>';
 
-    const MAP_COMMENTS = [
-      { id: "example-1", lat: 50.5, lng: 12.0,
-        teaser: "Example note — edit me",
-        full: "This is a placeholder demonstrating the comment-bubble mechanism (MAP_COMMENTS in index.html). Replace or add entries with real commentary." }
+    const UI_COMMENTS = [
+      { id: "example-1", target: "#dssPillarNatura2000", corner: "top-right",
+        teaser: "Scoped, not exhaustive",
+        full: "Shows Natura 2000 sites within 50km of a RE-ENFORCE Pilot Action only (440 of ~12,400 sites across these 7 countries) -- kept small deliberately, for load time and relevance. Ask if the radius should change." }
     ];
 
-    function buildCommentsLayer(map) {
-      const group = L.layerGroup();
-      MAP_COMMENTS.forEach(function(c) {
-        const icon = L.divIcon({
-          className: "",
-          html: '<div class="comment-marker-hit" title="' + c.teaser + '">'
-            + '<span class="comment-marker-icon">' + COMMENT_BUBBLE_SVG + '</span>'
-            + '<span class="comment-marker-label">' + c.teaser + '</span>'
-            + '</div>',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -6]
+    function renderUiComments() {
+      UI_COMMENTS.forEach(function(c) {
+        const target = document.querySelector(c.target);
+        if (!target) return;
+        const cs = getComputedStyle(target);
+        if (cs.position === "static") target.style.position = "relative";
+
+        const wrap = document.createElement("div");
+        wrap.className = "ui-comment " + "ui-comment-" + (c.corner || "top-right");
+
+        const badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = "ui-comment-badge";
+        badge.title = c.teaser;
+        badge.innerHTML = UI_COMMENT_BUBBLE_SVG;
+
+        const label = document.createElement("span");
+        label.className = "ui-comment-label";
+        label.textContent = c.teaser;
+
+        const panel = document.createElement("div");
+        panel.className = "ui-comment-panel";
+        panel.hidden = true;
+        panel.innerHTML = '<div class="ui-comment-panel-head">Note<button type="button" class="ui-comment-close" aria-label="Close">&times;</button></div>'
+          + '<div class="ui-comment-panel-body">' + c.full + '</div>';
+
+        badge.addEventListener("click", function(e) {
+          e.stopPropagation();
+          panel.hidden = !panel.hidden;
         });
-        const popupHtml = '<div class="map-popup"><div class="map-popup-head">Note</div>'
-          + '<div class="map-popup-body">' + c.full + '</div></div>';
-        L.marker([c.lat, c.lng], { icon: icon, keyboard: false, pane: "commentsPane" })
-          .bindPopup(popupHtml, { className: "pilot-popup", closeButton: true })
-          .addTo(group);
+        panel.querySelector(".ui-comment-close").addEventListener("click", function(e) {
+          e.stopPropagation();
+          panel.hidden = true;
+        });
+
+        wrap.appendChild(badge);
+        wrap.appendChild(label);
+        wrap.appendChild(panel);
+        target.appendChild(wrap);
       });
-      return group;
     }
 
     // Build the pilot-action pins for exactly one map instance and return
@@ -4492,14 +4548,17 @@
     }
 
     // ====================================================================
-    // NATURA 2000 (EEA) -- ~12,400 SAC/SPA site boundaries across the 7
-    // RE-ENFORCE countries. Server-side generalised (maxAllowableOffset)
-    // at source via the EEA ArcGIS REST API rather than shipping full-detail
-    // boundaries -- the raw geometry for even one country (Austria, 306
-    // sites) was 18.5MB; generalised, the whole 7-country set is ~11MB.
+    // NATURA 2000 (EEA) -- SAC/SPA site boundaries, filtered to the 440
+    // sites within 50km of a RE-ENFORCE Pilot Action (not all ~12,400 sites
+    // across the 7 countries -- most of those have nothing to do with the
+    // project; see scratchpad filter script, haversine distance to nearest
+    // of the 10 pilot-action points). That filtering is what actually fixed
+    // the load time: 11MB/12,409 features down to ~480KB/440 features.
+    // Geometry is also server-side generalised (maxAllowableOffset) at
+    // source via the EEA ArcGIS REST API rather than shipping full-detail
+    // boundaries -- raw geometry for just Austria's 306 sites was 18.5MB.
     // Lazy-loaded on first toggle-on, not on page load, and rendered with
-    // Leaflet's canvas renderer (not SVG) since 12k+ DOM paths would be the
-    // real performance problem, not the fetch.
+    // Leaflet's canvas renderer (not SVG).
     // ====================================================================
     const NATURA2000_URL = "webmap_data/natura2000/natura2000_re-enforce.geojson";
 
@@ -4772,7 +4831,6 @@
       attachMapClick(mapR, "right");
       APP.pilotLayerRight = buildPilotLayer(mapR);
       APP.catalogueLayerRight = buildCatalogueLayer(mapR);
-      buildCommentsLayer(mapR).addTo(mapR);
       document.getElementById("map2").style.background = (BASEMAPS[APP.currentBasemap] || BASEMAPS.osm).bg;
 
       // The right panel starts as a clone of the left config with its own map.
@@ -4860,7 +4918,7 @@
       createMapPanes(APP.map);
       APP.pilotLayerLeft = buildPilotLayer(APP.leftMap);
       APP.catalogueLayerLeft = buildCatalogueLayer(APP.leftMap);
-      buildCommentsLayer(APP.leftMap).addTo(APP.leftMap);
+      renderUiComments();
 
       addBasemapControl();
       addSplitScreenControl();
