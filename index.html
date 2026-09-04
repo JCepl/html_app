@@ -155,13 +155,13 @@
       color: #2b4a68;
     }
 
-    /* RE-ENFORCE pilot-action markers -- matches the official BFW/Stefan
-       Ebner pilot-areas map style: a solid yellow dot with a black outline,
-       labeled with its PA-N disturbance code, on a satellite basemap.
-       The dot itself is a small 16px target -- .pilot-marker-hit wraps it
-       in a much bigger (36px) invisible circle that actually owns the
-       cursor/hover/click, so users don't have to land a click on the tiny
-       dot precisely. */
+    /* RE-ENFORCE pilot-action markers -- the icon PNGs (webmap_data/pilot_icons)
+       are cropped straight from Stefan Ebner's (BFW) own overview map in the
+       official Pilot Action Report, one per disturbance driver (ash dieback,
+       drought, riparian, bark beetle, fire, wind), not redrawn. Each icon
+       is a small 20px target -- .pilot-marker-hit wraps it in a much bigger
+       (36px) invisible circle that actually owns the cursor/hover/click, so
+       users don't have to land a click on the tiny icon precisely. */
     .pilot-marker-hit {
       position: relative;
       width: 36px;
@@ -174,34 +174,28 @@
       transition: background 0.15s ease;
     }
     .pilot-marker-hit:hover {
-      background: rgba(255, 230, 0, 0.3);
+      background: rgba(211, 133, 43, 0.25);
     }
     .pilot-marker-icon {
-      width: 16px;
-      height: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #ffe600;
-      border: 1.5px solid #1a1a1a;
-      border-radius: 50%;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-      transition: background 0.15s ease, transform 0.15s ease;
+      width: 22px;
+      height: 22px;
+      display: block;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+      transition: transform 0.15s ease;
     }
     .pilot-marker-hit:hover .pilot-marker-icon {
-      background: #fff34d;
-      transform: scale(1.2);
+      transform: scale(1.25);
     }
     .pilot-marker-label {
       position: absolute;
-      left: 30px;
-      top: 7px;
+      left: 26px;
+      top: 9px;
       white-space: nowrap;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      color: #ffe600;
-      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
-        0 0 3px rgba(0, 0, 0, 0.8);
+      color: #163b60;
+      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 0 3px rgba(255, 255, 255, 0.9);
       pointer-events: none;
     }
     .pilot-popup .leaflet-popup-content-wrapper {
@@ -1400,11 +1394,11 @@
       <span class="dss-pillar-status">Coming soon</span>
     </div>
     <div class="dss-pillar is-toggle" id="dssPillarPilotActions" role="button" tabindex="0"
-         title="All 9 sites of RE-ENFORCE's 6 official Pilot Actions (PA1-PA6) are mapped, with type and links. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
+         title="All 10 pins of RE-ENFORCE's 6 official Pilot Actions (PA1-PA6) are mapped, matching Stefan Ebner's (BFW) own overview map -- icons, locations and grouping. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
       <span class="dss-pillar-num">4</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Pilot Action recommendations</span>
-        <span class="dss-pillar-copy" id="dssPillarPilotActionsCopy">9 sites, 6 Pilot Actions</span>
+        <span class="dss-pillar-copy" id="dssPillarPilotActionsCopy">10 pins, 6 Pilot Actions</span>
       </span>
       <span class="dss-pillar-status" id="dssPillarPilotActionsStatus">Show on map</span>
     </div>
@@ -2261,70 +2255,65 @@
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
     const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
 
-    // RE-ENFORCE's 6 official numbered Pilot Actions (PA1-PA6), each tested
-    // at 1-2 physical sites -- sourced from the project's own authoritative
-    // deliverable, not news articles or guesses:
+    // RE-ENFORCE's 6 official numbered Pilot Actions (PA1-PA6), one pin per
+    // action -- sourced from the project's own authoritative deliverable AND
+    // its own overview map, not news articles or guesses:
     //   Report on Pilot Actions (Deliverable 2.3.3, Output 2.1, v1, 05 2026)
     //   https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf
-    // This superseded an earlier 6-marker set built from general news
-    // articles, which had real errors this fixes: Pilsen is PA-2 ONLY (no
-    // PA-5 there -- PA-5's second site is Horn, Austria, which was missing
-    // entirely); PA-6's Polish site is Toruń, not Rytel (Rytel doesn't
-    // appear in the official deliverable at all); Goriška Karst, Slovenia
-    // was mislabeled "PA-3" -- Slovenia hosts no numbered Pilot Action in
-    // this deliverable, so it's dropped rather than shown with a fabricated
-    // code. Two sites legitimately host TWO Pilot Actions each (same
-    // physical location, different disturbance driver being studied there):
-    // Duna-Dráva NP, Hungary (PA1 + PA4) and Agordino, Italy (PA3 + PA6) --
-    // `actions` is an array so the map label can stack them instead of
-    // cramming both into one slash-joined string.
+    //   Figure 1 (table) -> which driver/PA-code per location.
+    //   Figure 2 (map, page 7) -> exactly which icon per driver, AND that
+    //   Stefan's own map shows 10 pins, not 9: Duna-Dráva (Hungary) and
+    //   Agordino (Italy) each get TWO adjacent pins (one per action, not one
+    //   pin listing two codes), while Austria's two PA5 sites (Japons AND
+    //   Horn, both Lower Austria) are shown as a SINGLE bark-beetle pin on
+    //   his map -- matched exactly here rather than our own 9-pin grouping.
+    // `hazard` selects the icon (webmap_data/pilot_icons/*.png) -- these are
+    // Stefan's own icon graphics, cropped from the embedded map image in the
+    // PDF above (page 7), not a redrawn approximation.
+    // This superseded an earlier set built from general news articles, which
+    // had real errors: Pilsen is PA-2 ONLY (no PA-5 there -- PA-5's second
+    // site is Horn, Austria, missing entirely before); PA-6's Polish site is
+    // Toruń, not Rytel (Rytel isn't in the official deliverable at all);
+    // Goriška Karst, Slovenia was mislabeled "PA-3" -- Slovenia hosts no
+    // numbered Pilot Action in this deliverable, so it's dropped rather than
+    // shown with a fabricated code.
     // Only Pilsen has a published exact coordinate; the rest are approximate
-    // (town/region centroid) -- marked `approx: true` so the popup is honest
-    // about precision. `link` points to each site's own dedicated news/event
-    // page where one exists (verified live 2026-09-04); otherwise to the
-    // official PDF above, deep-linked to that site's page.
+    // (town/region centroid, or a small offset off a shared site so two pins
+    // there don't sit exactly on top of each other) -- marked `approx: true`
+    // so the popup is honest about precision. `link` points to each action's
+    // own dedicated news/event page where one exists (verified live
+    // 2026-09-04); otherwise to the official PDF above, deep-linked to that
+    // action's page.
     const PILOT_ACTIONS = [
-      { id: "hu-dunadrava", label: "Duna-Dráva National Park", country: "Hungary",
-        lat: 45.95, lng: 18.10, approx: true,
-        actions: [
-          { pa: "PA-1", type: "Ash dieback (hardwood gallery forests)" },
-          { pa: "PA-4", type: "Improper management of riparian forests" }
-        ],
+      { id: "hu-dunadrava-pa1", pa: "PA-1", hazard: "ash_dieback", label: "Duna-Dráva National Park", country: "Hungary",
+        type: "Ash dieback (hardwood gallery forests)", lat: 45.95, lng: 18.08, approx: true,
         link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=8" },
-      { id: "de-pomerania", label: "Western Pomerania", country: "Germany",
-        lat: 53.70, lng: 12.64, approx: true,
-        actions: [{ pa: "PA-1", type: "Ash dieback (since 2008; storm-thrown 2022)" }],
+      { id: "hu-dunadrava-pa4", pa: "PA-4", hazard: "riparian", label: "Duna-Dráva National Park", country: "Hungary",
+        type: "Improper management of riparian forests", lat: 45.95, lng: 18.14, approx: true,
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=25" },
+      { id: "de-pomerania", pa: "PA-1", hazard: "ash_dieback", label: "Western Pomerania", country: "Germany",
+        type: "Ash dieback (since 2008; storm-thrown 2022)", lat: 53.70, lng: 12.64, approx: true,
         link: "https://www.interreg-central.eu/news/ash-dieback-and-multiple-reforestation-approaches-in-germany/" },
-      { id: "hr-jastrebarsko", label: "Jastrebarsko", country: "Croatia",
-        lat: 45.6667, lng: 15.6500, approx: true,
-        actions: [{ pa: "PA-2", type: "Drought (European beech)" }],
+      { id: "hr-jastrebarsko", pa: "PA-2", hazard: "drought", label: "Jastrebarsko", country: "Croatia",
+        type: "Drought (European beech)", lat: 45.6667, lng: 15.6500, approx: true,
         link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=12" },
-      { id: "cz-pilsen", label: "Near Pilsen (Plzeň)", country: "Czech Republic",
-        lat: 49.8516714, lng: 13.4085067, approx: false,
-        actions: [{ pa: "PA-2", type: "Drought & bark beetle (Scots pine, since 2018)" }],
+      { id: "cz-pilsen", pa: "PA-2", hazard: "drought", label: "Near Pilsen (Plzeň)", country: "Czech Republic",
+        type: "Drought & bark beetle (Scots pine, since 2018)", lat: 49.8516714, lng: 13.4085067, approx: false,
         link: "https://www.youtube.com/watch?v=D6szlpYw4Vc" },
-      { id: "pl-myszyniec", label: "Myszyniec Forest District", country: "Poland",
-        lat: 53.2833, lng: 21.35, approx: true,
-        actions: [{ pa: "PA-3", type: "Fire (stand-replacing, 2014)" }],
+      { id: "pl-myszyniec", pa: "PA-3", hazard: "fire", label: "Myszyniec Forest District", country: "Poland",
+        type: "Fire (stand-replacing, 2014)", lat: 53.2833, lng: 21.35, approx: true,
         link: "https://www.interreg-central.eu/news/uav-poland/" },
-      { id: "it-agordino", label: "Agordino (Dolomites)", country: "Italy",
-        lat: 46.3167, lng: 12.0500, approx: true,
-        actions: [
-          { pa: "PA-3", type: "Fire (2018, 2011)" },
-          { pa: "PA-6", type: "Storm (Vaia storm, 2018)" }
-        ],
+      { id: "it-agordino-pa3", pa: "PA-3", hazard: "fire", label: "Agordino (Dolomites)", country: "Italy",
+        type: "Fire (2018, 2011)", lat: 46.3167, lng: 12.03, approx: true,
         link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=22" },
-      { id: "at-japons", label: "Japons", country: "Austria",
-        lat: 48.62, lng: 15.19, approx: true,
-        actions: [{ pa: "PA-5", type: "Spruce bark beetle & drought" }],
+      { id: "it-agordino-pa6", pa: "PA-6", hazard: "wind", label: "Agordino (Dolomites)", country: "Italy",
+        type: "Storm (Vaia storm, 2018)", lat: 46.3167, lng: 12.09, approx: true,
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=34" },
+      { id: "at-japons-horn", pa: "PA-5", hazard: "bark_beetle", label: "Japons & Horn", country: "Austria",
+        type: "Spruce bark beetle & drought (Lower Austria)", lat: 48.643, lng: 15.428, approx: true,
         link: "https://www.interreg-central.eu/event/open-day-in-austria/" },
-      { id: "at-horn", label: "Horn", country: "Austria",
-        lat: 48.6667, lng: 15.6667, approx: true,
-        actions: [{ pa: "PA-5", type: "Spruce bark beetle & drought" }],
-        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=28" },
-      { id: "pl-torun", label: "Toruń", country: "Poland",
-        lat: 53.0138, lng: 18.5981, approx: true,
-        actions: [{ pa: "PA-6", type: "Storm (2017 hurricane, 18,425 ha lost)" }],
+      { id: "pl-torun", pa: "PA-6", hazard: "wind", label: "Toruń", country: "Poland",
+        type: "Storm (2017 hurricane, 18,425 ha lost)", lat: 53.0138, lng: 18.5981, approx: true,
         link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=32" }
     ];
     // European Bark-Beetle Event Catalogue (~/barkbeetle-catalogue, own repo).
@@ -4334,18 +4323,12 @@
     function buildPilotLayer(map) {
       const group = L.layerGroup();
       PILOT_ACTIONS.forEach(function(p) {
-        // Multi-action sites (Hungary: PA1+PA4; Italy: PA3+PA6) stack their
-        // codes on separate lines in the marker label -- never slash-joined
-        // ("PA-1 / PA-4"), which read as one garbled code rather than two.
-        const paCodes = p.actions.map(function(a) { return a.pa; });
-        const labelHtml = paCodes.join("<br>");
-        const titleText = p.label + " (" + p.country + "): "
-          + p.actions.map(function(a) { return a.pa + " " + a.type; }).join("; ");
+        const titleText = p.pa + " " + p.label + " (" + p.country + "): " + p.type;
         const icon = L.divIcon({
           className: "",
           html: '<div class="pilot-marker-hit" title="' + titleText + '">'
-            + '<div class="pilot-marker-icon"></div>'
-            + '<div class="pilot-marker-label">' + labelHtml + '</div>'
+            + '<img class="pilot-marker-icon" src="webmap_data/pilot_icons/' + p.hazard + '.png?v=' + ASSET_VERSION + '" alt="' + p.pa + '" />'
+            + '<div class="pilot-marker-label">' + p.pa + '</div>'
             + '</div>',
           iconSize: [36, 36],
           iconAnchor: [18, 18],
@@ -4354,11 +4337,8 @@
         const coordNote = p.approx
           ? "Approx. location (exact coordinates not published)"
           : "Coordinates: " + p.lat.toFixed(4) + "°N, " + p.lng.toFixed(4) + "°E";
-        const actionsHtml = p.actions.map(function(a) {
-          return '<strong>' + a.pa + '</strong>: ' + a.type;
-        }).join("<br>");
         const popupHtml = '<strong>' + p.label + '</strong> — ' + p.country + '<br>'
-          + actionsHtml + '<br>'
+          + '<strong>' + p.pa + '</strong>: ' + p.type + '<br>'
           + '<span style="color:#666;font-size:11px;">' + coordNote + '</span><br>'
           + '<a href="' + p.link + '" target="_blank" rel="noopener noreferrer">About this pilot action ↗</a>';
         L.marker([p.lat, p.lng], { icon: icon, keyboard: false, pane: "pilotActionsPane" })
