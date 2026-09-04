@@ -402,6 +402,18 @@
     .dss-pillar.is-active .dss-pillar-copy { color: rgba(255, 255, 255, 0.85); }
     .dss-pillar.is-active .dss-pillar-status { color: #ffffff; border-color: rgba(255, 255, 255, 0.7); }
 
+    /* Pillar 1 doubles as the driver ribbon's show/hide toggle. */
+    .dss-ribbon-toggle { cursor: pointer; }
+    .dss-ribbon-toggle:hover { background: #c67a26; }
+    .dss-ribbon-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .dss-ribbon-toggle .dss-pillar-status::after {
+      content: "▾";
+      margin-left: 4px;
+      display: inline-block;
+      transition: transform 0.15s ease;
+    }
+    .dss-ribbon-toggle.is-collapsed .dss-pillar-status::after { transform: rotate(-90deg); }
+
     .dss-pillar.is-soon { opacity: 0.6; }
 
     /* Pillars 2/3 have no real layer yet, but clicking them still reveals
@@ -462,12 +474,24 @@
       min-height: 0;
     }
 
+    /* Collapses via max-height/padding, NOT display:none -- stays a real
+       grid row in body's layout at all times (see body's grid-template-rows
+       comment above); toggled by clicking the "Risk drivers" pillar. */
     .layer-ribbon {
       position: relative;
       z-index: 1190;
+      max-height: 260px;
       padding: 5px 12px;
+      overflow: hidden;
       border-bottom: 1px solid #c9d8ea;
       background: linear-gradient(180deg, #ecf3fb 0%, #e7f0fa 100%);
+      transition: max-height 0.15s ease, padding 0.15s ease;
+    }
+    .layer-ribbon.is-collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-bottom: none;
     }
 
     .ribbon-inner {
@@ -1348,13 +1372,14 @@
   </header>
 
   <div class="dss-pillar-strip" aria-label="RE-ENFORCE DSS components">
-    <div class="dss-pillar is-active" title="Maps of the relative risk given by the main drivers of forest degradation (drought, fire, wind, bark beetle and ash dieback).">
+    <div class="dss-pillar is-active dss-ribbon-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
+         title="Maps of the relative risk given by the main drivers of forest degradation (drought, fire, wind, bark beetle and ash dieback). Click to show/hide the driver menu below.">
       <span class="dss-pillar-num">1</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Risk drivers</span>
         <span class="dss-pillar-copy">Drought, fire, wind, bark beetle &amp; ash dieback</span>
       </span>
-      <span class="dss-pillar-status">Available below</span>
+      <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Available below</span>
     </div>
     <div class="dss-pillar is-soon dss-pillar-detail-toggle" data-pillar="ecosystem" role="button" tabindex="0"
          title="Ecosystem-service maps -- click for details.">
@@ -1375,11 +1400,11 @@
       <span class="dss-pillar-status">Coming soon</span>
     </div>
     <div class="dss-pillar is-toggle" id="dssPillarPilotActions" role="button" tabindex="0"
-         title="6 documented RE-ENFORCE Pilot Action sites are already mapped, with type and links. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
+         title="All 9 sites of RE-ENFORCE's 6 official Pilot Actions (PA1-PA6) are mapped, with type and links. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
       <span class="dss-pillar-num">4</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Pilot Action recommendations</span>
-        <span class="dss-pillar-copy" id="dssPillarPilotActionsCopy">6 documented pilot sites</span>
+        <span class="dss-pillar-copy" id="dssPillarPilotActionsCopy">9 sites, 6 Pilot Actions</span>
       </span>
       <span class="dss-pillar-status" id="dssPillarPilotActionsStatus">Show on map</span>
     </div>
@@ -2236,39 +2261,71 @@
     const COUNTRY_GEOJSON_URL = "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_01M_2024_4326.geojson";
     const FORECAST_MANIFEST_URL = "webmap_data/forecast_bundle/manifest.json";
 
-    // RE-ENFORCE pilot-action reference sites. Sourced from the project's own
-    // pages, not guessed:
-    //  - site names, countries, hazard types, years: interreg-central.eu/projects/re-enforce
-    //  - PA-N disturbance codes + "ten pilot areas" total: bfw.gv.at (Stefan Ebner's
-    //    institution), whose own map plots these as plain yellow dots labeled by
-    //    PA-N -- replicated here as the marker style (see .pilot-marker-icon).
+    // RE-ENFORCE's 6 official numbered Pilot Actions (PA1-PA6), each tested
+    // at 1-2 physical sites -- sourced from the project's own authoritative
+    // deliverable, not news articles or guesses:
+    //   Report on Pilot Actions (Deliverable 2.3.3, Output 2.1, v1, 05 2026)
+    //   https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf
+    // This superseded an earlier 6-marker set built from general news
+    // articles, which had real errors this fixes: Pilsen is PA-2 ONLY (no
+    // PA-5 there -- PA-5's second site is Horn, Austria, which was missing
+    // entirely); PA-6's Polish site is Toruń, not Rytel (Rytel doesn't
+    // appear in the official deliverable at all); Goriška Karst, Slovenia
+    // was mislabeled "PA-3" -- Slovenia hosts no numbered Pilot Action in
+    // this deliverable, so it's dropped rather than shown with a fabricated
+    // code. Two sites legitimately host TWO Pilot Actions each (same
+    // physical location, different disturbance driver being studied there):
+    // Duna-Dráva NP, Hungary (PA1 + PA4) and Agordino, Italy (PA3 + PA6) --
+    // `actions` is an array so the map label can stack them instead of
+    // cramming both into one slash-joined string.
     // Only Pilsen has a published exact coordinate; the rest are approximate
-    // (town/region centroid) since RE-ENFORCE hasn't published precise ones --
-    // marked `approx: true` so the popup is honest about precision. The BFW map
-    // shows 10 pilot areas project-wide; these are the 6 individually named and
-    // described on the project's own site.
-    // `link` points to each site's OWN dedicated news/event page (found and
-    // verified live 2026-09-04), not the generic project homepage every entry
-    // used to share.
+    // (town/region centroid) -- marked `approx: true` so the popup is honest
+    // about precision. `link` points to each site's own dedicated news/event
+    // page where one exists (verified live 2026-09-04); otherwise to the
+    // official PDF above, deep-linked to that site's page.
     const PILOT_ACTIONS = [
-      { id: "pl-myszyniec", label: "Myszyniec Forest District", country: "Poland", pa: "PA-3",
-        type: "Fire (stand-replacing, 2014)", lat: 53.2833, lng: 21.35, approx: true,
-        link: "https://www.interreg-central.eu/news/uav-poland/" },
-      { id: "pl-rytel", label: "Rytel Forest District", country: "Poland", pa: "PA-6",
-        type: "Windthrow (2017, active restoration)", lat: 53.85, lng: 17.75, approx: true,
-        link: "https://www.interreg-central.eu/news/uav-drone-mission/" },
-      { id: "cz-pilsen", label: "Near Pilsen (Plzeň)", country: "Czech Republic", pa: "PA-2 / PA-5",
-        type: "Drought & bark beetle (since 2018)", lat: 49.8516714, lng: 13.4085067, approx: false,
-        link: "https://www.youtube.com/watch?v=D6szlpYw4Vc" },
-      { id: "at-japons", label: "Japons", country: "Austria", pa: "PA-5",
-        type: "Bark beetle", lat: 48.62, lng: 15.19, approx: true,
-        link: "https://www.interreg-central.eu/event/open-day-in-austria/" },
-      { id: "de-ne", label: "Northeastern Germany", country: "Germany", pa: "PA-1 / PA-6",
-        type: "Storm & ash dieback (2022)", lat: 53.70, lng: 12.64, approx: true,
+      { id: "hu-dunadrava", label: "Duna-Dráva National Park", country: "Hungary",
+        lat: 45.95, lng: 18.10, approx: true,
+        actions: [
+          { pa: "PA-1", type: "Ash dieback (hardwood gallery forests)" },
+          { pa: "PA-4", type: "Improper management of riparian forests" }
+        ],
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=8" },
+      { id: "de-pomerania", label: "Western Pomerania", country: "Germany",
+        lat: 53.70, lng: 12.64, approx: true,
+        actions: [{ pa: "PA-1", type: "Ash dieback (since 2008; storm-thrown 2022)" }],
         link: "https://www.interreg-central.eu/news/ash-dieback-and-multiple-reforestation-approaches-in-germany/" },
-      { id: "si-goriska", label: "Goriška Karst", country: "Slovenia", pa: "PA-3",
-        type: "Wildfire (2022)", lat: 45.85, lng: 13.65, approx: true,
-        link: "https://www.interreg-central.eu/event/workshop-for-national-and-regional-authorities-in-slovenia/" }
+      { id: "hr-jastrebarsko", label: "Jastrebarsko", country: "Croatia",
+        lat: 45.6667, lng: 15.6500, approx: true,
+        actions: [{ pa: "PA-2", type: "Drought (European beech)" }],
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=12" },
+      { id: "cz-pilsen", label: "Near Pilsen (Plzeň)", country: "Czech Republic",
+        lat: 49.8516714, lng: 13.4085067, approx: false,
+        actions: [{ pa: "PA-2", type: "Drought & bark beetle (Scots pine, since 2018)" }],
+        link: "https://www.youtube.com/watch?v=D6szlpYw4Vc" },
+      { id: "pl-myszyniec", label: "Myszyniec Forest District", country: "Poland",
+        lat: 53.2833, lng: 21.35, approx: true,
+        actions: [{ pa: "PA-3", type: "Fire (stand-replacing, 2014)" }],
+        link: "https://www.interreg-central.eu/news/uav-poland/" },
+      { id: "it-agordino", label: "Agordino (Dolomites)", country: "Italy",
+        lat: 46.3167, lng: 12.0500, approx: true,
+        actions: [
+          { pa: "PA-3", type: "Fire (2018, 2011)" },
+          { pa: "PA-6", type: "Storm (Vaia storm, 2018)" }
+        ],
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=22" },
+      { id: "at-japons", label: "Japons", country: "Austria",
+        lat: 48.62, lng: 15.19, approx: true,
+        actions: [{ pa: "PA-5", type: "Spruce bark beetle & drought" }],
+        link: "https://www.interreg-central.eu/event/open-day-in-austria/" },
+      { id: "at-horn", label: "Horn", country: "Austria",
+        lat: 48.6667, lng: 15.6667, approx: true,
+        actions: [{ pa: "PA-5", type: "Spruce bark beetle & drought" }],
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=28" },
+      { id: "pl-torun", label: "Toruń", country: "Poland",
+        lat: 53.0138, lng: 18.5981, approx: true,
+        actions: [{ pa: "PA-6", type: "Storm (2017 hurricane, 18,425 ha lost)" }],
+        link: "https://www.interreg-central.eu/wp-content/uploads/2026/05/Report_Pilot-actions_D.2.3.3.pdf#page=32" }
     ];
     // European Bark-Beetle Event Catalogue (~/barkbeetle-catalogue, own repo).
     // 149 events, 255 source links (barkbeetle-catalogue, data/events.csv snapshot) Full multi-source citations per event
@@ -2319,6 +2376,9 @@
       dssPillarPilotActions: document.getElementById("dssPillarPilotActions"),
       dssPillarPilotActionsStatus: document.getElementById("dssPillarPilotActionsStatus"),
       dssPillarDetail: document.getElementById("dssPillarDetail"),
+      dssPillarRiskDrivers: document.getElementById("dssPillarRiskDrivers"),
+      dssPillarRiskDriversStatus: document.getElementById("dssPillarRiskDriversStatus"),
+      layerRibbon: document.querySelector(".layer-ribbon"),
       mapCaptionLeft: document.getElementById("mapCaptionLeft"),
       mapCaptionRight: document.getElementById("mapCaptionRight"),
       yearSlider: document.getElementById("yearSlider"),
@@ -4274,11 +4334,18 @@
     function buildPilotLayer(map) {
       const group = L.layerGroup();
       PILOT_ACTIONS.forEach(function(p) {
+        // Multi-action sites (Hungary: PA1+PA4; Italy: PA3+PA6) stack their
+        // codes on separate lines in the marker label -- never slash-joined
+        // ("PA-1 / PA-4"), which read as one garbled code rather than two.
+        const paCodes = p.actions.map(function(a) { return a.pa; });
+        const labelHtml = paCodes.join("<br>");
+        const titleText = p.label + " (" + p.country + "): "
+          + p.actions.map(function(a) { return a.pa + " " + a.type; }).join("; ");
         const icon = L.divIcon({
           className: "",
-          html: '<div class="pilot-marker-hit" title="' + p.label + ' (' + p.country + '): ' + p.type + '">'
+          html: '<div class="pilot-marker-hit" title="' + titleText + '">'
             + '<div class="pilot-marker-icon"></div>'
-            + '<div class="pilot-marker-label">' + p.pa + '</div>'
+            + '<div class="pilot-marker-label">' + labelHtml + '</div>'
             + '</div>',
           iconSize: [36, 36],
           iconAnchor: [18, 18],
@@ -4287,8 +4354,11 @@
         const coordNote = p.approx
           ? "Approx. location (exact coordinates not published)"
           : "Coordinates: " + p.lat.toFixed(4) + "°N, " + p.lng.toFixed(4) + "°E";
+        const actionsHtml = p.actions.map(function(a) {
+          return '<strong>' + a.pa + '</strong>: ' + a.type;
+        }).join("<br>");
         const popupHtml = '<strong>' + p.label + '</strong> — ' + p.country + '<br>'
-          + p.pa + ': ' + p.type + '<br>'
+          + actionsHtml + '<br>'
           + '<span style="color:#666;font-size:11px;">' + coordNote + '</span><br>'
           + '<a href="' + p.link + '" target="_blank" rel="noopener noreferrer">About this pilot action ↗</a>';
         L.marker([p.lat, p.lng], { icon: icon, keyboard: false, pane: "pilotActionsPane" })
@@ -4350,6 +4420,12 @@
       toggleEl.classList.add("is-open");
       DOM.dssPillarDetail.innerHTML = DSS_PILLAR_DETAIL[key] || "";
       DOM.dssPillarDetail.classList.add("is-open");
+    }
+
+    function toggleDriverRibbon() {
+      const collapsed = DOM.layerRibbon.classList.toggle("is-collapsed");
+      DOM.dssPillarRiskDrivers.classList.toggle("is-collapsed", collapsed);
+      DOM.dssPillarRiskDriversStatus.textContent = collapsed ? "Hidden" : "Available below";
     }
 
     // Bark-beetle event-catalogue markers -- same simple pattern as
@@ -4886,6 +4962,12 @@
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDssPillarDetail(toggleEl); }
         });
       });
+      if (DOM.dssPillarRiskDrivers) {
+        DOM.dssPillarRiskDrivers.addEventListener("click", toggleDriverRibbon);
+        DOM.dssPillarRiskDrivers.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDriverRibbon(); }
+        });
+      }
 
       // Any driver box's accessory layers stay collapsed until its header
       // strip is clicked (currently Bark beetle +3, Drought +1).
