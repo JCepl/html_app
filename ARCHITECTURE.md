@@ -12,9 +12,10 @@ step: open `index.html` and it runs.
 
 It is a **multi-stress** DSS. Stresses are grouped in the top ribbon:
 - **Bark beetle** (the mature stress, several layers — see below)
-- **Wind** (forest wind-damage probability)
+- **Wind** (forest wind-damage probability, + a Grunig et al. pressure-index accessory)
 - **Drought** (SPEI-based, 2 layers — see below)
-- **Wildfire** — placeholder ("Coming soon")
+- **Wildfire** (Grunig et al. pressure index — this project has no in-house wildfire model)
+- **Ash dieback** — placeholder ("Coming soon")
 
 ## 2. Files
 
@@ -24,13 +25,18 @@ html_app/
   ARCHITECTURE.md         # this file
   README.md               # project blurb
   webmap_data/            # all map data + the R scripts that build it
-    map_meta.js           # global: bbox, value range, bbtl (Science) hex geojson file list
+    map_meta.js           # MAP_META (bbtl) + MAP_META_FIRE + MAP_META_WIND: bbox, value
+                           # range, years/rcps, hex geojson file list -- one object per
+                           # hex layer, see HEX_OVERLAY_IDS in index.html
     wind/                 # wind_<period>.png + wind_meta.json (RCP8.5, 3 periods)        ~11 MB
     drought/              # drought_{future,ref}_meta.json + classified PNGs (Stefan Ebner, BFW) ~0.5 MB
     phenips/              # phenips_*.png + phenips_data.json (GDD / generations)          ~4 MB
     forecast_bundle/      # bark-beetle forecast: manifest.json + per-model/scenario/period ~46 MB
-    geojson/              # bbtl pressure hexes (Grünig et al. 2026 Science) per rcp+year
+    geojson/              # pressure-index hexes (Grunig et al. 2026 Science), per rcp+year:
+                           #   bbtl_*.geojson (bark beetle), fire_*.geojson (wildfire),
+                           #   wind_*.geojson (wind) -- 24 files each (3 rcp x 8 years)
     bbt_past_disturbance.png(+meta)   # classified historical disturbance
+    build_fire_wind_hex_geojsons.sh   # rebuilds fire_*/wind_*.geojson from the Dryad gpkg
     *.R                   # data-build scripts (see §6)
 ```
 
@@ -58,16 +64,28 @@ once everything moved to pre-rendered PNGs + the dual-map compare.)
 | `bbtpast` | Past disturbance | **PNG** (classified) | historical 1985–2023 footprint |
 | `bbtl` | Bark Beetle Pressure | **vector hexes (GeoJSON)** | Grünig et al. 2026, *Science*; per RCP × year |
 | `wind` | Wind | **PNG** raster | wind-damage probability, RCP8.5, 3 periods |
+| `windPressure` | Wind Pressure | **vector hexes (GeoJSON)** | Grünig et al. 2026, *Science*; per RCP × year; accessory of the Wind group |
 | `droughtFuture` | Future SPEI classes | **PNG** raster (classified) | December SPEI-equivalent-12, 4 classes, 4 scenario/period combos |
 | `droughtRef` | Reference indicators (MYD) | **PNG** raster (classified) | multi-year-drought indicators, 1981-2010 reference period, 3 selectable metrics |
-| `wildfire` | — | not available | placeholder |
+| `wildfire` | Wildfire Pressure | **vector hexes (GeoJSON)** | Grünig et al. 2026, *Science*; per RCP × year; this project's only wildfire layer |
+| `ashDieback` | — | not available | placeholder |
 
 All raster layers are **pre-rendered RGBA PNGs + a `*_meta.json`** (bounds, value range)
-and drawn as `L.imageOverlay`. The only vector layer is `bbtl`.
+and drawn as `L.imageOverlay`. The vector (hex) layers are `bbtl`, `wildfire`, and
+`windPressure` — see `HEX_OVERLAY_IDS` in index.html; all three share one code path
+(styling, click sampling, RCP/year control panel, citation box) parameterized by
+overlay id, and more than one can be visible/cached at once (`APP.hexGeojson[id]`,
+`APP.layerInstances[id]`). To add a fourth: add an `OVERLAY_CATALOG` entry, a
+`MAP_META_*` object in map_meta.js, a ribbon card, and its id to `HEX_OVERLAY_IDS`
+— no other JS changes needed.
 
 In the ribbon, the bark-beetle layers are one group: only **Predictions** shows until the
 user clicks the **"Bark beetle ▸"** label, which reveals the accessories (PHENIPS, Past,
-Pressure). See `#bbToggle` / `#bbAccessories` and the `.bb-*` CSS.
+Pressure). Wind works the same way: only **Wind** (the raster) shows until **"Wind ▸"**
+(`#windToggle`/`#windAccessories`) reveals **Wind Pressure**. Wildfire has only the one
+pressure-index card and no accessories to reveal, so its group has no toggle — same as
+Wind's group had before Wind Pressure was added. See `.bb-*` CSS for the shared
+toggle/accessories pattern.
 
 ## 5. JavaScript structure (inside the single `<script>`)
 
@@ -209,7 +227,11 @@ regenerate PNGs**, or browsers serve stale images. (Current: `20260628-floor`.)
 - **Pre-rendered, not client-computed.** Don't reintroduce client-side raster reading;
   add layers as PNG + meta produced by an R script.
 - **Ramp sync** (see §6) and **ASSET_VERSION bump** are the two easiest things to forget.
-- The bark-beetle **pressure hexes (`bbtl`) can't be pinned into split-screen image
-  panels** (vector); it works as a normal layer.
+- The pressure-index hex layers (`bbtl`, `wildfire`, `windPressure`) **can't be pinned
+  into split-screen image panels** (vector); they work as normal layers.
+- RCP/year are **global, shared controls**: changing either refreshes every currently
+  *visible* hex layer (`HEX_OVERLAY_IDS.forEach` in the selector handlers), not just the
+  focused one — so stacking e.g. `bbtl` + `wildfire` and dragging the year slider moves
+  both.
 - Coordinates/extent: data is EPSG:4326; PNGs are reprojected to Web-Mercator at build time
   so `L.imageOverlay` aligns with the basemap.
