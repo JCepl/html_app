@@ -6,16 +6,25 @@
 ## 1. What this is
 
 A **single-file, static web map** — the **RE-ENFORCE Decision Support System** — that
-visualises **forest-disturbance risk across Europe** under climate scenarios. It is
+visualises **forest-disturbance indicators across Europe** under climate scenarios. It is
 deployed to **GitHub Pages** (live at `jcepl.github.io/html_app`). No backend, no build
 step: open `index.html` and it runs.
 
 It is a **multi-stress** DSS. Stresses are grouped in the top ribbon:
 - **Bark beetle** (the mature stress, several layers — see below)
-- **Wind** (forest wind-damage probability, + a Grunig et al. pressure-index accessory)
+- **Wind** (forest wind-damage susceptibility, + a Grunig et al. pressure-index accessory)
 - **Drought** (SPEI-based, 2 layers — see below)
 - **Wildfire** (Grunig et al. pressure index — this project has no in-house wildfire model)
 - **Ash dieback** — placeholder ("Coming soon")
+
+**Terminology (2026-09, consortium feedback):** avoid the word "risk"/"probability" as a
+blanket label — most layers are a susceptibility index, a hazard-occurrence estimate, or
+some blend of the two (varies per driver and per model; see each `OVERLAY_CATALOG[id]
+.description`), not a single calibrated risk probability. Only the bark-beetle forecast
+(a genuinely calibrated, spatial-block-CV-validated XGBoost classifier) earns the word
+"probability" in its own copy. Everywhere else in the UI, prefer "pressure index",
+"susceptibility", "model forecast", or "disturbance indicator". If you add copy, match
+this — it's a live, disclosed decision (see §11), not an incidental style choice.
 
 ## 2. Files
 
@@ -199,17 +208,79 @@ regenerate PNGs**, or browsers serve stale images. (Current: `20260628-floor`.)
 
 - **Basemap switcher** (top-right, collapsed/subtle, expands on hover): Streets / Light /
   Dark / **Plain (borders only)**.
-- **"Hide risk below X%"** slider (Legend card): masks low-risk areas. Threshold is an
-  **absolute probability**; each layer's colour scale tops out at a different probability
-  (wind saturates at 0.5 → its slider caps at 49%), so `riskFractionFor` converts the % to
-  the right colour-scale fraction per layer. PNG layers are masked client-side via canvas
-  (`loadThresholdedImage`); the hex layer via `fillOpacity`.
+- **"Hide values below X%"** slider (Legend card): masks the low end of the displayed
+  layer's own colour scale. Threshold is an **absolute value on that scale**; each layer's
+  scale tops out at a different point (wind saturates at 0.5 → its slider caps at 49%), so
+  `riskFractionFor` converts the % to the right colour-scale fraction per layer. PNG layers
+  are masked client-side via canvas (`loadThresholdedImage`); hex layers via `fillOpacity`.
 - **Click popup** — small bubble (`mini-popup`) above the borders; mirrors the side panel.
 - **Share view** (banner) — encodes the full view into the URL hash (`buildShareUrl` /
   `applyStateFromUrl`): basemap, visible/focused layers, forecast & PHENIPS & wind settings,
-  RCP/year, threshold.
+  RCP/year, threshold, Simple/Advanced mode (`sv`).
 
-## 8. Running & regenerating
+## 8. Simple / Advanced view
+
+**Default = Simple** (`APP.simpleView = true`), toggled by the banner's **"Show full
+detail" / "Simple view"** button (`#detailModeBtn`, wired in `initControls`) and applied by
+`applySimpleView()`. Simplifies the surface for a non-scientist audience, per 2026-09
+consortium feedback (Anna Wöhlbrandt: *"think less of a scientist, more like a teacher or
+journalist... I would totally omit picking climate models or ensemble models... include one
+(or an average) and that's it"*). Nothing is deleted — Advanced restores the identical full
+set instantly, no reload.
+
+**Scope is deliberately narrow: model/GCM-ensemble complexity only, never time period.**
+An earlier version of this also hid the far-future/end-of-century options (wind's `far`,
+PHENIPS's `end`) and capped the pressure-index hex layers' year slider at 2070 — corrected
+2026-09-06 per explicit user instruction ("DONT HIDE END OF CENTURY"): showing what changes
+by end of century is the whole point of a climate-impact DSS, so every time period stays
+available in **both** modes. Do not reintroduce a far-future/end-of-century cut here.
+
+What Simple actually hides/forces:
+- **Bark beetle forecast Model picker** (`#forecastModelField`) + **Historical Evaluation**
+  metrics/confusion-matrix (`#forecastMetricsBox`) — hidden; `currentForecastModel` is
+  pinned to `SIMPLE_VIEW_DEFAULT_FORECAST_MODEL` (`chelsa_fixed25_monotone`), the one
+  variant with both a real held-out CV and a construction-guaranteed non-decreasing future
+  response (see `CHELSA_NATIVE_TRAINING/PROJECT_REFERENCE_bark_beetle_model.md` §5–7). Its
+  Future-period dropdown (reference / end-century) is untouched in both modes.
+- **Wind Climate-model (GCM) picker** (`#windGcmField`) — hidden. Wind's Future-period
+  dropdown (historical/near/far) is untouched in both modes.
+- **RCP scenario, PHENIPS period, and the pressure-index hex layers' (`bbtl`/`wildfire`/
+  `windPressure`) year slider are never restricted** — same reasoning as time period above:
+  these are meaningful choices (policy scenario; what year to look at), not incidental
+  model-ensemble clutter.
+
+Toggling calls `applySimpleView()` again (idempotent, safe to call repeatedly).
+
+## 9. Period-coverage strip
+
+A 4-chip strip under every driver group's header (`.period-strip`/`.period-chip`),
+added 2026-09 per user request for "clear structure -- stated empty if its empty":
+Historic / Contemporary / Near future / Later future, one chip per slot, always
+present so a gap reads as a gap rather than a silent absence.
+
+- **Green chip** = a real layer covers that slot (hover for exactly which layer
+  and years); **dashed grey `.is-empty`** = honestly no coverage.
+- **Click-to-jump:** any non-empty chip is also a link. `data-jump-overlay` /
+  `data-jump-period` attributes drive `jumpToOverlayPeriod()`, which shows that
+  overlay, sets its period/year to match the chip, expands its accessory panel if
+  collapsed (`expandAccessoryFor()` / `ACCESSORY_PARENT_GROUP`), and scrolls its
+  card into view. `period` is a semantic slot (`historical`/`near`/`far`),
+  translated per overlay since each one's own controls differ: drought's period
+  selector also encodes a scenario (matched by year-range prefix, e.g.
+  `2041_2070`), the pressure-index hex layers (`wildfire`/`bbtl`) use a literal
+  year (2030/2100), and `bbtforecast`'s "later future" resolves to whichever
+  period is chronologically last for the currently-selected model (fetched from
+  the forecast manifest via `ensureForecastManifestLoaded()`) — the flagship
+  model has no near-future run, so its strip only ever exposes Historic (via
+  `bbtpast`, a different overlay) and Later future.
+- Honest gaps this audit surfaced, worth not re-deriving: **no driver has a
+  "Contemporary" (now) layer at all**; **Wildfire has no Historic layer**
+  (Grünig's pre-aggregated 50km hex product ships future years only — a real one
+  needs the raw 100m Dryad tarball, see the project memory's Dryad-archaeology
+  note); **the bark-beetle forecast itself has no near-future run** (reference +
+  end-century only — the Pressure hex stands in at the group level).
+
+## 10. Running & regenerating
 
 - **Run locally:** `cd html_app && python3 -m http.server 8765` → open
   `http://localhost:8765/index.html`. (It's static; any web server works. GitHub Pages
@@ -220,7 +291,7 @@ regenerate PNGs**, or browsers serve stale images. (Current: `20260628-floor`.)
 - **Regenerate data:** run the relevant R script in `webmap_data/` (terra + jsonlite
   required), then **bump `ASSET_VERSION`**.
 
-## 9. Conventions / gotchas
+## 11. Conventions / gotchas
 
 - **One file.** No modules; functions are globals grouped by banner comments. Keep related
   code in its section.
@@ -235,3 +306,6 @@ regenerate PNGs**, or browsers serve stale images. (Current: `20260628-floor`.)
   both.
 - Coordinates/extent: data is EPSG:4326; PNGs are reprojected to Web-Mercator at build time
   so `L.imageOverlay` aligns with the basemap.
+- **No "risk"/"probability" as a blanket label** in new copy — see §1's terminology note
+  and §8 (Simple/Advanced). Say what the layer actually is: susceptibility, pressure
+  index, model forecast, or (only where genuinely true) probability.

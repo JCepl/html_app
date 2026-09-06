@@ -571,7 +571,7 @@
 
     /* Collapses via max-height/padding, NOT display:none -- stays a real
        grid row in body's layout at all times (see body's grid-template-rows
-       comment above); toggled by clicking the "Risk drivers" pillar. */
+       comment above); toggled by clicking the "Disturbance drivers" pillar. */
     .layer-ribbon {
       position: relative;
       z-index: 1190;
@@ -864,6 +864,48 @@
 
     .overlay-group-cards { display: flex; gap: 5px; padding: 5px; flex: 1; align-items: stretch; }
     .overlay-group-cards.bb-grid { display: flex; gap: 5px; align-items: stretch; }
+
+    /* Period strip: one row per driver group, always the same 4 slots
+       (Historic / Contemporary / Near future / Later future) so gaps are
+       visible as gaps, not silently absent. A chip with real coverage is a
+       click-to-jump link (see data-jump-overlay wiring in initControls);
+       an empty chip stays a plain, non-interactive coverage indicator. */
+    .period-strip {
+      display: flex;
+      gap: 3px;
+      padding: 4px 5px 0;
+      flex-wrap: nowrap;
+    }
+    .period-chip {
+      flex: 1;
+      text-align: center;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 2px 2px;
+      border-radius: 4px;
+      border: 1px solid #c9d8e8;
+      background: #dcebd8;
+      color: #3a6b3a;
+      cursor: default;
+    }
+    .period-chip.is-empty {
+      border-style: dashed;
+      background: transparent;
+      color: #a9b6c4;
+    }
+    .period-chip[data-jump-overlay] {
+      cursor: pointer;
+    }
+    .period-chip[data-jump-overlay]:hover {
+      background: #c3ddc0;
+      border-color: #7fa878;
+    }
+    .period-chip[data-jump-overlay]:focus-visible {
+      outline: 2px solid #2f5480;
+      outline-offset: 1px;
+    }
 
     /* Drivers that actually have accessory layers to reveal (Bark beetle,
        Drought) get the click affordance + arrow on the header strip above;
@@ -1460,6 +1502,8 @@
         <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
         <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
         <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <button class="banner-link banner-button" id="detailModeBtn" type="button" aria-pressed="false"
+                title="Simplified by default (one model, no climate-model picker, near-future only). Switch to see every model, scenario, and validation detail.">Show full detail</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
       </nav>
       <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
@@ -1468,10 +1512,10 @@
 
   <div class="dss-pillar-strip" aria-label="RE-ENFORCE DSS components">
     <div class="dss-pillar is-active dss-ribbon-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
-         title="Maps of the relative risk given by the main drivers of forest degradation (drought, fire, wind, bark beetle and ash dieback). Click to show/hide the driver menu below.">
+         title="Modelled indicators for the main drivers of forest disturbance (drought, fire, wind, bark beetle and ash dieback) -- susceptibility and/or hazard, depending on the driver; see each layer's own description. Click to show/hide the driver menu below.">
       <span class="dss-pillar-num">1</span>
       <span class="dss-pillar-body">
-        <span class="dss-pillar-title">Risk drivers</span>
+        <span class="dss-pillar-title">Disturbance drivers</span>
         <span class="dss-pillar-copy">Drought, fire, wind, bark beetle &amp; ash dieback</span>
       </span>
       <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Available below</span>
@@ -1512,12 +1556,18 @@
       <div id="overlayCardStrip" class="overlay-card-strip" aria-label="Overlay choices">
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="droughtToggle" data-toggle-target="droughtAccessories" role="button" tabindex="0"
-               title="Show 1 more drought layer (reference-period MYD indicators) -- for context, not a risk forecast"
+               title="Show 1 more drought layer (reference-period MYD indicators) -- for context, not a model forecast"
                aria-expanded="false">Drought <span class="bb-toggle-count">+1</span></div>
+          <div class="period-strip" title="Data coverage by time period">
+            <span class="period-chip" data-jump-overlay="droughtRef" title="Reference indicators, 1981-2010 -- click to view">Historic</span>
+            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
+            <span class="period-chip" data-jump-overlay="droughtFuture" data-jump-period="near" title="Future SPEI, 2041-2070 -- click to view">Near future</span>
+            <span class="period-chip" data-jump-overlay="droughtFuture" data-jump-period="far" title="Future SPEI, 2071-2100 -- click to view">Later future</span>
+          </div>
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="droughtFuture">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Future SPEI classes</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Future SPEI classes</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtFuture">Display</button>
             </span>
@@ -1547,6 +1597,12 @@
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label">Wildfire</div>
+          <div class="period-strip" title="Data coverage by time period">
+            <span class="period-chip is-empty" title="No historic wildfire layer built yet -- would need the raw 100m Grunig archive, not the pre-aggregated hex product used here">Historic</span>
+            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
+            <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="near" title="Wildfire Pressure, from 2030 -- click to view">Near future</span>
+            <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="far" title="Wildfire Pressure, to 2100 -- click to view">Later future</span>
+          </div>
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="wildfire">
           <span class="overlay-card-head">
@@ -1565,17 +1621,23 @@
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="windToggle" data-toggle-target="windAccessories" role="button" tabindex="0"
-               title="Show 1 more wind layer (pressure index) -- for context, not a risk forecast"
+               title="Show 1 more wind layer (pressure index) -- for context, not a model forecast"
                aria-expanded="false">Wind <span class="bb-toggle-count">+1</span></div>
+          <div class="period-strip" title="Data coverage by time period">
+            <span class="period-chip" data-jump-overlay="wind" data-jump-period="historical" title="Wind damage susceptibility, historical -- click to view">Historic</span>
+            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
+            <span class="period-chip" data-jump-overlay="wind" data-jump-period="near" title="Wind damage 2041-2070; Wind Pressure from 2030 -- click to view wind damage">Near future</span>
+            <span class="period-chip" data-jump-overlay="wind" data-jump-period="far" title="Wind damage 2071-2100; Wind Pressure to 2100 -- click to view wind damage">Later future</span>
+          </div>
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="wind">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Wind</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Wind</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wind">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Risk of forest wind damage (probability), RCP8.5, across 3 climate periods.</span>
+          <span class="overlay-card-copy">Modelled forest wind-damage susceptibility, RCP8.5, across 3 climate periods.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="wind" />
             <span class="overlay-tool-value" data-opacity-value="wind">0.85</span>
@@ -1600,12 +1662,18 @@
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="bbToggle" data-toggle-target="bbAccessories" role="button" tabindex="0"
-               title="Show 2 more bark beetle layers (PHENIPS climate, pressure index) -- for context, not risk forecasts"
+               title="Show 2 more bark beetle layers (PHENIPS climate, pressure index) -- for context, not model forecasts"
                aria-expanded="false">Bark beetle <span class="bb-toggle-count">+2</span></div>
+          <div class="period-strip" title="Data coverage by time period">
+            <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2023 -- click to view">Historic</span>
+            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
+            <span class="period-chip" data-jump-overlay="bbtl" data-jump-period="near" title="Bark Beetle Pressure, from 2030 (the validated forecast model itself has no near-future run -- reference and end-century only) -- click to view pressure">Near future</span>
+            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Predictions end-century; PHENIPS end; Pressure to 2100 -- click to view end-century predictions">Later future</span>
+          </div>
           <div class="overlay-group-cards bb-grid">
         <div class="overlay-card hazard-primary" data-overlay="bbtforecast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Risk forecast</span>Predictions</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Predictions</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
             </span>
@@ -1661,6 +1729,12 @@
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label">Ash dieback</div>
+          <div class="period-strip" title="Data coverage by time period">
+            <span class="period-chip is-empty" title="No layer yet">Historic</span>
+            <span class="period-chip is-empty" title="No layer yet">Contemporary</span>
+            <span class="period-chip is-empty" title="No layer yet">Near future</span>
+            <span class="period-chip is-empty" title="No layer yet">Later future</span>
+          </div>
           <div class="overlay-group-cards">
         <div class="overlay-card coming-soon" data-overlay="ashDieback">
           <span class="overlay-card-head">
@@ -1692,7 +1766,7 @@
         <div id="forecastPanel" class="nested-panel" hidden>
           <p class="nested-title">Bark Beetle Forecast</p>
           <div class="nested-grid">
-            <div>
+            <div id="forecastModelField">
               <div class="label">Model</div>
               <div class="row">
                 <select id="forecastModelSelector"></select>
@@ -1768,7 +1842,7 @@
         </div>
 
         <div id="windPanel" class="nested-panel" hidden>
-          <p class="nested-title">Wind Damage Risk Controls</p>
+          <p class="nested-title">Wind Damage Controls</p>
           <div class="label">Period</div>
           <div class="row">
             <select id="windPeriodSelector">
@@ -1777,14 +1851,16 @@
               <option value="far">Far future 2071–2100</option>
             </select>
           </div>
-          <div class="label">Climate model (GCM)</div>
-          <div class="row">
-            <select id="windGcmSelector">
-              <option value="default" selected>Default</option>
-              <option value="mpi">MPI-ESM1-2-HR</option>
-            </select>
+          <div id="windGcmField">
+            <div class="label">Climate model (GCM)</div>
+            <div class="row">
+              <select id="windGcmSelector">
+                <option value="default" selected>Default</option>
+                <option value="mpi">MPI-ESM1-2-HR</option>
+              </select>
+            </div>
           </div>
-          <div class="small">Probability of forest wind damage (0–1). Threshold 0.5 = damage. Color scale saturates at 0.5 = high risk. Scenario RCP8.5 (SSP5-8.5). Historical baseline is model-independent (GCM choice has no effect).</div>
+          <div class="small">Modelled forest wind-damage susceptibility (0–1). Colour scale saturates at 0.5. Scenario RCP8.5 (SSP5-8.5). Historical baseline is model-independent (GCM choice has no effect).</div>
         </div>
 
         <div id="droughtFuturePanel" class="nested-panel" hidden>
@@ -1857,9 +1933,9 @@
         </div>
 
         <div id="riskFilterBox" class="risk-filter">
-          <div class="label">Hide risk below <span id="riskValue">0%</span> probability</div>
+          <div class="label">Hide values below <span id="riskValue">0%</span></div>
           <input type="range" id="riskSlider" min="0" max="100" step="1" value="0" />
-          <div class="small">Hides areas where the damage probability is below this value (max 50% = p 0.5, the damage threshold). Applies to the wind, bark beetle forecast probability, and bark beetle pressure layers.</div>
+          <div class="small">Hides areas below this value on the displayed layer's own colour scale (wind's scale tops out at 50%). Applies to the wind, bark beetle forecast, and the three pressure-index layers (bark beetle, wildfire, wind).</div>
         </div>
 
         <div id="citationBox" class="citation-box">
@@ -1960,6 +2036,10 @@
       // Hide map values whose risk-scale fraction is below this (0..1). Applies
       // to all risk layers (bbtl hexes, wind + forecast probability PNGs).
       riskThreshold: 0,
+      // Default = simplified surface (one model, no GCM picker, near-future
+      // only). "Show full detail" flips this off. Not split-screen-per-side
+      // state -- deliberately global, same for both maps.
+      simpleView: true,
       // Split screen: two real maps. The active one is what `map`/`layerInstances`
       // (and all per-map fields) point to, so the whole pipeline drives only it.
       // The inactive side's state is parked in `panels`.
@@ -2068,6 +2148,16 @@
     // control panel, citation). Add an id here (plus an OVERLAY_CATALOG
     // entry, a MAP_META_* object, and a ribbon card) to add another.
     const HEX_OVERLAY_IDS = ["bbtl", "wildfire", "windPressure"];
+
+    // Simple/Advanced view (2026-09 consortium feedback: default to the
+    // least-confusing surface for a non-scientist audience -- one model, no
+    // GCM picker -- and let "Show full detail" restore everything). Every
+    // time period, including end-of-century, stays available in BOTH modes
+    // -- explicitly not something to hide (2026-09-06 correction: an
+    // earlier version of this also capped the far-future/end-of-century
+    // options, which is wrong -- the whole point of a climate-impact DSS is
+    // showing what changes by end of century). See applySimpleView().
+    const SIMPLE_VIEW_DEFAULT_FORECAST_MODEL = "chelsa_fixed25_monotone";
 
     // Wind's own scale (Tommaso's QGIS rendering) -- see WIND_RAMP in
     // webmap_data/color_scales.R. An independent copy: historically this and
@@ -2325,7 +2415,7 @@
       },
       bbtforecast: {
         label: "Bark beetle forecast",
-        description: "Future bark beetle risk forecasts from the forecast bundle. Choose model, future period, and threshold to compare projected risk surfaces.",
+        description: "Future bark beetle disturbance forecasts from the forecast bundle. Choose model, future period, and threshold to compare projected surfaces.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -2354,7 +2444,7 @@
       },
       ashDieback: {
         label: "Ash dieback",
-        description: "Planned overlay for ash dieback disturbance risk. Currently only referenced as an event-marker tag (Pilot actions), no model/layer exists yet.",
+        description: "Planned overlay for ash dieback disturbance. Currently only referenced as an event-marker tag (Pilot actions), no model/layer exists yet.",
         available: false,
         usesRcp: true,
         usesYear: true,
@@ -2385,8 +2475,8 @@
         }
       },
       wind: {
-        label: "Wind damage risk",
-        description: "Risk of forest wind damage as a probability (0 low – 1 high; threshold 0.5 = damage). Color scale saturates at 0.5. Three climate periods under RCP8.5 (SSP5-8.5). Select the period using the control below.",
+        label: "Wind damage susceptibility",
+        description: "Modelled forest wind-damage susceptibility (0 low – 1 high). Colour scale saturates at 0.5. Three climate periods under RCP8.5 (SSP5-8.5). Select the period using the control below.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -2516,6 +2606,10 @@
       legendThreshMarker: document.getElementById("legendThreshMarker"),
       shareBtn: document.getElementById("shareBtn"),
       splitBtn: document.getElementById("splitBtn"),
+      detailModeBtn: document.getElementById("detailModeBtn"),
+      forecastModelField: document.getElementById("forecastModelField"),
+      forecastMetricsBox: document.getElementById("forecastMetricsBox"),
+      windGcmField: document.getElementById("windGcmField"),
       pilotActionsBtn: document.getElementById("pilotActionsBtn"),
       dssPillarPilotActions: document.getElementById("dssPillarPilotActions"),
       dssPillarPilotActionsStatus: document.getElementById("dssPillarPilotActionsStatus"),
@@ -3137,6 +3231,72 @@
         syncCitationVisibility();
         setStatus(APP.overlayVisible ? "Overlay hidden" : "All overlays hidden");
       }
+    }
+
+    // A period-strip chip's accessory layer (droughtRef, windPressure,
+    // phenips, bbtl) lives inside a collapsed bb-accessories panel -- jumping
+    // to it should also reveal it, not just change map state behind a closed
+    // panel.
+    const ACCESSORY_PARENT_GROUP = {
+      droughtRef: "droughtAccessories",
+      windPressure: "windAccessories",
+      bbtl: "bbAccessories",
+      phenips: "bbAccessories"
+    };
+
+    function expandAccessoryFor(overlayId) {
+      const accessoriesId = ACCESSORY_PARENT_GROUP[overlayId];
+      if (!accessoriesId) return;
+      const accessories = document.getElementById(accessoriesId);
+      if (!accessories || !accessories.hidden) return;
+      accessories.hidden = false;
+      const toggle = document.querySelector('[data-toggle-target="' + accessoriesId + '"]');
+      if (toggle) {
+        toggle.classList.add("open");
+        toggle.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    // Click-to-jump for period-strip chips (2026-09 follow-up to the
+    // read-only coverage strip -- "give me a link to click"). `period` is a
+    // semantic slot ("historical"/"near"/"far"), not necessarily a literal
+    // control value -- each branch below translates it to whatever that
+    // overlay's own controls actually use, since drought's period selector
+    // encodes a scenario too and the hex layers use a literal year instead.
+    async function jumpToOverlayPeriod(overlayId, period) {
+      if (!OVERLAY_CATALOG[overlayId] || !OVERLAY_CATALOG[overlayId].available) return;
+
+      expandAccessoryFor(overlayId);
+
+      if (overlayId === "droughtFuture") {
+        const prefix = period === "near" ? "2041_2070" : "2071_2100";
+        const opt = Array.from(DOM.droughtFuturePeriodSelector.options).find(function(o) {
+          return o.value.indexOf(prefix) === 0;
+        });
+        if (opt) APP.currentDroughtFuturePeriod = opt.value;
+      } else if (overlayId === "wind") {
+        APP.currentWindPeriod = period;
+      } else if (overlayId === "wildfire" || overlayId === "bbtl") {
+        APP.currentYear = period === "near" ? 2030 : 2100;
+      } else if (overlayId === "bbtforecast") {
+        // "Later future" is the only jumpable bbtforecast slot -- the
+        // flagship model has no near-future run (see period-strip audit).
+        // Periods run chronological reference -> end, so the last entry for
+        // whatever model is currently selected is end-century.
+        try {
+          const manifest = await ensureForecastManifestLoaded();
+          const periods = (manifest.models[APP.currentForecastModel] && manifest.models[APP.currentForecastModel].periods) || manifest.periods || [];
+          if (periods.length) APP.currentForecastPeriod = periods[periods.length - 1];
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      setLayerVisibilityFromRibbon(overlayId, true);
+      syncControlsToActive();
+
+      const card = DOM.overlayCardStrip && DOM.overlayCardStrip.querySelector('[data-overlay="' + overlayId + '"]');
+      if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     async function hydrateForecastControls() {
@@ -5051,6 +5211,7 @@
       // Per-layer opacity sliders.
       p.set("lo", LAYER_OPACITY_KEYS.map(function(k) { return APP.layerOpacity[k]; }).join(","));
       p.set("sp", APP.split ? "1" : "0");
+      p.set("sv", APP.simpleView ? "1" : "0");
       p.set("pa", APP.showPilotActions ? "1" : "0");
       // No "ce" param -- catalogue-event visibility is derived from "ov"
       // (whether bbtpast is in it), not stored independently.
@@ -5074,6 +5235,7 @@
       setIf("dp", "currentDroughtFuturePeriod"); setIf("dm", "currentDroughtRefMetric");
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
+      if (p.has("sv")) APP.simpleView = p.get("sv") !== "0";
       if (p.has("pa")) { APP.showPilotActions = p.get("pa") === "1"; syncPilotActionsVisibility(); }
 
       if (p.has("lo")) {
@@ -5113,6 +5275,7 @@
       getOverlayIds().forEach(function(id) { clearLayerInstance(id); });
       updateOverlayPaneOrder();
       syncOverlayControls(false);
+      applySimpleView();
       APP.visibleOverlays.forEach(function(id) { updateOverlayLayer(id); });
       updateOverlayCardStates();
       setLegendLabels();
@@ -5149,6 +5312,34 @@
         APP[stateKey] = select.value;
         refreshForecastOverlayIfVisible();
       });
+    }
+
+    // Show/hide the "advanced" controls (climate-model/GCM pickers,
+    // validation detail) per APP.simpleView. Every time period, including
+    // end-of-century, stays available in both modes -- only pinned to a
+    // model/GCM ensemble is hidden. Reversible and idempotent -- safe to
+    // call any time, not just when the toggle itself is clicked.
+    function applySimpleView() {
+      const simple = APP.simpleView;
+      if (DOM.detailModeBtn) {
+        DOM.detailModeBtn.textContent = simple ? "Show full detail" : "Simple view";
+        DOM.detailModeBtn.setAttribute("aria-pressed", String(!simple));
+      }
+
+      // Bark beetle forecast: hide the Model picker + validation metrics,
+      // pinned to the one model with a real held-out evaluation and a
+      // construction-guaranteed (not just empirically observed) non-
+      // decreasing future response -- see CHELSA_NATIVE_TRAINING project docs.
+      if (DOM.forecastModelField) DOM.forecastModelField.hidden = simple;
+      if (DOM.forecastMetricsBox) DOM.forecastMetricsBox.hidden = simple;
+      if (simple && APP.currentForecastModel !== SIMPLE_VIEW_DEFAULT_FORECAST_MODEL) {
+        APP.currentForecastModel = SIMPLE_VIEW_DEFAULT_FORECAST_MODEL;
+        refreshForecastOverlayIfVisible();
+      }
+
+      // Wind: hide only the GCM picker. Every period option (including far
+      // future) stays available in both modes -- not something to hide.
+      if (DOM.windGcmField) DOM.windGcmField.hidden = simple;
     }
 
     function initControls() {
@@ -5256,6 +5447,11 @@
       });
 
       bindShareButton();
+      if (DOM.detailModeBtn) DOM.detailModeBtn.addEventListener("click", function() {
+        APP.simpleView = !APP.simpleView;
+        applySimpleView();
+      });
+      applySimpleView();
       if (DOM.splitBtn) DOM.splitBtn.addEventListener("click", toggleSplit);
       if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.addEventListener("click", togglePilotActions);
       if (DOM.dssPillarPilotActions) {
@@ -5296,6 +5492,22 @@
         toggle.addEventListener("click", toggleGroup);
         toggle.addEventListener("keydown", function(e) {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleGroup(); }
+        });
+      });
+
+      // Period-strip chips with real coverage are click-to-jump links;
+      // empty chips (no data-jump-overlay) stay plain and non-interactive.
+      document.querySelectorAll(".period-chip[data-jump-overlay]").forEach(function(chip) {
+        chip.setAttribute("role", "button");
+        chip.setAttribute("tabindex", "0");
+        const activate = function() {
+          jumpToOverlayPeriod(chip.dataset.jumpOverlay, chip.dataset.jumpPeriod).catch(function(error) {
+            console.error(error);
+          });
+        };
+        chip.addEventListener("click", activate);
+        chip.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); }
         });
       });
 
