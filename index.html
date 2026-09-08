@@ -575,8 +575,8 @@
     .layer-ribbon {
       position: relative;
       z-index: 1190;
-      max-height: 260px;
-      padding: 5px 12px;
+      max-height: 210px;
+      padding: 4px 12px;
       overflow: hidden;
       border-bottom: 1px solid #c9d8ea;
       background: linear-gradient(180deg, #ecf3fb 0%, #e7f0fa 100%);
@@ -851,29 +851,31 @@
       align-items: center;
       justify-content: space-between;
       gap: 6px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #eaf1fa;
       background: #244166;
-      padding: 5px 8px;
+      padding: 4px 8px;
       white-space: nowrap;
       transition: background 0.15s ease;
     }
 
-    .overlay-group-cards { display: flex; gap: 5px; padding: 5px; flex: 1; align-items: stretch; }
-    .overlay-group-cards.bb-grid { display: flex; gap: 5px; align-items: stretch; }
+    .overlay-group-cards { display: flex; gap: 4px; padding: 4px; flex: 1; align-items: stretch; }
+    .overlay-group-cards.bb-grid { display: flex; gap: 4px; align-items: stretch; }
 
-    /* Period strip: one row per driver group, always the same 4 slots
-       (Historic / Contemporary / Near future / Later future) so gaps are
-       visible as gaps, not silently absent. A chip with real coverage is a
-       click-to-jump link (see data-jump-overlay wiring in initControls);
-       an empty chip stays a plain, non-interactive coverage indicator. */
+    /* Period strip: one row per driver group, always the same 3 slots
+       (Historic / Near future / Later future) so gaps are visible as gaps,
+       not silently absent. "Contemporary" was dropped -- no driver ever had
+       a layer for it, so the slot was permanently empty across every group.
+       A chip with real coverage is a click-to-jump link (see data-jump-overlay
+       wiring in initControls); an empty chip stays a plain, non-interactive
+       coverage indicator. */
     .period-strip {
       display: flex;
       gap: 3px;
-      padding: 4px 5px 0;
+      padding: 3px 5px 0;
       flex-wrap: nowrap;
     }
     .period-chip {
@@ -883,7 +885,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      padding: 2px 2px;
+      padding: 1px 2px;
       border-radius: 4px;
       border: 1px solid #c9d8e8;
       background: #dcebd8;
@@ -949,7 +951,7 @@
       font-weight: 800;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .overlay-card.hazard-primary {
@@ -985,7 +987,7 @@
     .overlay-card {
       min-width: 110px;
       max-width: 168px;
-      padding: 4px 7px 5px;
+      padding: 3px 6px 4px;
       border: 1px solid #e0e9f3;
       border-radius: 6px;
       background: rgba(248, 251, 255, 0.7);
@@ -1023,14 +1025,14 @@
       display: block;
       font-size: 11px;
       font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 2px;
+      line-height: 1.1;
+      margin-bottom: 1px;
     }
 
     .overlay-card-copy {
       display: block;
       font-size: 9.5px;
-      line-height: 1.25;
+      line-height: 1.15;
       color: #7488a0;
     }
 
@@ -1049,7 +1051,7 @@
       font-size: 10px;
       font-weight: 700;
       line-height: 1;
-      padding: 6px 7px;
+      padding: 5px 7px;
       cursor: pointer;
     }
 
@@ -1078,8 +1080,8 @@
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 5px;
-      margin-top: 5px;
-      padding-top: 5px;
+      margin-top: 4px;
+      padding-top: 4px;
       border-top: 1px solid rgba(185, 207, 231, 0.7);
       cursor: default;
     }
@@ -1560,7 +1562,6 @@
                aria-expanded="false">Drought <span class="bb-toggle-count">+1</span></div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="droughtRef" title="Reference indicators, 1981-2010 -- click to view">Historic</span>
-            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
             <span class="period-chip" data-jump-overlay="droughtFuture" data-jump-period="near" title="Future SPEI, 2041-2070 -- click to view">Near future</span>
             <span class="period-chip" data-jump-overlay="droughtFuture" data-jump-period="far" title="Future SPEI, 2071-2100 -- click to view">Later future</span>
           </div>
@@ -1599,7 +1600,6 @@
           <div class="overlay-group-label">Wildfire</div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip is-empty" title="No historic wildfire layer built yet -- would need the raw 100m Grunig archive, not the pre-aggregated hex product used here">Historic</span>
-            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
             <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="near" title="Wildfire Pressure, from 2030 -- click to view">Near future</span>
             <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="far" title="Wildfire Pressure, to 2100 -- click to view">Later future</span>
           </div>
@@ -1625,7 +1625,6 @@
                aria-expanded="false">Wind <span class="bb-toggle-count">+1</span></div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="wind" data-jump-period="historical" title="Wind damage susceptibility, historical -- click to view">Historic</span>
-            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
             <span class="period-chip" data-jump-overlay="wind" data-jump-period="near" title="Wind damage 2041-2070; Wind Pressure from 2030 -- click to view wind damage">Near future</span>
             <span class="period-chip" data-jump-overlay="wind" data-jump-period="far" title="Wind damage 2071-2100; Wind Pressure to 2100 -- click to view wind damage">Later future</span>
           </div>
@@ -1666,7 +1665,6 @@
                aria-expanded="false">Bark beetle <span class="bb-toggle-count">+2</span></div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2023 -- click to view">Historic</span>
-            <span class="period-chip is-empty" title="No layer for this period">Contemporary</span>
             <span class="period-chip" data-jump-overlay="bbtl" data-jump-period="near" title="Bark Beetle Pressure, from 2030 (the validated forecast model itself has no near-future run -- reference and end-century only) -- click to view pressure">Near future</span>
             <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Predictions end-century; PHENIPS end; Pressure to 2100 -- click to view end-century predictions">Later future</span>
           </div>
@@ -1731,7 +1729,6 @@
           <div class="overlay-group-label">Ash dieback</div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip is-empty" title="No layer yet">Historic</span>
-            <span class="period-chip is-empty" title="No layer yet">Contemporary</span>
             <span class="period-chip is-empty" title="No layer yet">Near future</span>
             <span class="period-chip is-empty" title="No layer yet">Later future</span>
           </div>
