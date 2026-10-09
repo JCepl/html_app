@@ -1,0 +1,23 @@
+{
+  "model": "chelsa_v41_b41lat_ssp585",
+  "auc": 0.925,
+  "notes": "v4.1 CHELSA-native model: rebuilt PET/SPEI (Hargreaves-Samani, SPEI3/6 log-logistic, reference 1981-2010), temperature seasonality bio4 as SD x 100, 8 topographic layers, latitude as a non-increasing additive term (damps the north by design; the data cannot confirm or refute the northern increase). Label: catalogue x EFDA v3 (cat50 with +1 px buffer). Monotone XGBoost, isotonic calibration. Spatial 5-fold (200 km tiles) out-of-fold AUC 0.925 on its own label; the precision/recall at the cutoffs below refer to this case-control sample (about 26% positives), not to real prevalence. Against EFDA v3 disturbance hits (spruce in the EFDA domain, 1985-2021, spatial holdout) the mean yearly AUC is 0.61: the maps rank where disturbance is more likely over the long term and do not track individual years. The layer value is a calibrated relative hazard index, not an outbreak probability. Futures are single climatological-normal snapshots (MPI-ESM1-2-HR), one GCM; SSP1-2.6 and SSP3-7.0 stand in for RCP2.6 and RCP4.5.",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "0.25",
+      "precision": 0.629,
+      "recall": 0.911,
+      "specificity": 0.812,
+      "F1": 0.744,
+      "red_fraction": "NA"
+    },
+    {
+      "cutoff": "0.5",
+      "precision": 0.731,
+      "recall": 0.737,
+      "specificity": 0.905,
+      "F1": 0.734,
+      "red_fraction": "NA"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "image": "risk_visible_t50.png",
+  "bounds": {
+    "south": 42.099860582750004,
+    "west": -10.483472900249991,
+    "north": 71.01652713375002,
+    "east": 31.641526931250013
+  },
+  "dimensions": {
+    "width": 578,
+    "height": 768
+  },
+  "source": "v4.1 A41 climate and topography only (monotone XGBoost, isotonic-calibrated; see V4_MODEL_REPORT.md)",
+  "value_range": {
+    "min": 0.55,
+    "max": 1
+  },
+  "note": "Standard classified view: bins start at the 0.55 floor, as in the other models."
+}
