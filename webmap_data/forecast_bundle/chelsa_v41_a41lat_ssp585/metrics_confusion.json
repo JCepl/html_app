@@ -1,23 +1,41 @@
 {
   "model": "chelsa_v41_a41lat_ssp585",
-  "auc": 0.801,
-  "notes": "v4.1 CHELSA-native model: rebuilt PET/SPEI (Hargreaves-Samani, SPEI3/6 log-logistic, reference 1981-2010), temperature seasonality bio4 as SD x 100, 8 topographic layers, latitude as a free predictor (it can interact with climate and also mutes the response in the south; the data cannot confirm or refute the northern increase). Label: fixed25 (literature catalogue, 25 km buffer around mapped events). Monotone XGBoost, isotonic calibration. Spatial 5-fold (200 km tiles) out-of-fold AUC 0.801 on its own label; the precision/recall at the cutoffs below refer to this case-control sample (about 26% positives), not to real prevalence. Against EFDA v3 disturbance hits (spruce in the EFDA domain, 1985-2021, spatial holdout) the mean yearly AUC is 0.59: the maps rank where disturbance is more likely over the long term and do not track individual years. The layer value is a calibrated relative hazard index, not an outbreak probability. Futures are single climatological-normal snapshots (MPI-ESM1-2-HR), one GCM; SSP1-2.6 and SSP3-7.0 stand in for RCP2.6 and RCP4.5.",
+  "auc": 0.838,
+  "notes": "v4.1 CHELSA-native model: rebuilt PET/SPEI (Hargreaves-Samani, SPEI3/6 log-logistic, reference 1981-2010), temperature seasonality bio4 as SD x 100, 8 topographic layers, latitude as a free predictor (it can interact with climate and also mutes the response in the south; the data cannot confirm or refute the northern increase). Label: fixed25 (literature catalogue, 25 km buffer around mapped events). Monotone XGBoost, isotonic calibration. Testing-period metrics, same convention as the other CHELSA-native models: trained on 1983-1997 and 80% of the 200 km tiles, tested on 2000-2020 in the other 20% of tiles (forward direction, the deployable one), mean of 5 spatial splits; the calibration was fitted on the training data only. AUC 0.838 (sd 0.057); cutoff 0.25: precision 0.42, recall 0.88, F1 0.56; cutoff 0.5: precision 0.56, recall 0.59, F1 0.56; best F1 0.61. Backward check (trained 2000-2020, tested 1983-1997): AUC 0.842, F1 0.55 at 0.25 and 0.52 at 0.5. These are case-control samples (24% positives in the forward test sample), so precision and recall do not describe real prevalence. Against EFDA v3 disturbance hits (spruce in the EFDA domain, 1985-2021, spatial holdout) the mean yearly AUC is 0.59: the maps rank where disturbance is more likely over the long term and do not track individual years. The layer value is a calibrated relative hazard index, not an outbreak probability. Futures are single climatological-normal snapshots (MPI-ESM1-2-HR), one GCM; SSP1-2.6 and SSP3-7.0 stand in for RCP2.6 and RCP4.5.",
   "aggregate_by_cutoff": [
     {
       "cutoff": "0.25",
-      "precision": 0.472,
-      "recall": 0.711,
-      "specificity": 0.727,
-      "F1": 0.567,
+      "precision": 0.421,
+      "recall": 0.883,
+      "specificity": 0.629,
+      "F1": 0.558,
       "red_fraction": "NA"
     },
     {
       "cutoff": "0.5",
-      "precision": 0.631,
-      "recall": 0.375,
-      "specificity": 0.924,
-      "F1": 0.471,
+      "precision": 0.559,
+      "recall": 0.593,
+      "specificity": 0.864,
+      "F1": 0.555,
       "red_fraction": "NA"
     }
-  ]
+  ],
+  "testing_period_summary": {
+    "forward_test_2000_2020": {
+      "auc": 0.838,
+      "auc_sd": 0.057,
+      "f1_at_0_25": 0.558,
+      "f1_at_0_5": 0.555,
+      "f1_max": 0.613,
+      "ece": 0.089
+    },
+    "backward_test_1983_1997": {
+      "auc": 0.842,
+      "auc_sd": 0.098,
+      "f1_at_0_25": 0.548,
+      "f1_at_0_5": 0.518,
+      "f1_max": 0.623,
+      "ece": 0.105
+    }
+  }
 }

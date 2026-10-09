@@ -1,23 +1,41 @@
 {
   "model": "chelsa_v41_b41_ssp126",
-  "auc": 0.927,
-  "notes": "v4.1 CHELSA-native model: rebuilt PET/SPEI (Hargreaves-Samani, SPEI3/6 log-logistic, reference 1981-2010), temperature seasonality bio4 as SD x 100, 8 topographic layers. Label: catalogue x EFDA v3 (cat50 with +1 px buffer). Monotone XGBoost, isotonic calibration. Spatial 5-fold (200 km tiles) out-of-fold AUC 0.927 on its own label; the precision/recall at the cutoffs below refer to this case-control sample (about 26% positives), not to real prevalence. Against EFDA v3 disturbance hits (spruce in the EFDA domain, 1985-2021, spatial holdout) the mean yearly AUC is 0.62: the maps rank where disturbance is more likely over the long term and do not track individual years. The layer value is a calibrated relative hazard index, not an outbreak probability. Futures are single climatological-normal snapshots (MPI-ESM1-2-HR), one GCM; SSP1-2.6 and SSP3-7.0 stand in for RCP2.6 and RCP4.5.",
+  "auc": 0.868,
+  "notes": "v4.1 CHELSA-native model: rebuilt PET/SPEI (Hargreaves-Samani, SPEI3/6 log-logistic, reference 1981-2010), temperature seasonality bio4 as SD x 100, 8 topographic layers. Label: catalogue x EFDA v3 (cat50 with +1 px buffer). Monotone XGBoost, isotonic calibration. Testing-period metrics, same convention as the other CHELSA-native models: trained on 1985-1997 and 80% of the 200 km tiles, tested on 2000-2020 in the other 20% of tiles (forward direction, the deployable one), mean of 5 spatial splits; the calibration was fitted on the training data only. AUC 0.868 (sd 0.035); cutoff 0.25: precision 0.43, recall 0.93, F1 0.56; cutoff 0.5: precision 0.64, recall 0.65, F1 0.64; best F1 0.66. Backward check (trained 2000-2020, tested 1985-1997): AUC 0.802, F1 0.57 at 0.25 and 0.57 at 0.5. These are case-control samples (26% positives in the forward test sample), so precision and recall do not describe real prevalence. Against EFDA v3 disturbance hits (spruce in the EFDA domain, 1985-2021, spatial holdout) the mean yearly AUC is 0.62: the maps rank where disturbance is more likely over the long term and do not track individual years. The layer value is a calibrated relative hazard index, not an outbreak probability. Futures are single climatological-normal snapshots (MPI-ESM1-2-HR), one GCM; SSP1-2.6 and SSP3-7.0 stand in for RCP2.6 and RCP4.5.",
   "aggregate_by_cutoff": [
     {
       "cutoff": "0.25",
-      "precision": 0.633,
-      "recall": 0.899,
-      "specificity": 0.817,
-      "F1": 0.743,
+      "precision": 0.426,
+      "recall": 0.93,
+      "specificity": 0.571,
+      "F1": 0.561,
       "red_fraction": "NA"
     },
     {
       "cutoff": "0.5",
-      "precision": 0.732,
-      "recall": 0.752,
-      "specificity": 0.903,
-      "F1": 0.742,
+      "precision": 0.639,
+      "recall": 0.65,
+      "specificity": 0.878,
+      "F1": 0.637,
       "red_fraction": "NA"
     }
-  ]
+  ],
+  "testing_period_summary": {
+    "forward_test_2000_2020": {
+      "auc": 0.868,
+      "auc_sd": 0.035,
+      "f1_at_0_25": 0.561,
+      "f1_at_0_5": 0.637,
+      "f1_max": 0.66,
+      "ece": 0.109
+    },
+    "backward_test_1985_1997": {
+      "auc": 0.802,
+      "auc_sd": 0.058,
+      "f1_at_0_25": 0.571,
+      "f1_at_0_5": 0.57,
+      "f1_max": 0.626,
+      "ece": 0.116
+    }
+  }
 }

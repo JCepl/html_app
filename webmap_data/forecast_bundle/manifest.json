@@ -177,6 +177,7 @@
       ],
       "periods": [
         "1981_2010",
+        "2041_2070",
         "2071_2100"
       ]
     },
@@ -212,6 +213,7 @@
       ],
       "periods": [
         "1981_2010",
+        "2041_2070",
         "2071_2100"
       ]
     },
@@ -247,6 +249,7 @@
       ],
       "periods": [
         "1981_2010",
+        "2041_2070",
         "2071_2100"
       ]
     },
@@ -282,6 +285,7 @@
       ],
       "periods": [
         "1981_2010",
+        "2041_2070",
         "2071_2100"
       ]
     }
@@ -3541,6 +3545,62 @@
       "threshold_visible_tifs": {
         "0.5": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2071_2100/risk_visible_t50.tif",
         "0.25": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2071_2100/risk_visible_t25.tif"
+      }
+    },
+    "chelsa_v41_b41lat_ssp585::2041_2070": {
+      "model": "chelsa_v41_b41lat_ssp585",
+      "period": "2041_2070",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "v4.1 CHELSA-native model. Value = calibrated relative hazard index on spruce pixels (not an outbreak probability). SSP5-8.5, 2041-2070: single 30-year climatological normal of MPI-ESM1-2-HR (CHELSA V2.1), not a multi-year forecast series. Full documentation: V4_MODEL_REPORT.md and FUTURE_RISK_PROJECTION_2026-10-08.md in the BB model folder.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_v41_b41lat_ssp585/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_v41_b41lat_ssp585/2041_2070/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_v41_b41lat_ssp585/2041_2070/risk_visible_t25.tif"
+      }
+    },
+    "chelsa_v41_b41_ssp585::2041_2070": {
+      "model": "chelsa_v41_b41_ssp585",
+      "period": "2041_2070",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "v4.1 CHELSA-native model. Value = calibrated relative hazard index on spruce pixels (not an outbreak probability). SSP5-8.5, 2041-2070: single 30-year climatological normal of MPI-ESM1-2-HR (CHELSA V2.1), not a multi-year forecast series. Full documentation: V4_MODEL_REPORT.md and FUTURE_RISK_PROJECTION_2026-10-08.md in the BB model folder.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_v41_b41_ssp585/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_v41_b41_ssp585/2041_2070/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_v41_b41_ssp585/2041_2070/risk_visible_t25.tif"
+      }
+    },
+    "chelsa_v41_a41lat_ssp585::2041_2070": {
+      "model": "chelsa_v41_a41lat_ssp585",
+      "period": "2041_2070",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "v4.1 CHELSA-native model. Value = calibrated relative hazard index on spruce pixels (not an outbreak probability). SSP5-8.5, 2041-2070: single 30-year climatological normal of MPI-ESM1-2-HR (CHELSA V2.1), not a multi-year forecast series. Full documentation: V4_MODEL_REPORT.md and FUTURE_RISK_PROJECTION_2026-10-08.md in the BB model folder.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_v41_a41lat_ssp585/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_v41_a41lat_ssp585/2041_2070/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_v41_a41lat_ssp585/2041_2070/risk_visible_t25.tif"
+      }
+    },
+    "chelsa_v41_a41_ssp585::2041_2070": {
+      "model": "chelsa_v41_a41_ssp585",
+      "period": "2041_2070",
+      "scenario": "ssp585",
+      "gcms": [
+        "MPI-ESM1-2-HR"
+      ],
+      "note": "v4.1 CHELSA-native model. Value = calibrated relative hazard index on spruce pixels (not an outbreak probability). SSP5-8.5, 2041-2070: single 30-year climatological normal of MPI-ESM1-2-HR (CHELSA V2.1), not a multi-year forecast series. Full documentation: V4_MODEL_REPORT.md and FUTURE_RISK_PROJECTION_2026-10-08.md in the BB model folder.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2041_2070/risk_visible_t50.tif",
+        "0.25": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2041_2070/risk_visible_t25.tif"
       }
     }
   }
