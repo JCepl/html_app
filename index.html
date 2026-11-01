@@ -101,14 +101,14 @@
       color: #244166; cursor: pointer; user-select: none; white-space: nowrap;
     }
     .fold-label:hover { color: #c4731c; }
-    .fold-label::after { font-weight: 600; letter-spacing: 0; text-transform: none; color: #6b7d92; }
+    .fold-label::after { white-space: pre; font-weight: 600; letter-spacing: 0; text-transform: none; color: #6b7d92; }
     body.fold-top #gutterTop .fold-label::after,
     body.fold-drivers #gutterMap .fold-label::after,
-    body.fold-side #gutterSide .fold-label::after { content: " \00B7 hidden, click to show"; }
+    body.fold-side #gutterSide .fold-label::after { content: "  \00B7  hidden, click to show"; }
     .fold-gutter-v .fold-label {
       writing-mode: vertical-rl; margin-top: 10px; font-size: 9.5px;
     }
-    body.fold-side #gutterSide .fold-label::after { content: " \00B7 hidden"; }
+    body.fold-side #gutterSide .fold-label::after { content: "  \00B7  hidden"; }
     .menu-toggle-tab.is-side { width: 16px; height: 44px; }
     .menu-toggle-tab.is-side:hover { width: 16px; height: 56px; }
     .menu-toggle-tab.is-side svg { width: 12px; height: 16px; transform: rotate(-90deg); }
