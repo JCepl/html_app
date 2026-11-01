@@ -5437,7 +5437,21 @@
       syncCatalogueEventsVisibility();
     }
 
+    // Closing the click popup also removes the little marker at the clicked
+    // point. Deferred one tick: opening a new popup closes the old one first,
+    // and that must not take the fresh marker with it.
     function attachMapClick(map, side) {
+      map.on("popupclose", function() {
+        setTimeout(function() {
+          if (map._popup && map.hasLayer(map._popup)) return;   // a new popup took over
+          [APP, APP.panels && APP.panels.left, APP.panels && APP.panels.right].forEach(function(st) {
+            if (st && st.map === map && st.clickMarker) {
+              map.removeLayer(st.clickMarker);
+              st.clickMarker = null;
+            }
+          });
+        }, 0);
+      });
       map.on("click", function(e) {
         if (APP.split && side !== APP.activeSide) setActiveSide(side);
         updatePanelFromClick(e.latlng);
