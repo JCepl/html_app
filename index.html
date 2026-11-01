@@ -477,16 +477,31 @@
       font-variant-numeric: tabular-nums;
     }
     .risk-radar-close {
-      background: none;
-      border: none;
+      width: 22px; height: 22px;
+      display: grid; place-items: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 17px;
       line-height: 1;
-      color: #a9c1db;
-      padding: 0 2px;
+      color: #ffffff;
+      padding: 0;
       font-family: inherit;
     }
-    .risk-radar-close:hover { color: #ffffff; }
+    .risk-radar-close:hover { background: #d3852b; border-color: #d3852b; }
+    /* Same round close button on the click popup (Leaflet's own, restyled). */
+    .leaflet-container .mini-popup a.leaflet-popup-close-button {
+      top: 4px; right: 5px; width: 22px; height: 22px;
+      display: grid; place-items: center;
+      font: 17px/1 Arial, sans-serif; text-indent: 0; padding: 0;
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+    }
+    .leaflet-container .mini-popup a.leaflet-popup-close-button:hover { background: #d3852b; border-color: #d3852b; }
+    .mini-popup .map-popup-head { padding-right: 34px; }
 
     .radar-svg { display: block; margin: 0 auto; }
     .radar-grid-ring { fill: none; stroke: #d2deeb; stroke-width: 1; }
@@ -4403,8 +4418,8 @@
           + sites.slice(0, 4).map(function(f) {
               const q = f.properties;
               return '<span class="map-popup-val">' + q.name + '<small> · ' + q.designation + ' · ' + q.code
-                + ' · <a href="https://natura2000.eea.europa.eu/Natura2000/SDF.aspx?site=' + encodeURIComponent(q.code)
-                + '" target="_blank" rel="noopener noreferrer" title="Official EEA Natura 2000 data form for this site">data form ↗</a></small></span>';
+                + ' · <a href="https://biodiversity.europa.eu/sites/natura2000/' + encodeURIComponent(q.code)
+                + '" target="_blank" rel="noopener noreferrer" title="Official EEA site page (Biodiversity Information System for Europe)">EEA site page ↗</a></small></span>';
             }).join("");
       }
       const html = '<div class="map-popup">'
@@ -4417,7 +4432,7 @@
       const popup = L.popup({
         autoPan: true,
         autoPanPadding: [20, 20],
-        closeButton: false,
+        closeButton: true,
         className: "mini-popup",
         maxWidth: 260,
         offset: [0, -4]
@@ -5020,6 +5035,11 @@
     }
 
     document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        if (APP.map) APP.map.closePopup();
+        if (APP.panels && APP.panels.right && APP.panels.right.map) APP.panels.right.map.closePopup();
+        closeRadarChart();
+      }
       if (e.key === "Escape" && Object.keys(FOLDS).some(function(c) { return document.body.classList.contains(c); })) setMapExpanded(false);
     });
 
