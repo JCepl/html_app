@@ -36,6 +36,59 @@
       overflow: hidden;
     }
 
+    /* "Expand map": hide everything above the map so it takes that space. */
+    body.map-expanded { grid-template-rows: minmax(0, 1fr); }
+    body.map-expanded .top-banner,
+    body.map-expanded .dss-pillar-strip,
+    body.map-expanded .dss-pillar-detail,
+    body.map-expanded .layer-ribbon { display: none !important; }
+    #app { position: relative; }
+    .menu-toggle-tab {
+      position: absolute;
+      top: 0;
+      left: calc(340px + (100% - 340px) / 2);
+      transform: translateX(-50%);
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px 6px;
+      border: 2px solid #173f69;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      background: #173f69;
+      color: #ffffff;
+      font: 700 13px/1 inherit;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    }
+    .menu-toggle-tab:hover { background: #24507c; }
+    .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
+    .mtt-switch {
+      position: relative;
+      width: 30px;
+      height: 16px;
+      border-radius: 8px;
+      background: #5fb35f;
+      transition: background 0.15s ease;
+    }
+    .mtt-knob {
+      position: absolute;
+      top: 2px;
+      left: 16px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: left 0.15s ease;
+    }
+    body.map-expanded .menu-toggle-tab { background: #ffffff; color: #173f69; }
+    body.map-expanded .mtt-switch { background: #9aa9b8; }
+    body.map-expanded .mtt-knob { left: 2px; }
+    @media (max-width: 700px) {
+      .menu-toggle-tab { left: 50%; }
+    }
+
     .top-banner {
       z-index: 1200;
       display: grid;
@@ -1469,7 +1522,11 @@
 
       .banner-actions {
         justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px 12px;
       }
+      .top-banner { padding: 6px 12px; gap: 4px; }
+      .eu-note { font-size: 11px; }
 
       .eu-note {
         white-space: normal;
@@ -4809,6 +4866,40 @@
     // not in the header row of unrelated project/info links. Moves the
     // existing #splitBtn node (with all its listeners already wired) into
     // a Leaflet control instead of recreating it.
+    function setMapExpanded(on) {
+      document.body.classList.toggle("map-expanded", on);
+      const btn = document.getElementById("expandMapBtn");
+      if (btn) {
+        btn.setAttribute("aria-pressed", String(!on));
+        btn.querySelector(".mtt-label").textContent = on ? "Menus off" : "Menus on";
+      }
+      setTimeout(function() {
+        if (APP.map) APP.map.invalidateSize();
+        const right = APP.split && APP.panels && (APP.panels.right || APP.panels.left);
+        if (right && right.map && right.map.invalidateSize) right.map.invalidateSize();
+      }, 50);
+    }
+    // A tab fixed on the seam between the menus and the map: always visible,
+    // always in the same place, and its state shows whether the menus are on.
+    function addMenuToggleTab() {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.id = "expandMapBtn";
+      tab.className = "menu-toggle-tab";
+      tab.setAttribute("aria-pressed", "true");
+      tab.innerHTML = '<span class="mtt-switch"><span class="mtt-knob"></span></span><span class="mtt-label">Menus on</span>';
+      tab.title = "Show or hide the menus above the map";
+      tab.addEventListener("click", function(e) {
+        e.stopPropagation();
+        setMapExpanded(!document.body.classList.contains("map-expanded"));
+      });
+      document.getElementById("app").appendChild(tab);
+    }
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape" && document.body.classList.contains("map-expanded")) setMapExpanded(false);
+    });
+
     function addSplitScreenControl() {
       const control = L.control({ position: "topright" });
       control.onAdd = function() {
@@ -5410,6 +5501,9 @@
       initControls();
       loadCountryBorders();
       applyStateFromUrl();
+      // Without a shared link, draw the default layer(s) explicitly.
+      if (!location.hash) APP.visibleOverlays.forEach(function(id) { updateOverlayLayer(id); });
+      addMenuToggleTab();
     }
 
     // --- Shareable view state (URL hash) -----------------------------------
