@@ -50,11 +50,22 @@
       border: 0 !important; overflow: hidden !important; visibility: hidden !important;
     }
     body.fold-side #panel { display: none; }
+    /* Open panel: the gutter takes NO space -- its arrow sits small on the seam
+       at the far right. Rolled up: the gutter becomes a real 22 px strip that
+       carries the panel's name, so a folded panel always says what it is. */
     .fold-gutter {
       position: relative;
       z-index: 1195;
-      height: 22px;
+      height: 0;
       box-sizing: border-box;
+    }
+    .fold-gutter .menu-toggle-tab {
+      position: absolute; right: 22px; top: 0; transform: translateY(-50%); z-index: 1;
+    }
+    .fold-gutter .fold-label { display: none; }
+    body.fold-top #gutterTop,
+    body.fold-drivers #gutterMap {
+      height: 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -62,16 +73,28 @@
       background: linear-gradient(180deg, #e3edf8, #d6e4f3);
       border-bottom: 1px solid #c3d4e6;
     }
+    body.fold-top #gutterTop .menu-toggle-tab,
+    body.fold-drivers #gutterMap .menu-toggle-tab { position: static; transform: none; }
+    body.fold-top #gutterTop .fold-label,
+    body.fold-drivers #gutterMap .fold-label { display: block; }
     .fold-gutter-v {
-      flex: 0 0 18px;
-      width: 18px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 12px;
+      position: relative;
+      z-index: 1195;
+      flex: 0 0 0;
+      width: 0;
+    }
+    .fold-gutter-v .menu-toggle-tab {
+      position: absolute; left: -8px; top: 50%; transform: translateY(-50%); z-index: 1;
+    }
+    .fold-gutter-v .fold-label { display: none; }
+    body.fold-side .fold-gutter-v {
+      flex: 0 0 18px; width: 18px;
+      display: flex; flex-direction: column; align-items: center; padding-top: 12px;
       background: linear-gradient(90deg, #e3edf8, #d6e4f3);
       border-right: 1px solid #c3d4e6;
     }
+    body.fold-side .fold-gutter-v .menu-toggle-tab { position: static; transform: none; }
+    body.fold-side .fold-gutter-v .fold-label { display: block; }
     body.fold-top .fold-gutter#gutterTop { border-top: 0; }
     .menu-toggle-tab {
       width: 44px;
@@ -90,7 +113,6 @@
     }
     .menu-toggle-tab svg { width: 16px; height: 12px; transition: transform 0.25s ease; }
     .menu-toggle-tab:hover { width: 56px; background: linear-gradient(180deg, #e39a3f, #c4731c); box-shadow: 0 2px 8px rgba(196, 115, 28, 0.5); animation: none; }
-    .menu-toggle-tab:active { transform: scale(0.95); }
     .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
     body.fold-top #foldTopBtn svg,
     body.fold-drivers #expandMapBtn svg { transform: rotate(180deg); }
