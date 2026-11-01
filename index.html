@@ -2580,6 +2580,27 @@
       }
     }
 
+    // The "hide values below" slider only does something for continuous-scale
+    // layers (wind, bark-beetle susceptibility, the pressure indices). For the
+    // classed layers (drought, fire weather, past disturbance, PHENIPS) it did
+    // nothing, so it is removed there instead of sitting on the panel idle.
+    function riskFilterApplies(topOverlayId) {
+      if (topOverlayId === "wind") return true;
+      if (topOverlayId === "bbtforecast") return APP.currentForecastView !== "delta";
+      return HEX_OVERLAY_IDS.includes(topOverlayId);
+    }
+    function syncRiskFilterBox(topOverlayId) {
+      const box = document.getElementById("riskFilterBox");
+      if (!box) return;
+      const applies = APP.overlayVisible && riskFilterApplies(topOverlayId);
+      box.style.display = applies ? "" : "none";
+      if (!applies && APP.riskThreshold > 0) {   // never leave a hidden cut-off behind
+        APP.riskThreshold = 0;
+        if (DOM.riskSlider) DOM.riskSlider.value = 0;
+        if (DOM.riskValue) DOM.riskValue.textContent = "0%";
+      }
+    }
+
     // Shade the hidden (left) portion of the legend bar up to the threshold.
     function updateLegendThreshMarker(topOverlayId) {
       const marker = DOM.legendThreshMarker;
@@ -3692,6 +3713,7 @@
     // ====================================================================
     function setLegendLabels() {
       if (!APP.overlayVisible) {
+        syncRiskFilterBox(null);
         renderLegendSwatches([]);
         DOM.legendBar.style.display = "none";
         DOM.legendMin.textContent = "NA";
@@ -3706,6 +3728,7 @@
       DOM.legendBar.style.display = "block";
       DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
       DOM.legendMin.parentElement.style.display = "";
+      syncRiskFilterBox(topOverlayId);
       updateRiskSliderRange(topOverlayId);
       updateLegendThreshMarker(topOverlayId);
 
