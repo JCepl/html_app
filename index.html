@@ -57,8 +57,8 @@
       box-sizing: border-box;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      padding-right: 22px;
+      justify-content: space-between;
+      padding: 0 22px 0 14px;
       background: linear-gradient(180deg, #e3edf8, #d6e4f3);
       border-bottom: 1px solid #c3d4e6;
     }
@@ -95,6 +95,20 @@
     body.fold-top #foldTopBtn svg,
     body.fold-drivers #expandMapBtn svg { transform: rotate(180deg); }
     /* side arrow: a tall pill pointing left (fold) / right (unfold) */
+    /* Each gutter names the panel it folds, also (and above all) when folded. */
+    .fold-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #244166; cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    .fold-label:hover { color: #c4731c; }
+    .fold-label::after { font-weight: 600; letter-spacing: 0; text-transform: none; color: #6b7d92; }
+    body.fold-top #gutterTop .fold-label::after,
+    body.fold-drivers #gutterMap .fold-label::after,
+    body.fold-side #gutterSide .fold-label::after { content: " \00B7 hidden, click to show"; }
+    .fold-gutter-v .fold-label {
+      writing-mode: vertical-rl; margin-top: 10px; font-size: 9.5px;
+    }
+    body.fold-side #gutterSide .fold-label::after { content: " \00B7 hidden"; }
     .menu-toggle-tab.is-side { width: 16px; height: 44px; }
     .menu-toggle-tab.is-side:hover { width: 16px; height: 56px; }
     .menu-toggle-tab.is-side svg { width: 12px; height: 16px; transform: rotate(-90deg); }
@@ -4936,9 +4950,9 @@
     //   driver panel (layer ribbon)         -> fold-drivers
     //   side panel (map inspector)          -> fold-side
     const FOLDS = {
-      "fold-top": { btn: "foldTopBtn", what: "top panel", gutter: "gutterTop" },
-      "fold-drivers": { btn: "expandMapBtn", what: "driver panel", gutter: "gutterMap" },
-      "fold-side": { btn: "foldSideBtn", what: "side panel", gutter: "gutterSide", side: true }
+      "fold-top": { btn: "foldTopBtn", what: "top panel", gutter: "gutterTop", name: "RE-ENFORCE DSS" },
+      "fold-drivers": { btn: "expandMapBtn", what: "driver panel", gutter: "gutterMap", name: "Disturbance drivers" },
+      "fold-side": { btn: "foldSideBtn", what: "side panel", gutter: "gutterSide", side: true, name: "Map inspector" }
     };
     function setFold(cls, on) {
       document.body.classList.toggle(cls, on);
@@ -4970,7 +4984,13 @@
           e.stopPropagation();
           setFold(cls, !document.body.classList.contains(cls));
         });
-        host.appendChild(tab);
+        const label = document.createElement("span");
+        label.className = "fold-label";
+        label.textContent = f.name;
+        label.title = "Show / hide: " + f.name;
+        label.addEventListener("click", function() { tab.click(); });
+        if (f.side) { host.appendChild(tab); host.appendChild(label); }
+        else { host.appendChild(label); host.appendChild(tab); }
       });
     }
 
