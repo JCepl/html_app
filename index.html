@@ -5090,6 +5090,11 @@
       PANEL_FIELDS.forEach(function(f) { APP[f] = o[f]; });
     }
 
+    // Soft edge: the map can be dragged past the Europe frame, but it pulls
+    // back (0 = free, 1 = hard wall) and springs back when released.
+    const MAP_SOFT_BOUNDS = [[24.0, -40.0], [80.0, 60.0]];
+    const MAP_BOUNDS_VISCOSITY = 0.4;
+
     function createMapPanes(map) {
       getOverlayIds().forEach(function(overlayId, index) {
         const paneName = getOverlayPaneName(overlayId);
@@ -5532,7 +5537,7 @@
       const mapR = L.map("map2", {
         center: APP.map.getCenter(), zoom: APP.map.getZoom(),
         renderer: L.svg(), zoomControl: false, attributionControl: false,
-        maxBounds: [[34.0, -15.0], [73.0, 36.0]], maxBoundsViscosity: 1.0
+        maxBounds: MAP_SOFT_BOUNDS, maxBoundsViscosity: MAP_BOUNDS_VISCOSITY
       });
       createMapPanes(mapR);
       const rb = buildCountryLayersOn(mapR);
@@ -5618,11 +5623,8 @@
         center: [50.2, 12.5],
         zoom: 4.7,
         renderer: L.svg(),
-        maxBounds: [
-          [34.0, -15.0],
-          [73.0, 36.0]
-        ],
-        maxBoundsViscosity: 1.0
+        maxBounds: MAP_SOFT_BOUNDS,
+        maxBoundsViscosity: MAP_BOUNDS_VISCOSITY
       });
       APP.leftMap = APP.map;
       createMapPanes(APP.map);
