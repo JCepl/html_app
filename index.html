@@ -37,11 +37,20 @@
     }
 
     /* "Expand map": hide everything above the map so it takes that space. */
-    body.map-expanded { grid-template-rows: minmax(0, 1fr); }
-    body.map-expanded .top-banner,
-    body.map-expanded .dss-pillar-strip,
-    body.map-expanded .dss-pillar-detail,
-    body.map-expanded .layer-ribbon { display: none !important; }
+    /* Each panel folds on its own; rows collapse to 0 height (not display:none)
+       so the five grid rows keep matching the five children. */
+    body { position: relative; }
+    body.fold-top .top-banner,
+    body.fold-top .dss-pillar-strip,
+    body.fold-top .dss-pillar-detail,
+    body.fold-drivers .layer-ribbon {
+      height: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
+      border: 0 !important; overflow: hidden !important; visibility: hidden !important;
+    }
+    body.fold-top::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+      background: #173f69; z-index: 1240; pointer-events: none;
+    }
     /* Menu fold button: a small round arrow that always sits on the line
        between the menus and the map (right side). Up = fold the menus away,
        down = bring them back. Hovering it lights up that dividing line. */
@@ -58,34 +67,57 @@
     }
     #app:has(.menu-toggle-tab:hover)::before,
     #app:has(.menu-toggle-tab:focus-visible)::before { background: #d3852b; }
-    body.map-expanded #app::before { height: 5px; background: #173f69; }
-    body.map-expanded #app:has(.menu-toggle-tab:hover)::before { background: #d3852b; }
+    body.fold-drivers #app::before { height: 5px; background: #173f69; }
+    body.fold-drivers #app:has(.menu-toggle-tab:hover)::before { background: #d3852b; }
     .menu-toggle-tab {
       position: absolute;
       top: 0;
-      right: 18px;
+      right: 22px;
       transform: translateY(-50%);
       z-index: 1250;
-      width: 30px;
-      height: 30px;
+      width: 46px;
+      height: 22px;
       padding: 0;
       display: grid;
       place-items: center;
-      border: 1.5px solid #9fb6cf;
-      border-radius: 50%;
-      background: #ffffff;
-      color: #173f69;
+      border: 2px solid #ffffff;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #2a5f96, #173f69);
+      color: #ffffff;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(23, 63, 105, 0.25);
-      transition: background 0.15s ease, border-color 0.15s ease, top 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 2px 8px rgba(23, 63, 105, 0.38), 0 0 0 1px rgba(23, 63, 105, 0.25);
+      transition: width 0.18s ease, background 0.15s ease, top 0.2s ease, transform 0.2s ease, border-radius 0.2s ease, box-shadow 0.15s ease;
+      animation: menuTabHint 2.4s ease-out 1.2s 2;
     }
-    .menu-toggle-tab svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
-    .menu-toggle-tab:hover { background: #173f69; color: #ffffff; border-color: #173f69; }
+    .menu-toggle-tab svg { width: 18px; height: 14px; transition: transform 0.25s ease; }
+    .menu-toggle-tab:hover { width: 58px; background: linear-gradient(180deg, #e39a3f, #c4731c); box-shadow: 0 3px 10px rgba(196, 115, 28, 0.5); animation: none; }
+    .menu-toggle-tab:active { transform: translateY(-50%) scale(0.95); }
     .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
-    body.map-expanded .menu-toggle-tab { top: 5px; transform: translateY(-50%) translateY(10px); }
-    body.map-expanded .menu-toggle-tab svg { transform: rotate(180deg); }
+    /* Folded: the button hangs from the dark strip like a drawer pull. */
+    body.fold-drivers .menu-toggle-tab {
+      top: 5px;
+      transform: none;
+      height: 20px;
+      border-radius: 0 0 14px 14px;
+      border-top-width: 0;
+      background: linear-gradient(180deg, #173f69, #2a5f96);
+    }
+    body.fold-drivers .menu-toggle-tab:hover { background: linear-gradient(180deg, #c4731c, #e39a3f); }
+    body.fold-drivers .menu-toggle-tab:active { transform: scale(0.95); }
+    body.fold-drivers .menu-toggle-tab svg { transform: rotate(180deg); }
+    @keyframes menuTabHint {
+      0% { box-shadow: 0 2px 8px rgba(23, 63, 105, 0.38), 0 0 0 0 rgba(227, 154, 63, 0.7); }
+      70% { box-shadow: 0 2px 8px rgba(23, 63, 105, 0.38), 0 0 0 12px rgba(227, 154, 63, 0); }
+      100% { box-shadow: 0 2px 8px rgba(23, 63, 105, 0.38), 0 0 0 0 rgba(227, 154, 63, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) { .menu-toggle-tab { animation: none; } }
     /* keep the map's top-right controls clear of the button */
     #app .leaflet-top.leaflet-right { margin-top: 14px; }
+    /* the top-panel button lives on the page, not inside #app */
+    body > .menu-toggle-tab { right: 22px; }
+    body.fold-top > .menu-toggle-tab { top: 5px; transform: none; height: 20px; border-radius: 0 0 14px 14px; border-top-width: 0; background: linear-gradient(180deg, #173f69, #2a5f96); }
+    body.fold-top > .menu-toggle-tab:hover { background: linear-gradient(180deg, #c4731c, #e39a3f); }
+    body.fold-top > .menu-toggle-tab svg { transform: rotate(180deg); }
 
     .top-banner {
       z-index: 1200;
@@ -4864,40 +4896,69 @@
     // not in the header row of unrelated project/info links. Moves the
     // existing #splitBtn node (with all its listeners already wired) into
     // a Leaflet control instead of recreating it.
-    function setMapExpanded(on) {
-      document.body.classList.toggle("map-expanded", on);
-      const btn = document.getElementById("expandMapBtn");
-      if (btn) {
-        btn.setAttribute("aria-pressed", String(!on));
-        btn.title = on ? "Show menus" : "Hide menus (more room for the map)";
-        btn.setAttribute("aria-label", btn.title);
-      }
+    function refreshMapSize() {
       setTimeout(function() {
         if (APP.map) APP.map.invalidateSize();
         const right = APP.split && APP.panels && (APP.panels.right || APP.panels.left);
         if (right && right.map && right.map.invalidateSize) right.map.invalidateSize();
-      }, 50);
+        placeTopFoldBtn();
+      }, 60);
     }
-    // A tab fixed on the seam between the menus and the map: always visible,
-    // always in the same place, and its state shows whether the menus are on.
-    function addMenuToggleTab() {
+    // Two independent folds, each with its own arrow on the seam below it:
+    //   top panel (banner + DSS components) -> body.fold-top
+    //   driver panel (layer ribbon)         -> body.fold-drivers
+    function setFold(cls, on) {
+      document.body.classList.toggle(cls, on);
+      const btn = document.getElementById(cls === "fold-top" ? "foldTopBtn" : "expandMapBtn");
+      if (btn) {
+        const what = cls === "fold-top" ? "top panel" : "driver panel";
+        btn.setAttribute("aria-pressed", String(!on));
+        btn.title = (on ? "Show " : "Hide ") + what;
+        btn.setAttribute("aria-label", btn.title);
+      }
+      refreshMapSize();
+    }
+    function setMapExpanded(on) { setFold("fold-top", on); setFold("fold-drivers", on); }
+    const FOLD_ARROW = '<svg viewBox="0 0 18 14" aria-hidden="true"><path d="M3 9.5 9 3.5l6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    function makeFoldBtn(id, cls, what, parent) {
       const tab = document.createElement("button");
       tab.type = "button";
-      tab.id = "expandMapBtn";
+      tab.id = id;
       tab.className = "menu-toggle-tab";
       tab.setAttribute("aria-pressed", "true");
-      tab.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 10.5 8 5.5l5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      tab.title = "Hide menus (more room for the map)";
+      tab.innerHTML = FOLD_ARROW;
+      tab.title = "Hide " + what;
       tab.setAttribute("aria-label", tab.title);
       tab.addEventListener("click", function(e) {
         e.stopPropagation();
-        setMapExpanded(!document.body.classList.contains("map-expanded"));
+        setFold(cls, !document.body.classList.contains(cls));
       });
-      document.getElementById("app").appendChild(tab);
+      parent.appendChild(tab);
+      return tab;
+    }
+    // Sits on the line under the top panel; follows it when it changes height.
+    function placeTopFoldBtn() {
+      const btn = document.getElementById("foldTopBtn");
+      if (!btn) return;
+      if (document.body.classList.contains("fold-top")) { btn.style.top = ""; return; }
+      const d = document.getElementById("dssPillarDetail") || document.querySelector(".dss-pillar-strip");
+      btn.style.top = d ? d.getBoundingClientRect().bottom + "px" : "";
+    }
+    function addMenuToggleTab() {
+      makeFoldBtn("expandMapBtn", "fold-drivers", "driver panel", document.getElementById("app"));
+      makeFoldBtn("foldTopBtn", "fold-top", "top panel", document.body);
+      placeTopFoldBtn();
+      window.addEventListener("resize", placeTopFoldBtn);
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(placeTopFoldBtn);
+        [".top-banner", ".dss-pillar-strip", "#dssPillarDetail"].forEach(function(q) {
+          const el = document.querySelector(q); if (el) ro.observe(el);
+        });
+      }
     }
 
     document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape" && document.body.classList.contains("map-expanded")) setMapExpanded(false);
+      if (e.key === "Escape" && (document.body.classList.contains("fold-top") || document.body.classList.contains("fold-drivers"))) setMapExpanded(false);
     });
 
     function addSplitScreenControl() {
