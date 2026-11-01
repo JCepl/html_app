@@ -384,7 +384,10 @@
       height: 9px;
       margin: -5px auto 0;
     }
-    .map-popup-val { display: block; font-weight: 600; margin: 3px 0 5px; }
+    .map-popup-val { display: block; font-weight: 600; margin: 1px 0 4px; }
+    .mini-popup .map-popup { min-width: 215px; max-width: 250px; }
+    .map-popup-val small { font-weight: 400; color: #5a6b80; }
+    .map-popup-layer { display: block; margin-top: 5px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #244166; }
 
     .risk-radar-btn {
       display: block;
@@ -4275,8 +4278,8 @@
     // state bundle -- mirrors the per-overlay branches in updatePanelFromClick
     // but reads no DOM and mutates nothing, so it's safe to call for the
     // inactive split-screen side too (with its own parked overlay/period).
-    function computeClickValueInfo(state, latlng) {
-      const overlayId = getTopVisibleOverlayIdFor(state);
+    function computeClickValueInfo(state, latlng, overlayIdOverride) {
+      const overlayId = overlayIdOverride || getTopVisibleOverlayIdFor(state);
       const overlay = OVERLAY_CATALOG[overlayId] || {};
       const label = overlay.label || "Layer";
 
@@ -4327,31 +4330,57 @@
     // `state`/`map` default to the active side, but split-screen clicks also
     // call this with the parked panel + the OTHER map so both sides get their
     // own popup instead of only the actively-clicked one.
+    // Every Natura 2000 site under the click (SAC and SPA often overlap).
+    function natura2000SitesAt(latlng) {
+      if (!APP.showNatura2000 || !APP.natura2000Data) return [];
+      const pt = turf.point([latlng.lng, latlng.lat]);
+      return APP.natura2000Data.features.filter(function(f) {
+        try { return turf.booleanPointInPolygon(pt, f); } catch (e) { return false; }
+      });
+    }
+
     function openClickPopup(latlng, state, map) {
       state = state || APP;
       map = map || APP.map;
       if (!state.overlayVisible) return;
-      const info = computeClickValueInfo(state, latlng);
       const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
       const countryName = countryFeature ? getCountryName(countryFeature) : "—";
-      const asyncId = getTopVisibleOverlayIdFor(state);
-      const wantsAsync = info.valueHtml == null && CLICK_VALUE_OVERLAYS.includes(asyncId);
-      const valueLine = wantsAsync ? '<span class="map-popup-val" data-async-val>Reading value…</span>'
-        : info.valueHtml == null ? ""
-        : '<span class="map-popup-val">' + info.valueHtml + '</span>';
+      // One row per layer that is switched on, so a click on one pixel reads
+      // them all together (top-most first).
+      const ids = (state.visibleOverlays && state.visibleOverlays.length
+        ? state.visibleOverlays.slice().reverse() : [getTopVisibleOverlayIdFor(state)]);
+      const asyncRows = [];
+      let rows = "";
+      ids.forEach(function(id) {
+        const info = computeClickValueInfo(state, latlng, id);
+        const wantsAsync = info.valueHtml == null && CLICK_VALUE_OVERLAYS.includes(id);
+        if (!wantsAsync && info.valueHtml == null) return;
+        rows += '<span class="map-popup-layer">' + info.label + '</span>'
+          + (wantsAsync ? '<span class="map-popup-val" data-async-val="' + id + '">Reading value…</span>'
+                        : '<span class="map-popup-val">' + info.valueHtml + '</span>');
+        if (wantsAsync) asyncRows.push(id);
+      });
+      const sites = natura2000SitesAt(latlng);
+      if (sites.length) {
+        rows += '<span class="map-popup-layer">Natura 2000</span>'
+          + sites.slice(0, 4).map(function(f) {
+              const q = f.properties;
+              return '<span class="map-popup-val">' + q.name + '<small> · ' + q.designation + ' · ' + q.code + '</small></span>';
+            }).join("");
+      }
       const html = '<div class="map-popup">'
-        + '<div class="map-popup-head">' + info.label + '</div>'
+        + '<div class="map-popup-head">' + (countryFeature ? countryName : "Map point") + '</div>'
         + '<div class="map-popup-body">'
-        + (countryFeature ? countryName + '<br>' : '')
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
-        + valueLine
+        + rows
         + '<button type="button" class="risk-radar-btn">Hazard profile ⬡</button>'
         + '</div></div>';
       const popup = L.popup({
-        autoPan: false,
+        autoPan: true,
+        autoPanPadding: [20, 20],
         closeButton: false,
         className: "mini-popup",
-        maxWidth: 210,
+        maxWidth: 260,
         offset: [0, -4]
       }).setLatLng(latlng).setContent(html).openOn(map);
 
@@ -4360,12 +4389,12 @@
       // both maps in split screen behave independently this way.
       const radarState = snapshotRadarState(state);
       const popupEl = popup.getElement();
-      if (wantsAsync) {
-        describeClickValue(asyncId, latlng, radarState).then(function(text) {
-          const slot = popupEl && popupEl.querySelector("[data-async-val]");
+      asyncRows.forEach(function(id) {
+        describeClickValue(id, latlng, radarState).then(function(text) {
+          const slot = popupEl && popupEl.querySelector('[data-async-val="' + id + '"]');
           if (slot) slot.textContent = text || "No data at this point";
         });
-      }
+      });
       const btn = popupEl && popupEl.querySelector(".risk-radar-btn");
       if (btn) {
         btn.addEventListener("click", function() { openRadarChart(latlng, radarState); });
@@ -5169,29 +5198,10 @@
     function buildNatura2000LayerOn(map) {
       return L.geoJSON(APP.natura2000Data, {
         pane: "natura2000Pane",
+        interactive: false,
         renderer: L.canvas({ pane: "natura2000Pane" }),
         style: function() {
           return { color: "#1b5e20", weight: 1, opacity: 0.55, fillColor: "#66bb6a", fillOpacity: 0.12 };
-        },
-        onEachFeature: function(feature, layer) {
-          const p = feature.properties;
-          const designationLabel = p.designation === "SPA"
-            ? "SPA — Birds Directive"
-            : p.designation === "SAC+SPA"
-              ? "SAC + SPA — Habitats and Birds Directives"
-              : "SAC — Habitats Directive";
-          const html = '<div class="map-popup">'
-            + '<div class="map-popup-head">' + p.name + '</div>'
-            + '<div class="map-popup-body">'
-            + designationLabel + '<br>'
-            + p.country + ' &middot; ' + p.code + '<br>'
-            + Number(p.area_ha).toLocaleString() + ' ha'
-            + '</div></div>';
-          layer.bindPopup(html, { className: "pilot-popup", closeButton: true });
-          // Path layers bubble clicks to the map by default -- without this,
-          // clicking a site also fires the app's own click-inspection popup
-          // on top of this one (same fix already applied to catalogue dots).
-          layer.on("click", function(evt) { L.DomEvent.stopPropagation(evt); });
         }
       });
     }
