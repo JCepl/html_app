@@ -900,8 +900,7 @@
     /* One single horizontal row: [label  cards] | [label  cards] | ... */
     .overlay-card-strip {
       display: flex;
-      flex-wrap: wrap;
-      row-gap: 6px;
+      flex-wrap: nowrap;   /* drivers always stay in ONE line; scrolls sideways if narrow */
       gap: 0;
       overflow-x: auto;
       padding-bottom: 1px;
@@ -1621,14 +1620,14 @@
   </header>
 
   <div class="dss-pillar-strip" aria-label="RE-ENFORCE DSS components">
-    <div class="dss-pillar is-active dss-ribbon-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
-         title="Modelled indicators for the main drivers of forest disturbance (drought, fire, wind, bark beetle and ash dieback) -- susceptibility and/or hazard, depending on the driver; see each layer's own description. Click to show/hide the driver menu below.">
+    <div class="dss-pillar is-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
+         title="Modelled indicators for the main drivers of forest disturbance (drought, fire, wind, bark beetle and ash dieback) -- susceptibility and/or hazard, depending on the driver; see each layer's own description. Click to show/hide the RE-ENFORCE driver maps on the map.">
       <span class="dss-pillar-num">1</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Disturbance drivers</span>
         <span class="dss-pillar-copy">Drought, fire, wind, bark beetle &amp; ash dieback</span>
       </span>
-      <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Available below</span>
+      <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Show on map</span>
     </div>
     <div class="dss-pillar is-toggle" id="dssPillarNatura2000" role="button" tabindex="0"
          title="Natura 2000 protected-area boundaries (SAC + SPA) within 50km of a RE-ENFORCE Pilot Action site, 440 sites (EEA, 2024/25) -- not every Natura 2000 site in these 7 countries, just the ones actually near project sites. Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
@@ -1705,7 +1704,9 @@
           </div>
         </div>
         <div class="overlay-group">
-          <div class="overlay-group-label">Wildfire</div>
+          <div class="overlay-group-label bb-toggle" id="fireToggle" data-toggle-target="fireAccessories" role="button" tabindex="0"
+               title="Show 1 more fire layer (pressure index) -- for context, not a model projection"
+               aria-expanded="false">Wildfire <span class="bb-toggle-count">+1</span></div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="fireWeather" data-jump-period="historical" title="Fire-weather level, 1981-2005 -- click to view">Historic</span>
             <span class="period-chip" data-jump-overlay="fireWeather" data-jump-period="near" title="Fire weather, 2041-2070 -- click to view">Near future</span>
@@ -1725,6 +1726,7 @@
             <span class="overlay-tool-value" data-opacity-value="fireWeather">0.85</span>
           </span>
         </div>
+        <div class="bb-accessories" id="fireAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="wildfire">
           <span class="overlay-card-head">
             <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Fire pressure (context)</span>
@@ -1738,7 +1740,8 @@
             <span class="overlay-tool-value" data-opacity-value="wildfire">0.85</span>
           </span>
         </div>
-          </div>
+        </div>
+                  </div>
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="windToggle" data-toggle-target="windAccessories" role="button" tabindex="0"
@@ -1782,8 +1785,8 @@
         </div>
         <div class="overlay-group">
           <div class="overlay-group-label bb-toggle" id="bbToggle" data-toggle-target="bbAccessories" role="button" tabindex="0"
-               title="Show 2 more bark beetle layers (PHENIPS climate, pressure index) -- for context, not model forecasts"
-               aria-expanded="false">Bark beetle <span class="bb-toggle-count">+2</span></div>
+               title="Show 3 more bark beetle layers (past disturbance, PHENIPS climate, pressure index) -- for context, not model forecasts"
+               aria-expanded="false">Bark beetle <span class="bb-toggle-count">+3</span></div>
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2023 -- click to view">Historic</span>
             <span class="period-chip" data-jump-overlay="bbtl" data-jump-period="near" title="Bark Beetle Pressure, from 2030 (the validated forecast model itself has no near-future run -- reference and end-century only) -- click to view pressure">Near future</span>
@@ -1803,6 +1806,7 @@
             <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
           </span>
         </div>
+                <div class="bb-accessories" id="bbAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="bbtpast">
           <span class="overlay-card-head">
             <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past forest disturbance</span>
@@ -1816,7 +1820,6 @@
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
           </span>
         </div>
-        <div class="bb-accessories" id="bbAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="phenips">
           <span class="overlay-card-head">
             <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>PHENIPS climate</span>
@@ -3378,6 +3381,7 @@
     }
 
     function updateOverlayCardStates() {
+      if (typeof syncDriverPillar === "function") syncDriverPillar();
       if (!DOM.overlayCardStrip) {
         return;
       }
@@ -3456,6 +3460,8 @@
     // panel.
     const ACCESSORY_PARENT_GROUP = {
       droughtRef: "droughtAccessories",
+      wildfire: "fireAccessories",
+      bbtpast: "bbAccessories",
       windPressure: "windAccessories",
       bbtl: "bbAccessories",
       phenips: "bbAccessories"
@@ -5273,10 +5279,22 @@
       DOM.dssPillarDetail.classList.add("is-open");
     }
 
+    // Pillar 1 behaves like pillars 2 and 4: one click puts the RE-ENFORCE
+    // driver maps on the map, the next click takes them all off again.
+    const DRIVER_MAIN_LAYERS = ["droughtFuture", "fireWeather", "wind", "bbtforecast"];
+    const DRIVER_ALL_LAYERS = DRIVER_MAIN_LAYERS.concat(["droughtRef", "wildfire", "windPressure", "bbtpast", "phenips", "bbtl"]);
+    function syncDriverPillar() {
+      const on = DRIVER_ALL_LAYERS.some(isOverlayVisible);
+      if (DOM.dssPillarRiskDrivers) DOM.dssPillarRiskDrivers.classList.toggle("is-on", on);
+      if (DOM.dssPillarRiskDriversStatus) DOM.dssPillarRiskDriversStatus.textContent = on ? "Shown on map" : "Show on map";
+    }
     function toggleDriverRibbon() {
-      const collapsed = DOM.layerRibbon.classList.toggle("is-collapsed");
-      DOM.dssPillarRiskDrivers.classList.toggle("is-collapsed", collapsed);
-      DOM.dssPillarRiskDriversStatus.textContent = collapsed ? "Hidden" : "Available below";
+      if (DRIVER_ALL_LAYERS.some(isOverlayVisible)) {
+        DRIVER_ALL_LAYERS.filter(isOverlayVisible).forEach(function(id) { setLayerVisibilityFromRibbon(id, false); });
+      } else {
+        setLayerVisibilityFromRibbon("droughtFuture", true);
+      }
+      syncDriverPillar();
     }
 
     // Bark-beetle event-catalogue markers -- same simple pattern as
