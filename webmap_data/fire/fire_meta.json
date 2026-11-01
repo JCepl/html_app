@@ -1,0 +1,147 @@
+{
+  "source": "Giannakopoulos & Karali 2020 (C3S fire danger indicators), EURO-CORDEX EUR-11 RCA4 / MPI-ESM-LR; aggregated by F. Taccaliti (UNIPD-TESAF), package of 28 Oct 2026",
+  "grid": "0.15 degree (about 15 km)",
+  "reference_period": "1981-2005",
+  "legends": {
+    "level": {
+      "labels": ["Very low (< 5.2)", "Low (5.2-11.2)", "Moderate (11.2-21.3)", "High (21.3-38)", "Very high (38-50)", "Extreme (> 50)"],
+      "colors": ["#FFF7BC", "#FEE391", "#FEC44F", "#FB9A29", "#D95F0E", "#8C2D04"]
+    },
+    "change": {
+      "labels": ["Decrease (more than -10%)", "Little change (-10 to +10%)", "+10 to +25%", "+25 to +50%", "+50 to +100%", "More than doubled (> +100%)", "Fire weather too mild for a change to be computed"],
+      "colors": ["#6BAED6", "#F0F0F0", "#FDD0A2", "#FDAE6B", "#E6550D", "#A63603", "#D9D9D9"],
+      "pale_note": "Pale colours: change smaller than the year-to-year noise (|change| <= 1.96 x standard error)."
+    }
+  },
+  "images": {
+    "level::historical": {
+      "file": "fire/level_historical.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "level::rcp26_2041_2070": {
+      "file": "fire/level_rcp26_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp26_2041_2070": {
+      "file": "fire/change_rcp26_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.153,
+      "median_change": 0.043
+    },
+    "level::rcp26_2071_2098": {
+      "file": "fire/level_rcp26_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp26_2071_2098": {
+      "file": "fire/change_rcp26_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.262,
+      "median_change": 0.146
+    },
+    "level::rcp45_2041_2070": {
+      "file": "fire/level_rcp45_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp45_2041_2070": {
+      "file": "fire/change_rcp45_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.448,
+      "median_change": 0.184
+    },
+    "level::rcp45_2071_2098": {
+      "file": "fire/level_rcp45_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp45_2071_2098": {
+      "file": "fire/change_rcp45_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.498,
+      "median_change": 0.159
+    },
+    "level::rcp85_2041_2070": {
+      "file": "fire/level_rcp85_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp85_2041_2070": {
+      "file": "fire/change_rcp85_2041_2070.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.43,
+      "median_change": 0.137
+    },
+    "level::rcp85_2071_2098": {
+      "file": "fire/level_rcp85_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      }
+    },
+    "change::rcp85_2071_2098": {
+      "file": "fire/change_rcp85_2071_2098.png",
+      "bounds": {
+        "south": 34.024818,
+        "west": -24.989596,
+        "north": 72.038685,
+        "east": 45.03408
+      },
+      "robust_share": 0.61,
+      "median_change": 0.318
+    }
+  }
+}

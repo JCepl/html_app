@@ -1,2 +1,13 @@
 # Ignore the local RE-ENFORCE project application PDF
 FINAL_APPROVED_RE-ENFORCE.pdf
+
+# Raw GeoTIFFs and retired model outputs stay local (not published); the app only reads the PNG overlays.
+webmap_data/**/*.tif
+webmap_data/*.tif
+webmap_data/forecast_bundle/ensemble/
+webmap_data/forecast_bundle/gam/
+webmap_data/forecast_bundle/rf/
+webmap_data/forecast_bundle/svm/
+webmap_data/forecast_bundle/xgb/
+webmap_data/forecast_bundle/xgb_v2_rcp26/
+webmap_data/forecast_bundle/xgb_v2_rcp45/

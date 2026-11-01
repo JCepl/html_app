@@ -12,7 +12,7 @@
   />
   <link
     rel="stylesheet"
-    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+    href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css"
   />
 
   <style>
@@ -817,6 +817,8 @@
     /* One single horizontal row: [label  cards] | [label  cards] | ... */
     .overlay-card-strip {
       display: flex;
+      flex-wrap: wrap;
+      row-gap: 6px;
       gap: 0;
       overflow-x: auto;
       padding-bottom: 1px;
@@ -986,6 +988,12 @@
       opacity: 1;
     }
     .overlay-card.hazard-auxiliary.active .overlay-card-eyebrow { color: #c3d2e2; }
+    /* Selected cards are dark: every text part must switch to a light colour. */
+    .overlay-card.active .overlay-card-title,
+    .overlay-card.hazard-auxiliary.active .overlay-card-title { color: #ffffff; }
+    .overlay-card.active .overlay-card-copy,
+    .overlay-card.hazard-auxiliary.active .overlay-card-copy { color: #d3e1f0; }
+    .overlay-card.active .overlay-card-copy a { color: #ffd9a3; }
 
     .overlay-card {
       min-width: 110px;
@@ -1477,14 +1485,18 @@
         min-height: 70vh;
       }
 
+      /* Phone: the map comes first and gets most of the screen; the
+         inspector panel follows below it. */
       #panel {
+        order: 2;
         width: 100%;
         border-right: none;
         border-bottom: 1px solid #ccc;
       }
 
       #map {
-        min-height: 55vh;
+        order: 1;
+        min-height: 68vh;
       }
     }
   </style>
@@ -1508,7 +1520,7 @@
         <a class="banner-link" href="https://zenodo.org/records/17191513" target="_blank" rel="noopener noreferrer">Database</a>
         <a class="banner-link" href="https://github.com/JCepl/RE-ENFORCE-Harmonized-Database" target="_blank" rel="noopener noreferrer">GitHub</a>
         <button class="banner-link banner-button" id="detailModeBtn" type="button" aria-pressed="false"
-                title="Simplified by default (one model, no climate-model picker, near-future only). Switch to see every model, scenario, and validation detail.">Show full detail</button>
+                title="Simplified by default (one model, no climate-model picker). Switch to see every model, scenario, and validation detail.">Show full detail</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
       </nav>
       <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
@@ -1530,7 +1542,7 @@
       <span class="dss-pillar-num">2</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Ecosystem services</span>
-        <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">Natura 2000 near pilot sites</span>
+        <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">Natura 2000 near pilot sites; service layers in preparation</span>
       </span>
       <span class="dss-pillar-status" id="dssPillarNatura2000Status">Show on map</span>
     </div>
@@ -1571,7 +1583,7 @@
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="droughtFuture">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Future SPEI classes</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Climate projection</span>Future SPEI classes</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtFuture">Display</button>
             </span>
@@ -1602,19 +1614,32 @@
         <div class="overlay-group">
           <div class="overlay-group-label">Wildfire</div>
           <div class="period-strip" title="Data coverage by time period">
-            <span class="period-chip is-empty" title="No historic wildfire layer built yet -- would need the raw 100m Grunig archive, not the pre-aggregated hex product used here">Historic</span>
-            <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="near" title="Wildfire Pressure, from 2030 -- click to view">Near future</span>
-            <span class="period-chip" data-jump-overlay="wildfire" data-jump-period="far" title="Wildfire Pressure, to 2100 -- click to view">Later future</span>
+            <span class="period-chip" data-jump-overlay="fireWeather" data-jump-period="historical" title="Fire-weather level, 1981-2005 -- click to view">Historic</span>
+            <span class="period-chip" data-jump-overlay="fireWeather" data-jump-period="near" title="Fire weather, 2041-2070 -- click to view">Near future</span>
+            <span class="period-chip" data-jump-overlay="fireWeather" data-jump-period="far" title="Fire weather, 2071-2098 -- click to view">Later future</span>
           </div>
           <div class="overlay-group-cards">
-        <div class="overlay-card hazard-primary" data-overlay="wildfire">
+        <div class="overlay-card hazard-primary" data-overlay="fireWeather">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Wildfire Pressure</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Climate projection</span>Fire-weather severity</span>
+            <span class="overlay-card-tools">
+              <button class="overlay-tool-btn" type="button" data-toggle-overlay="fireWeather">Display</button>
+            </span>
+          </span>
+          <span class="overlay-card-copy">How hard a fire would be to contain on summer days (not how likely one is to start). Change vs. 1981&ndash;2005, or the absolute level.</span>
+          <span class="overlay-opacity-row">
+            <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="fireWeather" />
+            <span class="overlay-tool-value" data-opacity-value="fireWeather">0.85</span>
+          </span>
+        </div>
+        <div class="overlay-card hazard-auxiliary" data-overlay="wildfire">
+          <span class="overlay-card-head">
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Fire pressure (Gr&uuml;nig et al.)</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wildfire">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Modelled wildfire pressure index by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
+          <span class="overlay-card-copy">Simulated fire pressure index of an independent study, by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="wildfire" />
             <span class="overlay-tool-value" data-opacity-value="wildfire">0.85</span>
@@ -1634,12 +1659,12 @@
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="wind">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Wind</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Climate projection</span>Wind damage</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wind">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Modelled forest wind-damage susceptibility, RCP8.5, across 3 climate periods.</span>
+          <span class="overlay-card-copy">Probability of stand damage under a 100-year wind speed (hazard &times; stand vulnerability), SSP5-8.5.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="wind" />
             <span class="overlay-tool-value" data-opacity-value="wind">0.85</span>
@@ -1669,17 +1694,17 @@
           <div class="period-strip" title="Data coverage by time period">
             <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2023 -- click to view">Historic</span>
             <span class="period-chip" data-jump-overlay="bbtl" data-jump-period="near" title="Bark Beetle Pressure, from 2030 (the validated forecast model itself has no near-future run -- reference and end-century only) -- click to view pressure">Near future</span>
-            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Predictions end-century; PHENIPS end; Pressure to 2100 -- click to view end-century predictions">Later future</span>
+            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Susceptibility index, end of century -- click to view">Later future</span>
           </div>
           <div class="overlay-group-cards bb-grid">
         <div class="overlay-card hazard-primary" data-overlay="bbtforecast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Model forecast</span>Predictions</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Earlier model version</span>Susceptibility index</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Future bark beetle forecast models and thresholds.</span>
+          <span class="overlay-card-copy">Susceptibility to documented bark-beetle and wind disturbance in spruce. Earlier model version; final maps follow.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
             <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
@@ -1687,12 +1712,12 @@
         </div>
         <div class="overlay-card hazard-auxiliary" data-overlay="bbtpast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past disturbance</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past forest disturbance</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Historical bark beetle disturbance footprint, plus 149 individually-sourced documented outbreak events (barkbeetle-catalogue) as clickable points, colour-coded by severity.</span>
+          <span class="overlay-card-copy">Detected forest disturbance 1985&ndash;2023, all agents (not bark beetle only), plus 149 documented bark-beetle outbreaks as clickable points.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
@@ -1764,7 +1789,7 @@
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
-          <p class="nested-title">Bark Beetle Forecast</p>
+          <p class="nested-title">Bark beetle susceptibility (earlier model version)</p>
           <div class="nested-grid">
             <div id="forecastModelField">
               <div class="label">Model</div>
@@ -1782,8 +1807,8 @@
               <div class="label">View</div>
               <div class="row">
                 <select id="forecastViewSelector">
-                  <option value="threshold">Thresholded risk</option>
-                  <option value="probability">Ensemble probability</option>
+                  <option value="threshold">High-susceptibility areas (above cut-off)</option>
+                  <option value="probability">Susceptibility index (0&ndash;1)</option>
                   <option value="delta" id="forecastViewDeltaOption">Δ % change vs. current (2011–2040)</option>
                 </select>
               </div>
@@ -1861,6 +1886,34 @@
             </div>
           </div>
           <div class="small">Modelled forest wind-damage susceptibility (0–1). Colour scale saturates at 0.5. Scenario RCP8.5 (SSP5-8.5). Historical baseline is model-independent (GCM choice has no effect).</div>
+        </div>
+
+        <div id="fireWeatherPanel" class="nested-panel" hidden>
+          <p class="nested-title">Fire-weather severity controls</p>
+          <div class="label">What to show</div>
+          <div class="row">
+            <select id="fireViewSelector">
+              <option value="change" selected>Change vs. 1981&ndash;2005 (summer severity rating)</option>
+              <option value="level">Absolute level (summer Fire Weather Index)</option>
+            </select>
+          </div>
+          <div class="label">Scenario / period</div>
+          <div class="row">
+            <select id="fireScenSelector">
+              <option value="rcp85_2041_2070" selected>2041&ndash;2070, RCP8.5</option>
+              <option value="rcp45_2041_2070">2041&ndash;2070, RCP4.5</option>
+              <option value="rcp26_2041_2070">2041&ndash;2070, RCP2.6</option>
+              <option value="rcp85_2071_2098">2071&ndash;2098, RCP8.5</option>
+              <option value="rcp45_2071_2098">2071&ndash;2098, RCP4.5</option>
+              <option value="rcp26_2071_2098">2071&ndash;2098, RCP2.6</option>
+              <option value="historical">1981&ndash;2005 (reference, level only)</option>
+            </select>
+          </div>
+          <div class="layer-info-box">
+            <div class="layer-info-row"><strong>What it shows</strong><span id="fireInfoDesc"></span></div>
+            <div class="layer-info-row"><strong>How to read it</strong><span id="fireInfoValues"></span></div>
+          </div>
+          <div class="small">Summer (June&ndash;August) fire weather from one climate-model chain (RCA4 driven by MPI-ESM-LR), 0.15&deg; grid (about 15 km). It describes weather conditions, <em>not</em> ignition probability. Source: F. Taccaliti, UNIPD-TESAF (C3S fire-danger indicators, Giannakopoulos &amp; Karali 2020).</div>
         </div>
 
         <div id="droughtFuturePanel" class="nested-panel" hidden>
@@ -1967,9 +2020,9 @@
     crossorigin=""
   ></script>
 
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
-  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
@@ -2047,9 +2100,9 @@
       activeSide: "left",
       panels: { left: null, right: null },
       // `visibleOverlays` controls what is drawn. The last item is drawn on top.
-      visibleOverlays: ["bbtforecast"],
+      visibleOverlays: ["droughtFuture"],
       // `focusedOverlay` controls which settings are shown in the left panel.
-      focusedOverlay: "bbtforecast",
+      focusedOverlay: "droughtFuture",
       layerOpacity: {
         bbtl: 0.85,
         bbtforecast: 0.85,
@@ -2058,6 +2111,7 @@
         wind: 0.85,
         droughtFuture: 0.85,
         droughtRef: 0.85,
+        fireWeather: 0.85,
         wildfire: 0.85,
         windPressure: 0.85
       },
@@ -2066,14 +2120,16 @@
       currentPhenipsVar: "gdd",
       currentPhenipsView: "abs",
       phenipsData: null,
-      currentForecastModel: "chelsa_fixed25_monotone",
-      currentForecastPeriod: "2011_2040",
+      currentForecastModel: "chelsa_v41_b41lat_ssp585",
+      currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
       currentForecastThreshold: "0.75",
       currentWindPeriod: "near",
-      currentWindGcm: "default",
+      currentWindGcm: "mpi",
       currentDroughtFuturePeriod: "2041_2070_ssp370",
       currentDroughtRefMetric: "n_events_2yr",
+      currentFireView: "change",
+      currentFireScen: "rcp85_2041_2070",
       currentForecastRasterRange: null,
       forecastManifest: null,
       forecastMetricsCache: {},
@@ -2086,6 +2142,7 @@
         wind: 0,
         droughtFuture: 0,
         droughtRef: 0,
+        fireWeather: 0,
         wildfire: 0,
         windPressure: 0
       },
@@ -2103,12 +2160,13 @@
         wind: null,
         droughtFuture: null,
         droughtRef: null,
+        fireWeather: null,
         wildfire: null,
         windPressure: null
       }
     };
 
-    const RASTER_OVERLAYS = ["phenips", "bbtforecast", "bbtpast", "wind", "droughtFuture", "droughtRef"];
+    const RASTER_OVERLAYS = ["phenips", "bbtforecast", "bbtpast", "wind", "droughtFuture", "droughtRef", "fireWeather"];
     const WIND_DATA_URL = "webmap_data/wind/wind_meta.json";
     const DROUGHT_FUTURE_DATA_URL = "webmap_data/drought/drought_future_meta.json";
     const DROUGHT_REF_DATA_URL = "webmap_data/drought/drought_ref_meta.json";
@@ -2116,7 +2174,7 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20260904-pilot-icons-v4";
+    const ASSET_VERSION = "20261101-review-fixes";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -2157,7 +2215,7 @@
     // earlier version of this also capped the far-future/end-of-century
     // options, which is wrong -- the whole point of a climate-impact DSS is
     // showing what changes by end of century). See applySimpleView().
-    const SIMPLE_VIEW_DEFAULT_FORECAST_MODEL = "chelsa_fixed25_monotone";
+    const SIMPLE_VIEW_DEFAULT_FORECAST_MODEL = "chelsa_v41_b41lat_ssp585";
 
     // Wind's own scale (Tommaso's QGIS rendering) -- see WIND_RAMP in
     // webmap_data/color_scales.R. An independent copy: historically this and
@@ -2398,7 +2456,7 @@
 
     const OVERLAY_CATALOG = {
       bbtl: {
-        label: "Bark beetle pressure index",
+        label: "Bark beetle pressure index (Grunig et al.)",
         description: "Modelled bark beetle pressure index by scenario and year (Grunig et al. 2026, Science). Select RCP scenario and year using the controls below.",
         available: true,
         usesRcp: true,
@@ -2414,16 +2472,16 @@
         meta: null
       },
       bbtforecast: {
-        label: "Bark beetle forecast",
-        description: "Future bark beetle disturbance forecasts from the forecast bundle. Choose model, future period, and threshold to compare projected surfaces.",
+        label: "Bark beetle susceptibility",
+        description: "Susceptibility index of documented bark-beetle and wind disturbance in spruce (0 low - 1 high), calibrated but not an annual attack probability. This is an earlier model version; the final model maps follow. Future maps are a climate shift on today's fixed forest geography, not a forecast. The share of cells where the future climate lies outside the model's training range (extrapolation) is not yet available for this earlier version and will be shown with the final maps.",
         available: true,
         usesRcp: false,
         usesYear: false,
         meta: null
       },
       bbtpast: {
-        label: "Past bark beetle disturbance",
-        description: "Classified historical bark beetle disturbance surface for 1985-2023. Zero values are transparent so nonzero disturbance stands out over the basemap.",
+        label: "Past forest disturbance (all agents)",
+        description: "Summed detected forest disturbance 1985-2023 from satellite data. All disturbance agents are included (storms, bark beetle, fire, logging); bark beetle is not separated, so large storm events such as the 2009 Landes storm also show. Dots are individually documented bark-beetle outbreaks. Zero values are transparent.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -2434,9 +2492,17 @@
           legend: null
         }
       },
+      fireWeather: {
+        label: "Fire-weather severity",
+        description: "Summer (June-August) fire-weather severity from one climate-model chain (RCA4 / MPI-ESM-LR, 0.15 degree grid): how hard a fire would be to contain, not how likely one is to start. Show the change relative to 1981-2005 or the absolute Fire Weather Index. Data: F. Taccaliti (UNIPD-TESAF).",
+        available: true,
+        usesRcp: false,
+        usesYear: false,
+        meta: { metaUrl: "webmap_data/fire/fire_meta.json", bounds: null, images: null }
+      },
       wildfire: {
-        label: "Wildfire pressure index",
-        description: "Modelled wildfire disturbance pressure index by scenario and year (Grunig et al. 2026, Science). Select RCP scenario and year using the controls below.",
+        label: "Fire pressure index (Grunig et al.)",
+        description: "Simulated fire pressure index of an independent study (Grunig et al. 2026, Science), by scenario and year. Context only, not a RE-ENFORCE model. Select RCP scenario and year using the controls below.",
         available: true,
         usesRcp: true,
         usesYear: true,
@@ -2476,7 +2542,7 @@
       },
       wind: {
         label: "Wind damage susceptibility",
-        description: "Modelled forest wind-damage susceptibility (0 low – 1 high). Colour scale saturates at 0.5. Three climate periods under RCP8.5 (SSP5-8.5). Select the period using the control below.",
+        description: "Probability of stand damage under a 100-year wind speed (0-1; 0.5 and above = damage expected). Combines the wind hazard with the vulnerability of the 2020 forest stands, so it is the one layer that includes vulnerability. Future scenario SSP5-8.5. The change between periods is small because the stand map is fixed at 2020. Data: T. Baggio (UNIPD).",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -2598,6 +2664,11 @@
       droughtFuturePeriodSelector: document.getElementById("droughtFuturePeriodSelector"),
       droughtRefPanel: document.getElementById("droughtRefPanel"),
       droughtRefMetricSelector: document.getElementById("droughtRefMetricSelector"),
+      fireWeatherPanel: document.getElementById("fireWeatherPanel"),
+      fireViewSelector: document.getElementById("fireViewSelector"),
+      fireScenSelector: document.getElementById("fireScenSelector"),
+      fireInfoDesc: document.getElementById("fireInfoDesc"),
+      fireInfoValues: document.getElementById("fireInfoValues"),
       droughtRefInfoDesc: document.getElementById("droughtRefInfoDesc"),
       droughtRefInfoValues: document.getElementById("droughtRefInfoValues"),
       droughtRefInfoLegend: document.getElementById("droughtRefInfoLegend"),
@@ -2850,7 +2921,33 @@
       DOM.windPanel.hidden = APP.focusedOverlay !== "wind";
       DOM.droughtFuturePanel.hidden = APP.focusedOverlay !== "droughtFuture";
       DOM.droughtRefPanel.hidden = APP.focusedOverlay !== "droughtRef";
+      DOM.fireWeatherPanel.hidden = APP.focusedOverlay !== "fireWeather";
       renderDroughtRefInfo();
+      renderFireInfo();
+    }
+
+    const FIRE_INFO = {
+      change: {
+        desc: "Relative change of the mean summer (June-August) seasonal severity rating compared with 1981-2005. The rating rises steeply with the Fire Weather Index, so it reflects how difficult a fire would be to contain.",
+        values: "Warm colours = more severe fire weather than in 1981-2005 (dark red = more than doubled), blue = less severe. Pale colours = change smaller than the year-to-year noise of the model. Grey = fire weather too mild for a change to be computed (mostly northern Europe)."
+      },
+      level: {
+        desc: "Mean summer (June-August) Fire Weather Index, in the standard fire-danger classes.",
+        values: "Dark colours = more dangerous fire weather. Compare the 1981-2005 level with a future period to see where the Mediterranean (high level already) and Central Europe (large relative increase) stand."
+      }
+    };
+    function renderFireInfo() {
+      if (!DOM.fireInfoDesc) return;
+      const info = FIRE_INFO[APP.currentFireView] || FIRE_INFO.change;
+      DOM.fireInfoDesc.textContent = info.desc;
+      DOM.fireInfoValues.textContent = info.values;
+    }
+
+    // Fire image key. "change" has no historical image, so it falls back to level.
+    function fireImageKey(state) {
+      const scen = state.currentFireScen;
+      const view = scen === "historical" ? "level" : state.currentFireView;
+      return view + "::" + scen;
     }
 
     // Per-metric documentation (Stefan Ebner, BFW, 2026-08-31 notes): each
@@ -3003,6 +3100,36 @@
       if (!response.ok) throw new Error("HTTP " + response.status + " for " + DROUGHT_REF_DATA_URL);
       overlay.meta.images = (await response.json()).images;
       return overlay.meta;
+    }
+
+    async function ensureFireMetaLoaded() {
+      const overlay = OVERLAY_CATALOG.fireWeather;
+      if (overlay.meta.images) return overlay.meta;
+      const response = await fetch(overlay.meta.metaUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status + " for " + overlay.meta.metaUrl);
+      const json = await response.json();
+      overlay.meta.images = json.images;
+      overlay.meta.legends = json.legends;
+      return overlay.meta;
+    }
+
+    async function updateFireWeatherLayer() {
+      if (!isOverlayVisible("fireWeather")) return;
+      const requestToken = beginOverlayLoad("fireWeather");
+      setStatus("Loading fire-weather layer...");
+      try {
+        const meta = await ensureFireMetaLoaded();
+        if (!isCurrentOverlayLoad("fireWeather", requestToken)) return;
+        const image = meta.images[fireImageKey(APP)];
+        if (!image) throw new Error("No fire image for " + fireImageKey(APP));
+        addImageOverlayLayer("fireWeather", "webmap_data/" + image.file + "?v=" + ASSET_VERSION, image.bounds);
+        updateOverlayPaneOrder();
+        setLegendLabels();
+        setStatus("");
+      } catch (error) {
+        console.error(error);
+        setStatus("Fire-weather overlay could not be loaded");
+      }
     }
 
     async function updateDroughtFutureLayer() {
@@ -3274,6 +3401,13 @@
           return o.value.indexOf(prefix) === 0;
         });
         if (opt) APP.currentDroughtFuturePeriod = opt.value;
+      } else if (overlayId === "fireWeather") {
+        if (period === "historical") { APP.currentFireScen = "historical"; APP.currentFireView = "level"; }
+        else {
+          const sfx = period === "near" ? "2041_2070" : "2071_2098";
+          const cur = APP.currentFireScen === "historical" ? "rcp85" : APP.currentFireScen.split("_")[0];
+          APP.currentFireScen = cur + "_" + sfx;
+        }
       } else if (overlayId === "wind") {
         APP.currentWindPeriod = period;
       } else if (overlayId === "wildfire" || overlayId === "bbtl") {
@@ -3516,6 +3650,19 @@
         }
         renderLegendSwatches(image.legend.labels.map(function(label, index) {
           return { color: image.legend.colors[index], label: label };
+        }));
+        return;
+      }
+
+      if (topOverlayId === "fireWeather") {
+        const key = fireImageKey(APP);
+        const legends = overlay.meta && overlay.meta.legends;
+        DOM.legendBar.style.display = "none";
+        DOM.legendMin.parentElement.style.display = "none";
+        if (!legends) { renderLegendSwatches([]); return; }
+        const lg = key.indexOf("change::") === 0 ? legends.change : legends.level;
+        renderLegendSwatches(lg.labels.map(function(label, index) {
+          return { color: lg.colors[index], label: label };
         }));
         return;
       }
@@ -3898,7 +4045,8 @@
       bbtforecast: updateForecastOverlay,
       wind: updateWindLayer,
       droughtFuture: updateDroughtFutureLayer,
-      droughtRef: updateDroughtRefLayer
+      droughtRef: updateDroughtRefLayer,
+      fireWeather: updateFireWeatherLayer
     };
 
     function syncOverlayControls(refreshTarget) {
@@ -4004,7 +4152,7 @@
       if (topOverlayId === "bbtforecast") return;
       if (topOverlayId === "bbtpast") return;
       if (topOverlayId === "wind") return;
-      if (topOverlayId === "droughtFuture" || topOverlayId === "droughtRef") return;
+      if (topOverlayId === "droughtFuture" || topOverlayId === "droughtRef" || topOverlayId === "fireWeather") return;
 
       if (hexFeature) {
         const layer = findLayerForFeature(hexFeature, topOverlayId);
@@ -4059,12 +4207,12 @@
       if (overlayId === "bbtforecast") return { label: label, valueHtml: null };
       if (overlayId === "bbtpast")     return { label: label, valueHtml: null };
       if (overlayId === "wind")        return { label: label, valueHtml: null };
-      if (overlayId === "droughtFuture" || overlayId === "droughtRef") return { label: label, valueHtml: null };
+      if (overlayId === "droughtFuture" || overlayId === "droughtRef" || overlayId === "fireWeather") return { label: label, valueHtml: null };
 
       const hexFeature = findContainingFeature(state.hexGeojson && state.hexGeojson[overlayId], latlng);
       if (hexFeature) {
         const val = Number(hexFeature.properties.mean);
-        return { label: label, valueHtml: isFinite(val) ? val.toFixed(6) : "NA" };
+        return { label: label, valueHtml: isFinite(val) ? "Pressure index " + val.toFixed(3) : "NA" };
       }
       return { label: label, valueHtml: "—" };
     }
@@ -4081,12 +4229,15 @@
       const info = computeClickValueInfo(state, latlng);
       const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
       const countryName = countryFeature ? getCountryName(countryFeature) : "—";
-      const valueLine = info.valueHtml == null ? ""
+      const asyncId = getTopVisibleOverlayIdFor(state);
+      const wantsAsync = info.valueHtml == null && CLICK_VALUE_OVERLAYS.includes(asyncId);
+      const valueLine = wantsAsync ? '<span class="map-popup-val" data-async-val>Reading value…</span>'
+        : info.valueHtml == null ? ""
         : '<span class="map-popup-val">' + info.valueHtml + '</span>';
       const html = '<div class="map-popup">'
         + '<div class="map-popup-head">' + info.label + '</div>'
         + '<div class="map-popup-body">'
-        + countryName + '<br>'
+        + (countryFeature ? countryName + '<br>' : '')
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
         + valueLine
         + '<button type="button" class="risk-radar-btn">Hazard profile ⬡</button>'
@@ -4104,6 +4255,12 @@
       // both maps in split screen behave independently this way.
       const radarState = snapshotRadarState(state);
       const popupEl = popup.getElement();
+      if (wantsAsync) {
+        describeClickValue(asyncId, latlng, radarState).then(function(text) {
+          const slot = popupEl && popupEl.querySelector("[data-async-val]");
+          if (slot) slot.textContent = text || "No data at this point";
+        });
+      }
       const btn = popupEl && popupEl.querySelector(".risk-radar-btn");
       if (btn) {
         btn.addEventListener("click", function() { openRadarChart(latlng, radarState); });
@@ -4174,7 +4331,10 @@
     async function sampleImageAt(img, bounds, latlng, colorFn) {
       if (!img || !img.naturalWidth) return null;
       const fracX = (latlng.lng - bounds.west) / (bounds.east - bounds.west);
-      const fracY = (bounds.north - latlng.lat) / (bounds.north - bounds.south);
+      // The PNGs are Web-Mercator images stretched between their lat/lon
+      // bounds, so the vertical position must be computed in Mercator space.
+      const mercY = function(lat) { return Math.asinh(Math.tan(lat * Math.PI / 180)); };
+      const fracY = (mercY(bounds.north) - mercY(latlng.lat)) / (mercY(bounds.north) - mercY(bounds.south));
       if (!(fracX >= 0 && fracX <= 1 && fracY >= 0 && fracY <= 1)) return null;
       const w = img.naturalWidth, h = img.naturalHeight;
       const px = Math.min(w - 1, Math.max(0, Math.floor(fracX * w)));
@@ -4310,14 +4470,71 @@
       return isFinite(v) ? v : null;
     }
 
-    // Bark-beetle reading for a point, for a given side's state: the
-    // vector hex layer ("bbtl") is the default representation unless this
-    // side is currently focused on one of the other two bark-beetle views,
-    // in which case that one is used instead (fetched off-screen if hidden).
-    async function getBarkBeetleRiskFor(latlng, state) {
-      const preferred = BBT_OVERLAY_IDS.includes(state.focusedOverlay) ? state.focusedOverlay : "bbtl";
-      if (preferred === "bbtl") return sampleHexOverlayFor("bbtl", latlng, state);
-      return sampleRasterOverlayFor(preferred, latlng, state);
+    // Reading of a classified (legend-coloured) PNG at a point: the pixel
+    // colour is matched to the layer's own legend, so what a user reads in a
+    // popup is exactly the class shown in the legend.
+    const CLICK_VALUE_OVERLAYS = ["droughtFuture", "droughtRef", "fireWeather", "wind", "bbtforecast"];
+
+    function hexToRgb(hex) {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+    }
+
+    async function classifiedSpecFor(overlayId, state, forRadar) {
+      if (overlayId === "droughtFuture") {
+        const m = await ensureDroughtFutureMetaLoaded();
+        const im = m.images[state.currentDroughtFuturePeriod];
+        return im ? { file: im.file, bounds: im.bounds, legend: im.legend } : null;
+      }
+      if (overlayId === "droughtRef") {
+        const m = await ensureDroughtRefMetaLoaded();
+        const im = m.images[state.currentDroughtRefMetric];
+        return im ? { file: im.file, bounds: im.bounds, legend: im.legend } : null;
+      }
+      if (overlayId === "fireWeather") {
+        const m = await ensureFireMetaLoaded();
+        const key = forRadar ? "level::" + state.currentFireScen : fireImageKey(state);
+        const im = m.images[key];
+        if (!im) return null;
+        return { file: im.file, bounds: im.bounds, legend: key.indexOf("change::") === 0 ? m.legends.change : m.legends.level };
+      }
+      return null;
+    }
+
+    async function readLegendClass(overlayId, latlng, state, forRadar) {
+      let spec;
+      try { spec = await classifiedSpecFor(overlayId, state, forRadar); } catch (e) { return null; }
+      if (!spec) return null;
+      const rgb = spec.legend.colors.map(hexToRgb);
+      const img = await cachedFetchImage("webmap_data/" + spec.file + "?v=" + ASSET_VERSION);
+      const idx = await sampleImageAt(img, spec.bounds, latlng, function(r, g, b) {
+        let best = 0, bestD = Infinity;
+        rgb.forEach(function(c, i) {
+          const d = (c[0] - r) * (c[0] - r) + (c[1] - g) * (c[1] - g) + (c[2] - b) * (c[2] - b);
+          if (d < bestD) { bestD = d; best = i; }
+        });
+        return best;
+      });
+      if (idx == null) return null;
+      return { index: idx, count: spec.legend.labels.length, label: spec.legend.labels[idx] };
+    }
+
+    const shortLabel = function(label) { return String(label).replace(/\s*\(.*$/, "").replace(/ drought hazard$/i, ""); };
+    const BB_CLASSES = [[0.25, "low"], [0.5, "moderate"], [0.75, "high"], [Infinity, "very high"]];
+    const WIND_CLASSES = [[0.25, "low"], [0.5, "moderate"], [Infinity, "high"]];
+    const classOf = function(table, v) { return table.find(function(row) { return v < row[0]; })[1]; };
+
+    async function describeClickValue(overlayId, latlng, state) {
+      if (overlayId === "wind") {
+        const v = await sampleRasterOverlayFor("wind", latlng, state);
+        return v == null ? null : "Damage probability " + v.toFixed(2) + (v >= 0.5 - 1e-6 ? " or more" : "") + " (" + classOf(WIND_CLASSES, v) + ")";
+      }
+      if (overlayId === "bbtforecast") {
+        const v = await sampleRasterOverlayFor("bbtforecast", latlng, state);
+        return v == null ? null : "Susceptibility index " + v.toFixed(2) + " (" + classOf(BB_CLASSES, v) + ")";
+      }
+      const c = await readLegendClass(overlayId, latlng, state, false);
+      return c ? c.label : null;
     }
 
     // Fields relevant to radar sampling, snapshotted at click/popup time so
@@ -4328,7 +4545,8 @@
       "focusedOverlay", "layerInstances", "hexGeojson",
       "currentRcp", "currentYear",
       "currentForecastModel", "currentForecastPeriod", "currentForecastView", "currentForecastThreshold",
-      "currentWindPeriod", "currentWindGcm", "currentDroughtFuturePeriod"
+      "currentWindPeriod", "currentWindGcm", "currentDroughtFuturePeriod", "currentDroughtRefMetric",
+      "currentFireScen", "currentFireView"
     ];
     function snapshotRadarState(state) {
       const snap = {};
@@ -4336,24 +4554,27 @@
       return snap;
     }
 
+    // One axis per driver that has a real layer. Each axis shows the class or
+    // index of that driver's own layer, rescaled to 0..1 only to draw the
+    // shape -- no invented placeholder values, no single integrated number.
     async function computeRadarValues(latlng, radarState) {
       const state = radarState || snapshotRadarState(APP);
       const [bb, wind, drought, fire] = await Promise.all([
-        getBarkBeetleRiskFor(latlng, state),
+        sampleRasterOverlayFor("bbtforecast", latlng, state),
         sampleRasterOverlayFor("wind", latlng, state),
-        sampleRasterOverlayFor("droughtFuture", latlng, state),
-        sampleHexOverlayFor("wildfire", latlng, state)
+        readLegendClass("droughtFuture", latlng, state, true),
+        readLegendClass("fireWeather", latlng, state, true)
       ]);
+      const fromClass = function(c) { return c ? (c.count - c.index) / c.count : null; };
       return [
-        { id: "bbtl", label: "Bark beetle", value: bb, placeholder: false },
-        { id: "wind", label: "Wind", value: wind, placeholder: false },
-        { id: "fire", label: "Fire", value: fire == null ? RADAR_PLACEHOLDER : fire, placeholder: fire == null },
-        { id: "ash", label: "Ash dieback", value: RADAR_PLACEHOLDER, placeholder: true },
-        {
-          id: "drought", label: "Drought",
-          value: drought == null ? RADAR_PLACEHOLDER : drought,
-          placeholder: drought == null
-        }
+        { id: "bbtl", label: "Bark beetle", value: bb == null ? null : Math.min(1, bb),
+          text: bb == null ? null : "susceptibility index " + bb.toFixed(2) + " (" + classOf(BB_CLASSES, bb) + ")" },
+        { id: "wind", label: "Wind", value: wind == null ? null : Math.min(1, wind / 0.5),
+          text: wind == null ? null : "damage probability " + wind.toFixed(2) + " (" + classOf(WIND_CLASSES, wind) + ")" },
+        { id: "fire", label: "Fire", value: fire ? (fire.index + 1) / fire.count : null,
+          text: fire ? "summer fire weather " + shortLabel(fire.label).toLowerCase() : null },
+        { id: "drought", label: "Drought", value: fromClass(drought),
+          text: drought ? shortLabel(drought.label).toLowerCase() + " hazard" : null }
       ];
     }
 
@@ -4368,7 +4589,7 @@
       const step = 360 / n;
       const rings = [0.2, 0.4, 0.6, 0.8, 1.0];
 
-      let svg = '<svg viewBox="0 0 240 224" width="240" height="224" class="radar-svg">';
+      let svg = '<svg viewBox="-34 0 308 224" width="100%" height="auto" class="radar-svg" style="max-width:260px">';
 
       rings.forEach(function(frac) {
         const pts = values.map(function(_, i) {
@@ -4458,18 +4679,12 @@
       if (!el.classList.contains("is-open")) return; // closed while sampling
 
       const rows = values.map(function(v) {
-        const shown = v.value == null ? "no data" : Math.round(v.value * 100) + "%";
-        const note = v.placeholder ? "placeholder — no model yet"
-          : (v.value == null ? "no data at this point" : "");
-        return '<div class="radar-legend-row"><span class="radar-legend-swatch'
-          + (v.placeholder ? " is-placeholder" : "") + '"></span>' + v.label
-          + ': <strong>' + shown + '</strong>'
-          + (note ? '<span class="radar-legend-note">' + note + '</span>' : '') + '</div>';
-      }).join("");
-      const hasUnconfident = values.some(function(v) { return v.placeholder || v.value == null; });
-      const edgeNote = hasUnconfident
-        ? '<div class="radar-legend-note">Dashed edges connect placeholder or no-data values — not a measured reading, don’t compare them to the solid segments.</div>'
-        : "";
+        return '<div class="radar-legend-row"><span class="radar-legend-swatch"></span>' + v.label
+          + ': <strong>' + (v.text || "no data at this point") + '</strong></div>';
+      }).join("") + '<div class="radar-legend-row"><span class="radar-legend-swatch is-placeholder"></span>Ash dieback: <strong>no layer yet</strong></div>';
+      const hasUnconfident = values.some(function(v) { return v.value == null; });
+      const edgeNote = '<div class="radar-legend-note">Each axis shows the class or index of that driver’s own layer (settings as currently chosen), so the shape compares drivers loosely and is not a combined risk value.'
+        + (hasUnconfident ? ' Dashed edges touch a driver with no data at this point.' : '') + '</div>';
       el.innerHTML = radarHeaderHtml(latlng) + '<div class="risk-radar-body">' + renderRadarSvg(values)
         + '<div class="risk-radar-legend">' + rows + edgeNote + '</div></div>';
       el.querySelector(".risk-radar-close").addEventListener("click", closeRadarChart);
@@ -4606,7 +4821,7 @@
       "currentPhenipsScen", "currentPhenisPeriod", "currentPhenipsVar",
       "currentPhenipsView", "currentForecastModel", "currentForecastPeriod",
       "currentForecastView", "currentForecastThreshold", "currentWindPeriod", "currentWindGcm",
-      "currentDroughtFuturePeriod", "currentDroughtRefMetric",
+      "currentDroughtFuturePeriod", "currentDroughtRefMetric", "currentFireView", "currentFireScen",
       "currentForecastRasterRange", "overlayLoadTokens", "overlayVisible",
       "currentHexGeojson", "layerInstances"
     ];
@@ -5016,6 +5231,8 @@
       updateWindGcmAvailability();
       if (DOM.droughtFuturePeriodSelector) DOM.droughtFuturePeriodSelector.value = APP.currentDroughtFuturePeriod;
       if (DOM.droughtRefMetricSelector) DOM.droughtRefMetricSelector.value = APP.currentDroughtRefMetric;
+      if (DOM.fireViewSelector) DOM.fireViewSelector.value = APP.currentFireView;
+      if (DOM.fireScenSelector) DOM.fireScenSelector.value = APP.currentFireScen;
       if (DOM.riskSlider) DOM.riskSlider.value = Math.round(APP.riskThreshold * 100);
       if (DOM.riskValue) DOM.riskValue.textContent = Math.round(APP.riskThreshold * 100) + "%";
       if (APP.focusedOverlay === "bbtforecast") {
@@ -5081,9 +5298,10 @@
         currentForecastView: APP.currentForecastView, currentForecastThreshold: APP.currentForecastThreshold,
         currentWindPeriod: APP.currentWindPeriod, currentWindGcm: APP.currentWindGcm, currentForecastRasterRange: null,
         currentDroughtFuturePeriod: APP.currentDroughtFuturePeriod, currentDroughtRefMetric: APP.currentDroughtRefMetric,
-        overlayLoadTokens: { bbtl: 0, bbtforecast: 0, phenips: 0, bbtpast: 0, wind: 0, droughtFuture: 0, droughtRef: 0, wildfire: 0, windPressure: 0 },
+        currentFireView: APP.currentFireView, currentFireScen: APP.currentFireScen,
+        overlayLoadTokens: { bbtl: 0, bbtforecast: 0, phenips: 0, bbtpast: 0, wind: 0, droughtFuture: 0, droughtRef: 0, fireWeather: 0, wildfire: 0, windPressure: 0 },
         overlayVisible: APP.overlayVisible, hexGeojson: { bbtl: null, wildfire: null, windPressure: null },
-        layerInstances: { bbtl: null, bbtforecast: null, phenips: null, bbtpast: null, wind: null, droughtFuture: null, droughtRef: null, wildfire: null, windPressure: null }
+        layerInstances: { bbtl: null, bbtforecast: null, phenips: null, bbtpast: null, wind: null, droughtFuture: null, droughtRef: null, fireWeather: null, wildfire: null, windPressure: null }
       };
 
       if (APP.map.sync) { APP.map.sync(mapR); mapR.sync(APP.map); }
@@ -5179,7 +5397,7 @@
     // Encode the meaningful view so a link reproduces what the user sees.
     // Fixed key order for the compact "lo" (layer opacity) param -- must match
     // the order restored in applyStateFromUrl.
-    const LAYER_OPACITY_KEYS = ["bbtl", "bbtforecast", "phenips", "bbtpast", "wind", "droughtFuture", "droughtRef", "wildfire", "windPressure"];
+    const LAYER_OPACITY_KEYS = ["bbtl", "bbtforecast", "phenips", "bbtpast", "wind", "droughtFuture", "droughtRef", "wildfire", "windPressure", "fireWeather"];
 
     function buildShareUrl() {
       const p = new URLSearchParams();
@@ -5198,6 +5416,8 @@
       p.set("wg", APP.currentWindGcm);
       p.set("dp", APP.currentDroughtFuturePeriod);
       p.set("dm", APP.currentDroughtRefMetric);
+      p.set("fw", APP.currentFireView);
+      p.set("fs", APP.currentFireScen);
       p.set("rc", APP.currentRcp);
       if (APP.currentYear != null) p.set("yr", String(APP.currentYear));
       p.set("th", String(Math.round(APP.riskThreshold * 100)));
@@ -5233,6 +5453,7 @@
       setIf("pv", "currentPhenipsVar"); setIf("pw", "currentPhenipsView");
       setIf("wp", "currentWindPeriod"); setIf("wg", "currentWindGcm"); setIf("rc", "currentRcp");
       setIf("dp", "currentDroughtFuturePeriod"); setIf("dm", "currentDroughtRefMetric");
+      setIf("fw", "currentFireView"); setIf("fs", "currentFireScen");
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
       if (p.has("sv")) APP.simpleView = p.get("sv") !== "0";
@@ -5259,6 +5480,8 @@
       updateWindGcmAvailability();
       setSel(DOM.droughtFuturePeriodSelector, APP.currentDroughtFuturePeriod);
       setSel(DOM.droughtRefMetricSelector, APP.currentDroughtRefMetric);
+      setSel(DOM.fireViewSelector, APP.currentFireView);
+      setSel(DOM.fireScenSelector, APP.currentFireScen);
       setSel(DOM.rcpSelector, APP.currentRcp);
       if (DOM.riskSlider) DOM.riskSlider.value = Math.round(APP.riskThreshold * 100);
       if (DOM.riskValue) DOM.riskValue.textContent = Math.round(APP.riskThreshold * 100) + "%";
@@ -5340,6 +5563,11 @@
       // Wind: hide only the GCM picker. Every period option (including far
       // future) stays available in both modes -- not something to hide.
       if (DOM.windGcmField) DOM.windGcmField.hidden = simple;
+      if (simple && APP.currentWindGcm !== "mpi") {
+        APP.currentWindGcm = "mpi";
+        if (DOM.windGcmSelector) DOM.windGcmSelector.value = "mpi";
+        if (isOverlayVisible("wind")) updateWindLayer();
+      }
     }
 
     function initControls() {
@@ -5433,6 +5661,18 @@
         APP.currentDroughtRefMetric = DOM.droughtRefMetricSelector.value;
         renderDroughtRefInfo();
         if (isOverlayVisible("droughtRef")) updateDroughtRefLayer();
+        else setLegendLabels();
+      });
+
+      DOM.fireViewSelector.addEventListener("change", function() {
+        APP.currentFireView = DOM.fireViewSelector.value;
+        renderFireInfo();
+        if (isOverlayVisible("fireWeather")) updateFireWeatherLayer();
+        else setLegendLabels();
+      });
+      DOM.fireScenSelector.addEventListener("change", function() {
+        APP.currentFireScen = DOM.fireScenSelector.value;
+        if (isOverlayVisible("fireWeather")) updateFireWeatherLayer();
         else setLegendLabels();
       });
 

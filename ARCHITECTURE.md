@@ -309,3 +309,19 @@ present so a gap reads as a gap rather than a silent absence.
 - **No "risk"/"probability" as a blanket label** in new copy — see §1's terminology note
   and §8 (Simple/Advanced). Say what the layer actually is: susceptibility, pressure
   index, model forecast, or (only where genuinely true) probability.
+
+
+## 12. 2026-11-01 review pass (branch `dss-review-fixes-2026-11`, unpublished)
+
+- **New layer `fireWeather`** (raster, cloned from the drought pattern): UNIPD-TESAF fire package (RCA4/MPI-ESM-LR, 0.15 deg).
+  Built by `webmap_data/export_fire_overlays.R` into `webmap_data/fire/` (+ `fire_meta.json`): views `change` (relative change of
+  mean JJA seasonal severity rating, pale where |change| <= 1.96 x se_rel) and `level` (JJA FWI, EFFIS classes), 3 RCPs x 2 periods
+  (+ historical level). Bands are selected by name. The Grunig hex fire layer (`wildfire`) is kept as a "for context" card.
+- **Click sampling fixed**: `sampleImageAt` now maps latitude in Web-Mercator space (it was linear, ~4 deg off at 50N).
+- **Popups and radar**: popups give a class label/value for drought, fire, wind, bark beetle; the radar has 4 axes (bark beetle, wind,
+  fire, drought) with class text, no placeholder values, ash dieback listed as "no layer yet".
+- **Defaults**: landing on drought (near future); Simple view pins bark beetle to `chelsa_v41_b41lat_ssp585` (labelled earlier
+  model version) and wind to the `mpi` future files.
+- **Wording**: "Predictions/forecast/probability" removed from bark-beetle copy; past disturbance is labelled all-agents.
+- **Publishing**: raw GeoTIFFs and retired model folders are untracked (`.gitignore`); the app only reads PNGs.
+- Not done: bark-beetle extrapolation share (needs the final model run), ecosystem-service layers, wind harmonised-grid rebuild.
