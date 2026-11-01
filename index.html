@@ -42,52 +42,50 @@
     body.map-expanded .dss-pillar-strip,
     body.map-expanded .dss-pillar-detail,
     body.map-expanded .layer-ribbon { display: none !important; }
+    /* Menu fold button: a small round arrow that always sits on the line
+       between the menus and the map (right side). Up = fold the menus away,
+       down = bring them back. Hovering it lights up that dividing line. */
     #app { position: relative; }
+    #app::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: transparent;
+      z-index: 1240;
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+    #app:has(.menu-toggle-tab:hover)::before,
+    #app:has(.menu-toggle-tab:focus-visible)::before { background: #d3852b; }
+    body.map-expanded #app::before { height: 5px; background: #173f69; }
+    body.map-expanded #app:has(.menu-toggle-tab:hover)::before { background: #d3852b; }
     .menu-toggle-tab {
       position: absolute;
       top: 0;
-      left: calc(340px + (100% - 340px) / 2);
-      transform: translateX(-50%);
-      z-index: 1100;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 14px 6px;
-      border: 2px solid #173f69;
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      background: #173f69;
-      color: #ffffff;
-      font: 700 13px/1 inherit;
-      cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-    }
-    .menu-toggle-tab:hover { background: #24507c; }
-    .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
-    .mtt-switch {
-      position: relative;
+      right: 18px;
+      transform: translateY(-50%);
+      z-index: 1250;
       width: 30px;
-      height: 16px;
-      border-radius: 8px;
-      background: #5fb35f;
-      transition: background 0.15s ease;
-    }
-    .mtt-knob {
-      position: absolute;
-      top: 2px;
-      left: 16px;
-      width: 12px;
-      height: 12px;
+      height: 30px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid #9fb6cf;
       border-radius: 50%;
       background: #ffffff;
-      transition: left 0.15s ease;
+      color: #173f69;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(23, 63, 105, 0.25);
+      transition: background 0.15s ease, border-color 0.15s ease, top 0.15s ease, transform 0.15s ease;
     }
-    body.map-expanded .menu-toggle-tab { background: #ffffff; color: #173f69; }
-    body.map-expanded .mtt-switch { background: #9aa9b8; }
-    body.map-expanded .mtt-knob { left: 2px; }
-    @media (max-width: 700px) {
-      .menu-toggle-tab { left: 50%; }
-    }
+    .menu-toggle-tab svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
+    .menu-toggle-tab:hover { background: #173f69; color: #ffffff; border-color: #173f69; }
+    .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
+    body.map-expanded .menu-toggle-tab { top: 5px; transform: translateY(-50%) translateY(10px); }
+    body.map-expanded .menu-toggle-tab svg { transform: rotate(180deg); }
+    /* keep the map's top-right controls clear of the button */
+    #app .leaflet-top.leaflet-right { margin-top: 14px; }
 
     .top-banner {
       z-index: 1200;
@@ -4871,7 +4869,8 @@
       const btn = document.getElementById("expandMapBtn");
       if (btn) {
         btn.setAttribute("aria-pressed", String(!on));
-        btn.querySelector(".mtt-label").textContent = on ? "Menus off" : "Menus on";
+        btn.title = on ? "Show menus" : "Hide menus (more room for the map)";
+        btn.setAttribute("aria-label", btn.title);
       }
       setTimeout(function() {
         if (APP.map) APP.map.invalidateSize();
@@ -4887,8 +4886,9 @@
       tab.id = "expandMapBtn";
       tab.className = "menu-toggle-tab";
       tab.setAttribute("aria-pressed", "true");
-      tab.innerHTML = '<span class="mtt-switch"><span class="mtt-knob"></span></span><span class="mtt-label">Menus on</span>';
-      tab.title = "Show or hide the menus above the map";
+      tab.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 10.5 8 5.5l5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      tab.title = "Hide menus (more room for the map)";
+      tab.setAttribute("aria-label", tab.title);
       tab.addEventListener("click", function(e) {
         e.stopPropagation();
         setMapExpanded(!document.body.classList.contains("map-expanded"));
