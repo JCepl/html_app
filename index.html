@@ -422,6 +422,7 @@
     }
     .map-popup-val { display: block; font-weight: 600; margin: 1px 0 4px; }
     .mini-popup .map-popup { min-width: 215px; max-width: 250px; }
+    .map-popup-val small a { color: #0f3b73; font-weight: 700; }
     .map-popup-val small { font-weight: 400; color: #5a6b80; }
     .map-popup-layer { display: block; margin-top: 5px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #244166; }
 
@@ -4378,13 +4379,14 @@
     function openClickPopup(latlng, state, map) {
       state = state || APP;
       map = map || APP.map;
-      if (!state.overlayVisible) return;
+      const sites = natura2000SitesAt(latlng);
+      if (!state.overlayVisible && !sites.length) return;
       const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
       const countryName = countryFeature ? getCountryName(countryFeature) : "—";
       // One row per layer that is switched on, so a click on one pixel reads
       // them all together (top-most first).
       const ids = (state.visibleOverlays && state.visibleOverlays.length
-        ? state.visibleOverlays.slice().reverse() : [getTopVisibleOverlayIdFor(state)]);
+        ? state.visibleOverlays.slice().reverse() : []);
       const asyncRows = [];
       let rows = "";
       ids.forEach(function(id) {
@@ -4396,12 +4398,13 @@
                         : '<span class="map-popup-val">' + info.valueHtml + '</span>');
         if (wantsAsync) asyncRows.push(id);
       });
-      const sites = natura2000SitesAt(latlng);
       if (sites.length) {
         rows += '<span class="map-popup-layer">Natura 2000</span>'
           + sites.slice(0, 4).map(function(f) {
               const q = f.properties;
-              return '<span class="map-popup-val">' + q.name + '<small> · ' + q.designation + ' · ' + q.code + '</small></span>';
+              return '<span class="map-popup-val">' + q.name + '<small> · ' + q.designation + ' · ' + q.code
+                + ' · <a href="https://natura2000.eea.europa.eu/Natura2000/SDF.aspx?site=' + encodeURIComponent(q.code)
+                + '" target="_blank" rel="noopener noreferrer" title="Official EEA Natura 2000 data form for this site">data form ↗</a></small></span>';
             }).join("");
       }
       const html = '<div class="map-popup">'
