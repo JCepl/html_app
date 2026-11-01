@@ -959,6 +959,12 @@
       margin-bottom: 1px;
     }
 
+    /* Keep the ribbon calm: opacity slider only on the selected card. */
+    .overlay-card:not(.active) .overlay-opacity-row { display: none; }
+    .overlay-card-copy { white-space: normal; }
+    details.layer-info-box > summary { cursor: pointer; font-weight: 700; font-size: 11px; color: #2b4a68; padding: 2px 0; }
+    details.layer-info-box[open] > summary { margin-bottom: 4px; }
+
     .overlay-card.hazard-primary {
       border: 1px solid rgba(211, 133, 43, 0.4);
       background: rgba(255, 247, 233, 0.9);
@@ -1583,12 +1589,12 @@
           <div class="overlay-group-cards">
         <div class="overlay-card hazard-primary" data-overlay="droughtFuture">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Climate projection</span>Future SPEI classes</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Climate projection</span>Future drought hazard</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtFuture">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">December SPEI-12-equivalent: projected climatic water balance relative to the 1981–2010 reference climate. 4 future scenario/period combinations.</span>
+          <span class="overlay-card-copy">Drier or wetter than 1981–2010.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="droughtFuture" />
             <span class="overlay-tool-value" data-opacity-value="droughtFuture">0.85</span>
@@ -1597,12 +1603,12 @@
         <div class="bb-accessories" id="droughtAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="droughtRef">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Reference indicators (MYD)</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past multi-year droughts</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="droughtRef">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Multi-year-drought (MYD) indicators, reference period 1981–2010: number of events, max duration, cumulative duration.</span>
+          <span class="overlay-card-copy">Past multi-year droughts, 1981–2010.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="droughtRef" />
             <span class="overlay-tool-value" data-opacity-value="droughtRef">0.85</span>
@@ -1626,7 +1632,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="fireWeather">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">How hard a fire would be to contain on summer days (not how likely one is to start). Change vs. 1981&ndash;2005, or the absolute level.</span>
+          <span class="overlay-card-copy">How hard a fire is to contain (summer).</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="fireWeather" />
             <span class="overlay-tool-value" data-opacity-value="fireWeather">0.85</span>
@@ -1634,12 +1640,12 @@
         </div>
         <div class="overlay-card hazard-auxiliary" data-overlay="wildfire">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Fire pressure (Gr&uuml;nig et al.)</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Fire pressure (context)</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wildfire">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Simulated fire pressure index of an independent study, by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
+          <span class="overlay-card-copy">Independent fire pressure index.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="wildfire" />
             <span class="overlay-tool-value" data-opacity-value="wildfire">0.85</span>
@@ -1664,7 +1670,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="wind">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Probability of stand damage under a 100-year wind speed (hazard &times; stand vulnerability), SSP5-8.5.</span>
+          <span class="overlay-card-copy">Chance of stand damage in a 100-year storm.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="wind" />
             <span class="overlay-tool-value" data-opacity-value="wind">0.85</span>
@@ -1673,12 +1679,12 @@
         <div class="bb-accessories" id="windAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="windPressure">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Wind Pressure</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Wind pressure (context)</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="windPressure">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Modelled wind pressure index by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
+          <span class="overlay-card-copy">Independent wind pressure index.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="windPressure" />
             <span class="overlay-tool-value" data-opacity-value="windPressure">0.85</span>
@@ -1704,7 +1710,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Susceptibility to documented bark-beetle and wind disturbance in spruce. Earlier model version; final maps follow.</span>
+          <span class="overlay-card-copy">Susceptibility of spruce (earlier model).</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
             <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
@@ -1717,7 +1723,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Detected forest disturbance 1985&ndash;2023, all agents (not bark beetle only), plus 149 documented bark-beetle outbreaks as clickable points.</span>
+          <span class="overlay-card-copy">Past forest disturbance, all causes.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
@@ -1731,7 +1737,7 @@
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="phenips">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Bark beetle GDD &amp; generations across 4 climate periods (3 GCM ensemble, RCP8.5).</span>
+          <span class="overlay-card-copy">Beetle generations per year.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="phenips" />
             <span class="overlay-tool-value" data-opacity-value="phenips">0.85</span>
@@ -1739,12 +1745,12 @@
         </div>
         <div class="overlay-card hazard-auxiliary" data-overlay="bbtl">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Bark Beetle Pressure</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Bark beetle pressure (context)</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtl">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Modelled bark beetle pressure index by scenario and year (<a href="https://doi.org/10.1126/science.adx6329" target="_blank" rel="noopener noreferrer">Grunig et al. 2026, <em>Science</em></a>).</span>
+          <span class="overlay-card-copy">Independent bark beetle pressure index.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtl" />
             <span class="overlay-tool-value" data-opacity-value="bbtl">0.85</span>
@@ -1909,10 +1915,9 @@
               <option value="historical">1981&ndash;2005 (reference, level only)</option>
             </select>
           </div>
-          <div class="layer-info-box">
+          <details class="layer-info-box"><summary>About this layer</summary>
             <div class="layer-info-row"><strong>What it shows</strong><span id="fireInfoDesc"></span></div>
-            <div class="layer-info-row"><strong>How to read it</strong><span id="fireInfoValues"></span></div>
-          </div>
+            <div class="layer-info-row"><strong>How to read it</strong><span id="fireInfoValues"></span></div></details>
           <div class="small">Summer (June&ndash;August) fire weather from one climate-model chain (RCA4 driven by MPI-ESM-LR), 0.15&deg; grid (about 15 km). It describes weather conditions, <em>not</em> ignition probability. Source: F. Taccaliti, UNIPD-TESAF (C3S fire-danger indicators, Giannakopoulos &amp; Karali 2020).</div>
         </div>
 
@@ -1927,11 +1932,10 @@
               <option value="2071_2100_ssp585">2071–2100, SSP5-8.5</option>
             </select>
           </div>
-          <div class="layer-info-box">
+          <details class="layer-info-box"><summary>About this layer</summary>
             <div class="layer-info-row"><strong>What it shows</strong><span>December SPEI-12-equivalent values representing projected climatic water balance conditions relative to the historical reference climate (1981–2010).</span></div>
             <div class="layer-info-row"><strong>How to read the values</strong><span>Values indicate the standardized position of projected future climatic water balance relative to the historical reference distribution (1981–2010). Negative = drier, positive = wetter than reference.</span></div>
-            <div class="layer-info-row"><strong>Legend</strong><span>&gt; −1.0 low drought hazard · −1.5 to ≤ −1.0 moderate · −2.0 to ≤ −1.5 high · &lt; −2.0 extreme.</span></div>
-          </div>
+            <div class="layer-info-row"><strong>Legend</strong><span>&gt; −1.0 low drought hazard · −1.5 to ≤ −1.0 moderate · −2.0 to ≤ −1.5 high · &lt; −2.0 extreme.</span></div></details>
           <div class="small">Source: Stefan Ebner (BFW). Scenario/period labelling for the 4 bands is inferred, not embedded in the source file — flagged for confirmation.</div>
         </div>
 
@@ -1945,11 +1949,10 @@
               <option value="total_duration">Cumulative duration of multi-year droughts</option>
             </select>
           </div>
-          <div class="layer-info-box">
+          <details class="layer-info-box"><summary>About this layer</summary>
             <div class="layer-info-row"><strong>What it shows</strong><span id="droughtRefInfoDesc"></span></div>
             <div class="layer-info-row"><strong>How to read the values</strong><span id="droughtRefInfoValues"></span></div>
-            <div class="layer-info-row"><strong>Legend</strong><span id="droughtRefInfoLegend"></span></div>
-          </div>
+            <div class="layer-info-row"><strong>Legend</strong><span id="droughtRefInfoLegend"></span></div></details>
           <div class="small">A multi-year drought (MYD) event is SPEI-12 ≤ −1.1 for ≥2 consecutive years, historical reference period 1981–2010, CHELSA-native ~1km. Source: Stefan Ebner (BFW).</div>
         </div>
 
@@ -4049,13 +4052,29 @@
       fireWeather: updateFireWeatherLayer
     };
 
+    // Show only the first sentence; the rest sits behind a "More" link.
+    function setShortDescription(el, text) {
+      el.textContent = "";
+      const m = /^(.+?[.!?])\s+(.+)$/s.exec(text || "");
+      if (!m) { el.textContent = text || ""; return; }
+      el.appendChild(document.createTextNode(m[1] + " "));
+      const rest = document.createElement("span");
+      rest.textContent = m[2]; rest.hidden = true;
+      const link = document.createElement("a");
+      link.href = "#"; link.textContent = "More";
+      link.addEventListener("click", function(e) {
+        e.preventDefault(); rest.hidden = !rest.hidden; link.textContent = rest.hidden ? "More" : "Less";
+      });
+      el.appendChild(link); el.appendChild(document.createTextNode(" ")); el.appendChild(rest);
+    }
+
     function syncOverlayControls(refreshTarget) {
       const focusedOverlay = getFocusedOverlay();
       const showHexControls = HEX_OVERLAY_IDS.includes(APP.focusedOverlay);
 
       // Selection and display are deliberately separate:
       // card click changes settings, while Display/Hide changes map visibility.
-      DOM.overlayDescription.textContent = focusedOverlay.description;
+      setShortDescription(DOM.overlayDescription, focusedOverlay.description);
       updateOverlayCardStates();
       updateForecastPanelVisibility();
       DOM.hexControlPanel.hidden = !showHexControls;
