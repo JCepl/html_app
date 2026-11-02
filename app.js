@@ -841,23 +841,68 @@
       return requestToken === APP.overlayLoadTokens[overlayId];
     }
 
+    // Crossfade: when an image layer is replaced (period, scenario or variable change), the old
+    // image stays under the new one until the new one has loaded, then the two swap by opacity.
+    const FADE_MS = 400;
+    const LAYER_GHOSTS = {};
+    const prefersReducedMotion = function() {
+      return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    };
+
+    function dropGhosts(overlayId, fade) {
+      (LAYER_GHOSTS[overlayId] || []).forEach(function(g) {
+        clearTimeout(g.timer);
+        const el = g.layer.getElement && g.layer.getElement();
+        const remove = function() { if (g.map.hasLayer(g.layer)) g.map.removeLayer(g.layer); };
+        if (fade && el) { el.style.transition = "opacity " + FADE_MS + "ms ease"; el.style.opacity = 0; setTimeout(remove, FADE_MS + 50); }
+        else remove();
+      });
+      LAYER_GHOSTS[overlayId] = [];
+    }
+
     function clearLayerInstance(overlayId) {
       const layer = APP.layerInstances[overlayId];
-      if (layer) {
-        APP.map.removeLayer(layer);
-        APP.layerInstances[overlayId] = null;
-      }
+      if (!layer) return;
+      APP.layerInstances[overlayId] = null;
+      if (prefersReducedMotion() || !layer.getElement || !layer.getElement()) { APP.map.removeLayer(layer); return; }
+      // Keep it as a ghost; if no replacement claims it within 120 ms it was a plain "hide", so fade it out.
+      const g = { layer: layer, map: APP.map, timer: null };
+      g.timer = setTimeout(function() {
+        LAYER_GHOSTS[overlayId] = (LAYER_GHOSTS[overlayId] || []).filter(function(x) { return x !== g; });
+        const el = layer.getElement();
+        if (el) { el.style.transition = "opacity " + FADE_MS + "ms ease"; el.style.opacity = 0; }
+        setTimeout(function() { if (g.map.hasLayer(layer)) g.map.removeLayer(layer); }, FADE_MS + 50);
+      }, 120);
+      (LAYER_GHOSTS[overlayId] = LAYER_GHOSTS[overlayId] || []).push(g);
     }
 
     function addImageOverlayLayer(overlayId, imagePath, bounds) {
-      APP.layerInstances[overlayId] = L.imageOverlay(imagePath, [
+      const target = getLayerOpacity(overlayId);
+      const ghosts = LAYER_GHOSTS[overlayId] || [];
+      ghosts.forEach(function(g) { clearTimeout(g.timer); });
+      const fade = !prefersReducedMotion() && ghosts.length > 0;
+      const layer = L.imageOverlay(imagePath, [
         [bounds.south, bounds.west],
         [bounds.north, bounds.east]
       ], {
-        opacity: getLayerOpacity(overlayId),
+        opacity: fade ? 0 : target,
         pane: getOverlayPaneName(overlayId)
       }).addTo(APP.map);
-      return APP.layerInstances[overlayId];
+      APP.layerInstances[overlayId] = layer;
+      if (fade) {
+        const el = layer.getElement();
+        let done = false;
+        const swap = function() {
+          if (done) return; done = true;
+          el.style.transition = "opacity " + FADE_MS + "ms ease";
+          if (APP.layerInstances[overlayId] === layer) el.style.opacity = getLayerOpacity(overlayId);
+          dropGhosts(overlayId, true);
+        };
+        el.addEventListener("load", swap, { once: true });
+        el.addEventListener("error", swap, { once: true });
+        setTimeout(swap, 6000);
+      }
+      return layer;
     }
 
     function getLayerOpacity(overlayId) {
@@ -1669,6 +1714,110 @@
     // LEGEND
     // ====================================================================
     function setLegendLabels() {
+      setLegendLabelsCore();
+      updatePeriodUi();
+    }
+
+    // ====================================================================
+    // PERIOD STRIP: active chip, "what is shown" badge, play-through
+    // ====================================================================
+    function selectedText(dom) {
+      return dom && dom.selectedOptions && dom.selectedOptions[0] ? dom.selectedOptions[0].textContent.trim() : "";
+    }
+
+    function periodTextFor(id) {
+      if (id === "droughtFuture") return selectedText(DOM.droughtFuturePeriodSelector);
+      if (id === "droughtRef") return "1981–2010";
+      if (id === "fireWeather") {
+        const s = APP.currentFireScen || "";
+        if (s === "historical") return "1981–2005";
+        const m = s.match(/^(rcp\d+)_(\d{4})_(\d{4})$/);
+        return m ? m[1].toUpperCase().replace("RCP", "RCP ") + " · " + m[2] + "–" + m[3] : s;
+      }
+      if (id === "wind") return selectedText(DOM.windPeriodSelector);
+      if (id === "bbtforecast") return String(APP.currentForecastPeriod || "").replace(/_/g, "–");
+      if (id === "bbtpast") return "1985–2024";
+      if (id === "phenips") return (phenipsIsObs() ? "observed " : String(APP.currentPhenipsScen).toUpperCase().replace("RCP", "RCP ") + " · ") + selectedText(DOM.phenisPeriodSelector);
+      if (id === "bbtl" || id === "wildfire") return String(APP.currentRcp || "").toUpperCase().replace("RCP", "RCP ") + " · " + APP.currentYear;
+      return "";
+    }
+
+    function chipIsActive(chip) {
+      const id = chip.dataset.jumpOverlay, p = chip.dataset.jumpPeriod;
+      if (!isOverlayVisible(id)) return false;
+      if (id === "droughtFuture") return String(APP.currentDroughtFuturePeriod).indexOf(p === "near" ? "2041_2070" : "2071_2100") === 0;
+      if (id === "fireWeather") {
+        const s = APP.currentFireScen || "";
+        return p === "historical" ? s === "historical" : s.endsWith(p === "near" ? "2041_2070" : "2071_2098");
+      }
+      if (id === "wind") return APP.currentWindPeriod === p;
+      if (id === "bbtl") return APP.currentYear === 2030;
+      if (id === "wildfire") return APP.currentYear === (p === "near" ? 2030 : 2100);
+      if (id === "bbtforecast") {
+        const m = APP.forecastManifest, e = m && m.models && m.models[APP.currentForecastModel];
+        const per = (e && e.periods) || (m && m.periods) || [];
+        return !per.length || APP.currentForecastPeriod === per[per.length - 1];
+      }
+      return true; // single-slot chips (Historic of droughtRef / bbtpast): shown = active
+    }
+
+    function updatePeriodUi() {
+      document.querySelectorAll(".period-chip[data-jump-overlay]").forEach(function(chip) {
+        const on = chipIsActive(chip);
+        chip.classList.toggle("is-active", on);
+        chip.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      const badge = document.getElementById("periodBadge");
+      if (!badge) return;
+      const top = APP.overlayVisible ? getTopVisibleOverlayId() : null;
+      const ov = top && OVERLAY_CATALOG[top];
+      if (!ov) { badge.hidden = true; return; }
+      const per = periodTextFor(top);
+      badge.textContent = ov.label + (per ? " · " + per : "");
+      badge.hidden = false;
+    }
+
+    // ▶ steps one strip's chips in order (historic -> near -> later), then stops on the last.
+    let PLAYING = null;
+    function stopPlay() {
+      if (!PLAYING) return;
+      clearTimeout(PLAYING.timer);
+      PLAYING.btn.textContent = "▶";
+      PLAYING.btn.setAttribute("aria-label", "Play through the periods");
+      PLAYING = null;
+    }
+    function startPlay(btn, chips) {
+      stopPlay();
+      PLAYING = { btn: btn, timer: null };
+      btn.textContent = "❚❚";
+      btn.setAttribute("aria-label", "Stop");
+      let i = 0, prev = null;
+      const step = function() {
+        if (!PLAYING || PLAYING.btn !== btn) return;
+        if (i >= chips.length) { stopPlay(); return; }
+        const c = chips[i++];
+        if (prev && prev !== c.dataset.jumpOverlay) setLayerVisibilityFromRibbon(prev, false);
+        prev = c.dataset.jumpOverlay;
+        jumpToOverlayPeriod(c.dataset.jumpOverlay, c.dataset.jumpPeriod).catch(console.error);
+        PLAYING.timer = setTimeout(step, 2800);
+      };
+      step();
+    }
+    function initPeriodPlay() {
+      document.querySelectorAll(".period-strip").forEach(function(strip) {
+        const chips = Array.from(strip.querySelectorAll(".period-chip[data-jump-overlay]"));
+        if (chips.length < 2) return;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "period-play"; btn.textContent = "▶";
+        btn.setAttribute("aria-label", "Play through the periods");
+        btn.title = "Play through historic → near future → later future";
+        btn.addEventListener("click", function() { if (PLAYING && PLAYING.btn === btn) stopPlay(); else startPlay(btn, chips); });
+        strip.appendChild(btn);
+        chips.forEach(function(c) { c.addEventListener("click", stopPlay); });
+      });
+    }
+
+    function setLegendLabelsCore() {
       if (!APP.overlayVisible) {
         syncRiskFilterBox(null);
         renderLegendSwatches([]);
@@ -4018,6 +4167,7 @@
         });
       });
 
+      initPeriodPlay();
       // Period-strip chips with real coverage are click-to-jump links;
       // empty chips (no data-jump-overlay) stay plain and non-interactive.
       document.querySelectorAll(".period-chip[data-jump-overlay]").forEach(function(chip) {
