@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Central Europe Hex Map</title>
+  <title>RE-ENFORCE Decision Support System</title>
 
   <link
     rel="stylesheet"
@@ -223,6 +223,9 @@
 
     .banner-button {
       background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 4px 2px;
       cursor: pointer;
       font-family: inherit;
     }
@@ -327,7 +330,8 @@
       position: absolute;
       z-index: 50;
     }
-    .ui-comment-top-right { top: -8px; right: -8px; }
+    .ui-comment-top-right { top: 4px; right: 104px; }
+    @media (max-width: 700px) { .ui-comment-top-right { top: -6px; right: 2px; } }
     .ui-comment-badge {
       width: 20px;
       height: 20px;
@@ -1066,6 +1070,16 @@
       letter-spacing: 0;
     }
     .bb-toggle.open .bb-toggle-count { display: none; }
+    .bb-toggle.has-on:not(.open)::before {
+      content: "● shown";
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #ffffff;
+      background: #2e9e5b;
+      border-radius: 8px;
+      padding: 1px 5px;
+      order: 2;
+    }
     .bb-accessories { display: flex; gap: 5px; }
     .bb-accessories[hidden] { display: none; }
 
@@ -1196,6 +1210,19 @@
       padding: 5px 7px;
       cursor: pointer;
     }
+
+    #toggleOverlayBtn, #fitOverlayBtn {
+      border: 1px solid #b9cfe7;
+      background: #ffffff;
+      color: #173f69;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    #toggleOverlayBtn:hover, #fitOverlayBtn:hover { background: #eef3f7; }
 
     .overlay-tool-btn.is-on {
       background: #1f5a96;
@@ -3460,6 +3487,14 @@
         button.classList.toggle("active", isActive);
       });
 
+      DOM.overlayCardStrip.querySelectorAll(".bb-accessories").forEach(function(group) {
+        const toggle = DOM.overlayCardStrip.querySelector('[data-toggle-target="' + group.id + '"]');
+        if (!toggle) return;
+        toggle.classList.toggle("has-on", Array.from(group.querySelectorAll("[data-toggle-overlay]")).some(function(b) {
+          return isOverlayVisible(b.dataset.toggleOverlay);
+        }));
+      });
+
       DOM.overlayCardStrip.querySelectorAll("[data-toggle-overlay]").forEach(function(button) {
         const overlayId = button.dataset.toggleOverlay;
         const isOn = isOverlayVisible(overlayId);
@@ -5719,6 +5754,9 @@
       p.set("sp", APP.split ? "1" : "0");
       p.set("sv", APP.simpleView ? "1" : "0");
       p.set("pa", APP.showPilotActions ? "1" : "0");
+      p.set("n2", APP.showNatura2000 ? "1" : "0");
+      const folded = Object.keys(FOLDS).filter(function(c) { return document.body.classList.contains(c); });
+      if (folded.length) p.set("fd", folded.join(","));
       // No "ce" param -- catalogue-event visibility is derived from "ov"
       // (whether bbtpast is in it), not stored independently.
       return location.origin + location.pathname + "#" + p.toString();
@@ -5743,6 +5781,8 @@
       if (p.has("yr")) APP.currentYear = Number(p.get("yr"));
       if (p.has("th")) APP.riskThreshold = Math.max(0, Math.min(100, Number(p.get("th")) || 0)) / 100;
       if (p.has("sv")) APP.simpleView = p.get("sv") !== "0";
+      if (p.has("fd")) p.get("fd").split(",").forEach(function(c) { if (FOLDS[c]) setFold(c, true); });
+      if (p.get("n2") === "1" && !APP.showNatura2000) toggleNatura2000();
       if (p.has("pa")) { APP.showPilotActions = p.get("pa") === "1"; syncPilotActionsVisibility(); }
 
       if (p.has("lo")) {
@@ -5773,9 +5813,12 @@
       if (DOM.riskValue) DOM.riskValue.textContent = Math.round(APP.riskThreshold * 100) + "%";
 
       if (p.has("ov")) {
-        APP.visibleOverlays = p.get("ov").split(",").filter(function(id) {
+        const asked = p.get("ov").split(",").filter(Boolean);
+        APP.visibleOverlays = asked.filter(function(id) {
           return OVERLAY_CATALOG[id] && OVERLAY_CATALOG[id].available;
         });
+        // A link naming only layers that no longer exist opens the default map, not a blank one.
+        if (asked.length && !APP.visibleOverlays.length) APP.visibleOverlays = ["droughtFuture"];
         syncOverlayVisibilityFlag();
         syncCatalogueEventsFromPastDisturbance();
       }
@@ -5992,6 +6035,12 @@
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleNatura2000(); }
         });
       }
+      document.querySelectorAll(".dss-pillar:not(.dss-pillar-detail-toggle)").forEach(function(pillar) {
+        pillar.addEventListener("click", function() {
+          document.querySelectorAll(".dss-pillar-detail-toggle.is-open").forEach(function(el) { el.classList.remove("is-open"); });
+          DOM.dssPillarDetail.classList.remove("is-open");
+        });
+      });
       document.querySelectorAll(".dss-pillar-detail-toggle").forEach(function(toggleEl) {
         toggleEl.addEventListener("click", function() { toggleDssPillarDetail(toggleEl); });
         toggleEl.addEventListener("keydown", function(e) {
