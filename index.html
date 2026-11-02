@@ -221,6 +221,7 @@
       border-bottom-color: #0f3b73;
     }
 
+    .banner-link[hidden], .eu-note[hidden] { display: none !important; }
     .banner-button {
       background: none;
       border: 0;
@@ -1763,8 +1764,10 @@
         <button class="banner-link banner-button" id="detailModeBtn" type="button" aria-pressed="false"
                 title="Simplified by default (one model, no climate-model picker). Switch to see every model, scenario, and validation detail.">Show full detail</button>
         <button class="banner-link banner-button" id="shareBtn" type="button">Share view</button>
+        <a class="banner-link" id="feedbackLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Feedback</a>
       </nav>
       <span class="eu-note">Co-financed by the European Union through Interreg Central Europe.</span>
+      <span class="eu-note" id="privacyNote" hidden>Anonymous usage statistics (no cookies, no personal data).</span>
     </div>
   </header>
 
@@ -2314,6 +2317,50 @@
     // 10. BASEMAPS
     // 11. SPLIT SCREEN -- two synced maps; the panel drives the ACTIVE one
     // 12. INIT, SHAREABLE LINK & CONTROL WIRING
+    // --- Optional, privacy-friendly usage statistics + feedback link --------
+    // Both stay OFF until a value is filled in:
+    //   goatcounterCode : the code of a GoatCounter site (https://CODE.goatcounter.com).
+    //                     Cookie-free, no personal data; skipped when the browser sends
+    //                     Do Not Track / Global Privacy Control.
+    //   feedbackUrl     : link of a short feedback form (a quiet link in the menu, never a pop-up).
+    const SITE_SETTINGS = { goatcounterCode: "", feedbackUrl: "" };
+    let analyticsOn = false;
+
+    function track(name) {
+      if (!analyticsOn) return;
+      try { window.goatcounter.count({ path: "event/" + name, title: name, event: true }); } catch (e) { /* analytics must never break the app */ }
+    }
+
+    function initSiteSettings() {
+      const feedback = document.getElementById("feedbackLink");
+      if (feedback && SITE_SETTINGS.feedbackUrl) { feedback.href = SITE_SETTINGS.feedbackUrl; feedback.hidden = false; }
+
+      const code = SITE_SETTINGS.goatcounterCode;
+      if (!code || navigator.doNotTrack === "1" || navigator.globalPrivacyControl) return;
+      window.goatcounter = { no_onload: false };
+      const tag = document.createElement("script");
+      tag.async = true;
+      tag.src = "https://gc.zgo.at/count.js";
+      tag.setAttribute("data-goatcounter", "https://" + code + ".goatcounter.com/count");
+      document.head.appendChild(tag);
+      analyticsOn = true;
+      const note = document.getElementById("privacyNote");
+      if (note) note.hidden = false;
+
+      // One delegated listener: what people use, never who they are.
+      document.addEventListener("click", function(e) {
+        const t = e.target.closest && e.target.closest("[data-toggle-overlay], .period-chip[data-jump-overlay], .dss-pillar, #shareBtn, #detailModeBtn, #feedbackLink, #mobLayersBtn, #mobLegendBtn");
+        if (!t) return;
+        if (t.dataset.toggleOverlay) {
+          const id = t.dataset.toggleOverlay;
+          setTimeout(function() { if (isOverlayVisible(id)) track("layer-" + id); }, 600);
+        } else if (t.dataset.jumpOverlay) track("chip-" + t.dataset.jumpOverlay + "-" + (t.dataset.jumpPeriod || "historic"));
+        else if (t.classList.contains("dss-pillar")) track("pillar-" + (t.id || t.dataset.pillar || "x"));
+        else track("click-" + t.id);
+      }, true);  // capture: the cards stop clicks from bubbling
+      tag.addEventListener("load", function() { track(isMobileLayout() ? "visit-phone" : "visit-desktop"); });
+    }
+
     const APP = {
       map: null,
       // Stable reference to the original (left) Leaflet map instance, set
@@ -4569,6 +4616,7 @@
     }
 
     function openClickPopup(latlng, state, map) {
+      track("map-click");
       state = state || APP;
       map = map || APP.map;
       const sites = natura2000SitesAt(latlng);
@@ -6229,6 +6277,7 @@
       }
 
       initMobileLayout();
+      initSiteSettings();
 
       // Any driver box's accessory layers stay collapsed until its header
       // strip is clicked (currently Bark beetle +3, Drought +1).
