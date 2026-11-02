@@ -1,0 +1,1634 @@
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    /* 5 explicit row tracks, one per top-level child in DOM order: banner,
+       DSS-pillar strip, DSS-pillar detail (collapses to 0 height when
+       [hidden]), driver ribbon, #app (the only flexible row -- fills all
+       remaining space for the map). Row count MUST track the number of
+       body's direct children exactly, or auto-placement shifts the 1fr
+       track onto the wrong element and silently breaks the map's height. */
+    body {
+      display: grid;
+      grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
+      background: #eef3f9;
+      overflow: hidden;
+    }
+
+    /* Fold arrows. Every arrow lives in its OWN thin gutter (a real grid row
+       between two panels, or a real column between side panel and map), so it
+       never covers anything -- folded or not. Panels fold independently:
+       fold-top (banner + DSS tabs), fold-drivers (driver cards), fold-side
+       (map inspector). Folded rows collapse to 0 height (not display:none) so
+       the grid rows keep matching the children. */
+    body.fold-top .top-banner,
+    body.fold-top .dss-pillar-strip,
+    body.fold-top .dss-pillar-detail,
+    body.fold-drivers .layer-ribbon {
+      height: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
+      border: 0 !important; overflow: hidden !important; visibility: hidden !important;
+    }
+    body.fold-side #panel { display: none; }
+    /* Open panel: the gutter takes NO space -- its arrow sits small on the seam
+       at the far right. Rolled up: the gutter becomes a real 22 px strip that
+       carries the panel's name, so a folded panel always says what it is. */
+    .fold-gutter {
+      position: relative;
+      z-index: 1195;
+      height: 0;
+      box-sizing: border-box;
+    }
+    .fold-gutter .menu-toggle-tab {
+      position: absolute; right: 22px; top: 0; transform: translateY(-50%); z-index: 1;
+    }
+    .fold-gutter .fold-label { display: none; }
+    body.fold-top #gutterTop,
+    body.fold-drivers #gutterMap {
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px 0 14px;
+      background: linear-gradient(180deg, #e3edf8, #d6e4f3);
+      border-bottom: 1px solid #c3d4e6;
+    }
+    body.fold-top #gutterTop .menu-toggle-tab,
+    body.fold-drivers #gutterMap .menu-toggle-tab { position: static; transform: none; }
+    body.fold-top #gutterTop .fold-label,
+    body.fold-drivers #gutterMap .fold-label { display: block; }
+    .fold-gutter-v {
+      position: relative;
+      z-index: 1195;
+      flex: 0 0 0;
+      width: 0;
+    }
+    .fold-gutter-v .menu-toggle-tab {
+      position: absolute; left: -8px; top: 50%; transform: translateY(-50%); z-index: 1;
+    }
+    .fold-gutter-v .fold-label { display: none; }
+    body.fold-side .fold-gutter-v {
+      flex: 0 0 18px; width: 18px;
+      display: flex; flex-direction: column; align-items: center; padding-top: 12px;
+      background: linear-gradient(90deg, #e3edf8, #d6e4f3);
+      border-right: 1px solid #c3d4e6;
+    }
+    body.fold-side .fold-gutter-v .menu-toggle-tab { position: static; transform: none; }
+    body.fold-side .fold-gutter-v .fold-label { display: block; }
+    body.fold-top .fold-gutter#gutterTop { border-top: 0; }
+    .menu-toggle-tab {
+      width: 44px;
+      height: 18px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid #ffffff;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #2a5f96, #173f69);
+      color: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 1px 5px rgba(23, 63, 105, 0.4);
+      transition: width 0.18s ease, height 0.18s ease, background 0.15s ease, box-shadow 0.15s ease;
+      animation: menuTabHint 2.4s ease-out 1.2s 2;
+    }
+    .menu-toggle-tab svg { width: 16px; height: 12px; transition: transform 0.25s ease; }
+    .menu-toggle-tab:hover { width: 56px; background: linear-gradient(180deg, #e39a3f, #c4731c); box-shadow: 0 2px 8px rgba(196, 115, 28, 0.5); animation: none; }
+    .menu-toggle-tab:focus-visible { outline: 3px solid #f3b970; outline-offset: 2px; }
+    body.fold-top #foldTopBtn svg,
+    body.fold-drivers #expandMapBtn svg { transform: rotate(180deg); }
+    /* side arrow: a tall pill pointing left (fold) / right (unfold) */
+    /* Each gutter names the panel it folds, also (and above all) when folded. */
+    .fold-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #244166; cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    .fold-label:hover { color: #c4731c; }
+    .fold-label::after { white-space: pre; font-weight: 600; letter-spacing: 0; text-transform: none; color: #6b7d92; }
+    body.fold-top #gutterTop .fold-label::after,
+    body.fold-drivers #gutterMap .fold-label::after,
+    body.fold-side #gutterSide .fold-label::after { content: "  \00B7  hidden, click to show"; }
+    .fold-gutter-v .fold-label {
+      writing-mode: vertical-rl; margin-top: 10px; font-size: 9.5px;
+    }
+    body.fold-side #gutterSide .fold-label::after { content: "  \00B7  hidden"; }
+    .menu-toggle-tab.is-side { width: 16px; height: 44px; }
+    .menu-toggle-tab.is-side:hover { width: 16px; height: 56px; }
+    .menu-toggle-tab.is-side svg { width: 12px; height: 16px; transform: rotate(-90deg); }
+    body.fold-side .menu-toggle-tab.is-side svg { transform: rotate(90deg); }
+    @media (max-width: 900px) { .fold-gutter-v { display: none; } body.fold-side #panel { display: block; } }
+    @keyframes menuTabHint {
+      0% { box-shadow: 0 1px 5px rgba(23, 63, 105, 0.4), 0 0 0 0 rgba(227, 154, 63, 0.7); }
+      70% { box-shadow: 0 1px 5px rgba(23, 63, 105, 0.4), 0 0 0 10px rgba(227, 154, 63, 0); }
+      100% { box-shadow: 0 1px 5px rgba(23, 63, 105, 0.4), 0 0 0 0 rgba(227, 154, 63, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) { .menu-toggle-tab { animation: none; } }
+
+    .top-banner {
+      z-index: 1200;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(360px, 1fr);
+      gap: 12px;
+      align-items: center;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 9px 16px;
+      border-bottom: 1px solid #c9d8ea;
+      background: linear-gradient(180deg, #f8fbff 0%, #ecf3fb 100%);
+    }
+
+    .banner-left {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .banner-logo {
+      display: block;
+      max-height: 42px;
+      width: auto;
+      object-fit: contain;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .banner-title {
+      min-width: 0;
+    }
+
+    .banner-title h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      color: #11385f;
+      white-space: normal;
+    }
+
+    .banner-right {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .banner-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+      white-space: normal;
+    }
+
+    .banner-link {
+      display: inline-block;
+      flex: 0 0 auto;
+      padding: 4px 2px;
+      color: #0f3b73;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border-bottom: 2px solid transparent;
+    }
+
+    .banner-link:hover {
+      border-bottom-color: #0f3b73;
+    }
+
+    .banner-link[hidden], .eu-note[hidden] { display: none !important; }
+    .banner-button {
+      background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 4px 2px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .banner-button.is-on {
+      color: #b35900;
+      border-bottom-color: #ffb000;
+    }
+
+    /* Click popup -- a navy header bar (matching the driver-ribbon's
+       overlay-group-label) over a white body, instead of Leaflet's generic
+       plain-white balloon, so it reads as part of the app rather than a
+       default browser tooltip dropped on the map. */
+    .mini-popup .leaflet-popup-content-wrapper {
+      padding: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #c3d4e6;
+      box-shadow: 0 8px 22px rgba(23, 63, 105, 0.22);
+    }
+    .mini-popup .leaflet-popup-content {
+      margin: 0;
+      width: auto !important;
+    }
+    .mini-popup .leaflet-popup-tip-container { margin-top: -1px; }
+    .map-popup-head {
+      background: #173f69;
+      color: #eaf1fa;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 5px 9px;
+    }
+    .map-popup-body {
+      padding: 6px 9px 7px;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #2b4a68;
+    }
+
+    /* RE-ENFORCE pilot-action markers -- the icon PNGs (webmap_data/pilot_icons)
+       are cropped straight from Stefan Ebner's (BFW) own overview map in the
+       official Pilot Action Report, one per disturbance driver (ash dieback,
+       drought, riparian, bark beetle, fire, wind), not redrawn. Each icon
+       is a small 20px target -- .pilot-marker-hit wraps it in a much bigger
+       (36px) invisible circle that actually owns the cursor/hover/click, so
+       users don't have to land a click on the tiny icon precisely. */
+    .pilot-marker-hit {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.15s ease;
+    }
+    .pilot-marker-hit:hover {
+      background: rgba(211, 133, 43, 0.25);
+    }
+    /* Circle clip lives here in CSS, not just in the source PNG's own alpha
+       mask -- guarantees a clean badge with no square/artifact fringe
+       showing at small render sizes, regardless of crop imperfections in
+       the extracted icon. */
+    .pilot-marker-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      transition: transform 0.15s ease;
+    }
+    .pilot-marker-icon img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .pilot-marker-hit:hover .pilot-marker-icon {
+      transform: scale(1.25);
+    }
+    .pilot-marker-label {
+      position: absolute;
+      left: 26px;
+      top: 9px;
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 700;
+      color: #163b60;
+      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 0 3px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+    }
+    .pilot-popup .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      border: 1px solid #c3d4e6;
+      box-shadow: 0 8px 22px rgba(23, 63, 105, 0.22);
+    }
+    .pilot-popup .leaflet-popup-content { margin: 8px 10px; font-size: 12px; line-height: 1.4; }
+    .pilot-popup strong { color: #163b60; }
+    .pilot-popup a { color: #0f3b73; font-weight: 700; }
+
+    .mini-popup .leaflet-popup-tip {
+      width: 9px;
+      height: 9px;
+      margin: -5px auto 0;
+    }
+    .map-popup-val { display: block; font-weight: 600; margin: 1px 0 4px; }
+    .mini-popup .map-popup { min-width: 215px; max-width: 250px; }
+    .map-popup-val small a { color: #0f3b73; font-weight: 700; }
+    .map-popup-val small { font-weight: 400; color: #5a6b80; }
+    .map-popup-layer { display: block; margin-top: 5px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #244166; }
+
+    .risk-radar-btn {
+      display: block;
+      width: 100%;
+      margin-top: 5px;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      color: #0f3b73;
+      background: #eef4fb;
+      border: 1px solid #b9cfe6;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .risk-radar-btn:hover { background: #dce9f7; }
+
+    .risk-radar-panel {
+      display: none;
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2000;
+      width: 240px;
+      overflow: hidden;
+      border: 1px solid #c3d4e6;
+      border-radius: 10px;
+      background: #ffffff;
+      box-shadow: 0 10px 28px rgba(23, 63, 105, 0.28);
+      font-size: 12px;
+      color: #102f4f;
+    }
+    .risk-radar-panel.is-open { display: block; }
+    .risk-radar-body { padding: 8px 12px 8px; }
+    /* Same navy header bar as .map-popup-head / .overlay-group-label, so
+       this floating card reads as part of the app's driver-ribbon language
+       instead of a generic white widget dropped on the map. */
+    .risk-radar-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #173f69;
+      padding: 5px 8px 5px 10px;
+    }
+    .risk-radar-header strong { color: #eaf1fa; font-size: 12px; font-weight: 700; }
+    .risk-radar-coords {
+      margin-left: auto;
+      font-size: 10px;
+      color: #a9c1db;
+      font-variant-numeric: tabular-nums;
+    }
+    .risk-radar-close {
+      width: 22px; height: 22px;
+      display: grid; place-items: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1;
+      color: #ffffff;
+      padding: 0;
+      font-family: inherit;
+    }
+    .risk-radar-close:hover { background: #d3852b; border-color: #d3852b; }
+    /* Same round close button on the click popup (Leaflet's own, restyled). */
+    .leaflet-container .mini-popup a.leaflet-popup-close-button {
+      top: 4px; right: 5px; width: 22px; height: 22px;
+      display: grid; place-items: center;
+      font: 17px/1 Arial, sans-serif; text-indent: 0; padding: 0;
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+    }
+    .leaflet-container .mini-popup a.leaflet-popup-close-button:hover { background: #d3852b; border-color: #d3852b; }
+    .mini-popup .map-popup-head { padding-right: 34px; }
+
+    .radar-svg { display: block; margin: 0 auto; }
+    .radar-grid-ring { fill: none; stroke: #d2deeb; stroke-width: 1; }
+    .radar-spoke { stroke: #d2deeb; stroke-width: 1; }
+    .radar-axis-label { font-size: 10px; fill: #486178; font-weight: 600; }
+    /* Fill only -- the outline is drawn per-segment below (radar-seg-*) so
+       the shape's edge itself, not just each dot, shows which parts of the
+       profile are real vs. placeholder/unmeasured. A single solid outline
+       through fabricated placeholder values (fire/ash) and real ones
+       (bark beetle/wind/drought) would read as "one equally-trustworthy
+       measured profile," which it isn't. */
+    .radar-value-poly { fill: rgba(15, 59, 115, 0.16); stroke: none; }
+    .radar-seg-confident { stroke: #0f3b73; stroke-width: 1.6; fill: none; }
+    .radar-seg-unconfident { stroke: #b9c4cf; stroke-width: 1.4; stroke-dasharray: 3 2; fill: none; }
+    .radar-dot-real { fill: #0f3b73; }
+    .radar-dot-placeholder { fill: #b9c4cf; stroke: #8a97a3; stroke-width: 1; stroke-dasharray: 2 1; }
+    .radar-dot-missing { fill: #ffffff; stroke: #b9c4cf; stroke-width: 1.5; }
+
+    .risk-radar-legend { margin-top: 2px; }
+    .risk-radar-loading { padding: 24px 0; text-align: center; color: #6b7f94; font-size: 11px; }
+    .radar-legend-row { display: flex; align-items: center; gap: 5px; padding: 1px 0; }
+    .radar-legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0f3b73;
+      flex: 0 0 auto;
+    }
+    .radar-legend-swatch.is-placeholder { background: #b9c4cf; }
+    .radar-legend-note { color: #8a97a3; font-size: 10px; margin-left: 4px; }
+
+    .eu-note {
+      font-size: 11px;
+      color: #4a627d;
+      white-space: normal;
+      max-width: 340px;
+      text-align: right;
+    }
+
+    /* The 4 components of the RE-ENFORCE DSS concept (D.3.1.1: risk-driver
+       maps, ecosystem-service maps, restoration-priority maps, Pilot Action
+       recommendations). Only #1 is actually built -- everything below is a
+       thin status strip, not a real section switcher, so it can't imply
+       functionality that doesn't exist yet. */
+    .dss-pillar-strip {
+      z-index: 1195;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #17324f;
+      border-bottom: 1px solid #0f2438;
+    }
+
+    .dss-pillar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #1c3c5e;
+      min-width: 0;
+    }
+
+    .dss-pillar-num {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.14);
+      color: #cfe0f2;
+    }
+
+    .dss-pillar-body {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .dss-pillar-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #eef4fb;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dss-pillar-copy {
+      font-size: 9.5px;
+      color: #9fb6cd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dss-pillar-status {
+      flex: 0 0 auto;
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9fb6cd;
+      border: 1px solid rgba(159, 182, 205, 0.5);
+      border-radius: 8px;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+
+    .dss-pillar.is-active {
+      background: #d3852b;
+    }
+    .dss-pillar.is-active .dss-pillar-num { background: rgba(255, 255, 255, 0.28); color: #ffffff; }
+    .dss-pillar.is-active .dss-pillar-title { color: #ffffff; }
+    .dss-pillar.is-active .dss-pillar-copy { color: rgba(255, 255, 255, 0.85); }
+    .dss-pillar.is-active .dss-pillar-status { color: #ffffff; border-color: rgba(255, 255, 255, 0.7); }
+
+    /* Pillar 1 doubles as the driver ribbon's show/hide toggle. */
+    .dss-ribbon-toggle { cursor: pointer; }
+    .dss-ribbon-toggle:hover { background: #c67a26; }
+    .dss-ribbon-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .dss-ribbon-toggle .dss-pillar-status::after {
+      content: "▾";
+      margin-left: 4px;
+      display: inline-block;
+      transition: transform 0.15s ease;
+    }
+    .dss-ribbon-toggle.is-collapsed .dss-pillar-status::after { transform: rotate(-90deg); }
+
+    .dss-pillar.is-soon { opacity: 0.6; }
+
+    /* Pillars 2/3 have no real layer yet, but clicking them still reveals
+       what's planned -- inline, in this same top strip (see
+       .dss-pillar-detail below), never as a panel floating over the map. */
+    .dss-pillar-detail-toggle { cursor: pointer; }
+    .dss-pillar-detail-toggle:hover { opacity: 0.85; background: #24507c; }
+    .dss-pillar-detail-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .dss-pillar-detail-toggle.is-open { opacity: 1; background: #24507c; }
+    .dss-pillar-detail-toggle .dss-pillar-status::after {
+      content: "▾";
+      margin-left: 4px;
+      display: inline-block;
+    }
+
+    /* Collapses via padding/height, NOT display:none -- this stays a real
+       grid row in body's layout at all times (see body's grid-template-rows
+       comment above); toggling display would desync the row count from the
+       template and silently break #app's height. */
+    .dss-pillar-detail {
+      max-height: 0;
+      padding: 0 14px;
+      overflow: hidden;
+      background: #eef4fb;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #2b4a68;
+      transition: max-height 0.15s ease, padding 0.15s ease;
+    }
+    .dss-pillar-detail.is-open {
+      max-height: 80px;
+      padding: 8px 14px;
+      border-bottom: 1px solid #c9d8ea;
+    }
+    .dss-pillar-detail strong { color: #163b60; }
+
+    .dss-pillar.is-toggle { cursor: pointer; }
+    .dss-pillar.is-toggle:hover { background: #24507c; }
+    .dss-pillar.is-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .dss-pillar.is-toggle .dss-pillar-status {
+      color: #eaf1fa;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .dss-pillar.is-toggle.is-on {
+      opacity: 1;
+      background: #d3852b;
+    }
+    .dss-pillar.is-toggle.is-on .dss-pillar-num { background: rgba(255, 255, 255, 0.28); color: #ffffff; }
+    .dss-pillar.is-toggle.is-on .dss-pillar-title { color: #ffffff; }
+    .dss-pillar.is-toggle.is-on .dss-pillar-copy { color: rgba(255, 255, 255, 0.85); }
+    .dss-pillar.is-toggle.is-on .dss-pillar-status { color: #ffffff; border-color: rgba(255, 255, 255, 0.7); }
+
+    #app {
+      display: flex;
+      width: 100vw;
+      height: 100%;
+      min-height: 0;
+    }
+
+    /* Collapses via max-height/padding, NOT display:none -- stays a real
+       grid row in body's layout at all times (see body's grid-template-rows
+       comment above); toggled by clicking the "Disturbance drivers" pillar. */
+    .layer-ribbon {
+      position: relative;
+      z-index: 1190;
+      max-height: 210px;
+      padding: 4px 12px;
+      overflow: hidden;
+      border-bottom: 1px solid #c9d8ea;
+      background: linear-gradient(180deg, #ecf3fb 0%, #e7f0fa 100%);
+      transition: max-height 0.15s ease, padding 0.15s ease;
+    }
+    .layer-ribbon.is-collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .ribbon-inner {
+      display: block;
+    }
+
+    #panel {
+      width: 340px;
+      min-height: 0;
+      box-sizing: border-box;
+      padding: 10px;
+      border-right: 1px solid #c7d6e6;
+      background: #edf3f9;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
+
+    #map {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      background: #aadaff;
+      position: relative;
+    }
+
+    /* Dual-map compare: second panel hidden until compare is on. */
+    #map2 {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      background: #aadaff;
+      position: relative;
+      display: none;
+      border-left: 2px solid #29465b;
+    }
+
+    #app.compare-on #map2 { display: block; }
+
+    .map-caption {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 800;
+      background: rgba(41, 70, 91, 0.92);
+      color: #fff;
+      font: 700 12px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+      padding: 5px 10px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+      display: none;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #app.compare-on .map-caption { display: block; }
+
+    .basemap-control {
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(0, 0, 0, 0.10);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      padding: 3px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font: 12px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+      opacity: 0.5;
+      transition: opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .basemap-control:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.97);
+    }
+
+    .basemap-control .basemap-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #5a6b78;
+      padding: 1px 3px;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .basemap-control .basemap-title::after { content: " ▾"; opacity: 0.6; }
+    .basemap-control:hover .basemap-title::after { content: " ▴"; }
+
+    /* Collapsed by default; the options appear on hover. */
+    .basemap-control button {
+      display: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #29465b;
+      text-align: left;
+      padding: 4px 9px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .basemap-control:hover button { display: block; }
+
+    .basemap-control button:hover {
+      background: #eef3f7;
+    }
+
+    .basemap-control button.is-on {
+      background: #29465b;
+      color: #fff;
+      border-color: #29465b;
+    }
+
+    /* Split-screen toggle lives on the map itself (top-right, above the
+       basemap switcher) -- it changes what's ON the map, so it belongs next
+       to the map, not in the header row alongside About/Database/GitHub. */
+    .split-screen-control { margin-bottom: 6px; }
+    .split-screen-control .banner-button {
+      display: block;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.10);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      padding: 5px 10px;
+      font: 700 11px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #29465b;
+      cursor: pointer;
+    }
+    .split-screen-control .banner-button:hover { background: #eef3f7; }
+    .split-screen-control .banner-button.is-on {
+      background: #29465b;
+      color: #fff;
+    }
+
+    /* Highlight the map the panel currently controls. */
+    #map.compare-active::after,
+    #map2.compare-active::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 3px solid #ffb000;
+      box-shadow: inset 0 0 12px rgba(255, 176, 0, 0.35);
+      pointer-events: none;
+      z-index: 850;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      margin: 0 0 7px;
+      color: #123a62;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .panel-card {
+      margin-bottom: 7px;
+      padding: 8px 10px;
+      border: 1px solid #d2deeb;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 6px 16px rgba(31, 78, 121, 0.06);
+    }
+
+    .panel-card-title {
+      margin: 0 0 6px;
+      color: #123a62;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .readout-item {
+      min-width: 0;
+      padding: 5px 7px;
+      border: 1px solid #dbe6f2;
+      border-radius: 9px;
+      background: #f8fbff;
+    }
+
+    .readout-item.wide {
+      grid-column: 1 / -1;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 8px;
+      margin-bottom: 3px;
+    }
+
+    .value {
+      min-height: 20px;
+      line-height: 1.35;
+      color: #102f4f;
+    }
+
+    #status {
+      min-height: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .panel-card .label:first-child,
+    .readout-item .label {
+      margin-top: 0;
+    }
+
+    .overlay-chooser {
+      margin-top: 6px;
+      padding: 6px 8px;
+      border: 1px solid #d2deeb;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    /* One single horizontal row: [label  cards] | [label  cards] | ... */
+    .overlay-card-strip {
+      display: flex;
+      flex-wrap: nowrap;   /* drivers always stay in ONE line; scrolls sideways if narrow */
+      gap: 0;
+      overflow-x: auto;
+      padding-bottom: 1px;
+      scrollbar-width: thin;
+      /* stretch, not center -- every driver box should be the same height
+         (the tallest one in the row), not sized to its own content and
+         vertically centered next to boxes of a different height. */
+      align-items: stretch;
+    }
+
+    /* Every driver (Bark beetle / Wind / Wildfire / Drought) is ONE bordered
+       box: a dark header strip carrying the driver name (+ an expand count
+       if it has accessory layers) sits directly on top of its primary
+       risk/forecast card, so the name and the layer it labels read as a
+       single unit instead of a floating pill beside an unrelated card. */
+    .overlay-group {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #c3d4e6;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #eef4fb;
+      margin-right: 8px;
+      flex: 0 0 auto;
+    }
+    .overlay-group:last-child { margin-right: 0; }
+
+    .overlay-group-label {
+      cursor: default;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #eaf1fa;
+      background: #244166;
+      padding: 4px 8px;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+
+    .overlay-group-cards { display: flex; gap: 4px; padding: 4px; flex: 1; align-items: stretch; }
+    .overlay-group-cards.bb-grid { display: flex; gap: 4px; align-items: stretch; }
+
+    /* Period strip: one row per driver group, always the same 3 slots
+       (Historic / Near future / Later future) so gaps are visible as gaps,
+       not silently absent. "Contemporary" was dropped -- no driver ever had
+       a layer for it, so the slot was permanently empty across every group.
+       A chip with real coverage is a click-to-jump link (see data-jump-overlay
+       wiring in initControls); an empty chip stays a plain, non-interactive
+       coverage indicator.
+
+       NOTE (2026-09-08): this seemed like a nice feature, but so far
+       navigation through this seems a bit chaotic -- revisit. */
+    .period-strip {
+      display: flex;
+      gap: 3px;
+      padding: 3px 5px 0;
+      flex-wrap: nowrap;
+    }
+    .period-chip {
+      flex: 1;
+      text-align: center;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 1px 2px;
+      border-radius: 4px;
+      border: 1px solid #c9d8e8;
+      background: #dcebd8;
+      color: #3a6b3a;
+      cursor: default;
+    }
+    .period-chip.is-empty {
+      border-style: dashed;
+      background: transparent;
+      color: #a9b6c4;
+    }
+    .period-chip[data-jump-overlay] {
+      cursor: pointer;
+    }
+    .period-chip[data-jump-overlay]:hover {
+      background: #c3ddc0;
+      border-color: #7fa878;
+    }
+    .period-chip[data-jump-overlay]:focus-visible {
+      outline: 2px solid #2f5480;
+      outline-offset: 1px;
+    }
+
+    /* Drivers that actually have accessory layers to reveal (Bark beetle,
+       Drought) get the click affordance + arrow on the header strip above;
+       drivers with only one layer (Wind) or none yet (Wildfire) stay
+       non-interactive -- there's nothing to expand, so no fake affordance. */
+    .bb-toggle {
+      cursor: pointer;
+    }
+    .bb-toggle:hover { background: #2f5480; }
+    .bb-toggle:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .bb-toggle::after {
+      content: "▸";
+      font-size: 11px;
+      line-height: 1;
+      display: inline-block;
+      transition: transform 0.15s ease;
+    }
+    .bb-toggle.open::after { transform: rotate(90deg); }
+    .bb-toggle-count {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #ffffff;
+      background: #d3852b;
+      border-radius: 8px;
+      padding: 1px 5px;
+      letter-spacing: 0;
+    }
+    .bb-toggle.open .bb-toggle-count { display: none; }
+    .bb-toggle.has-on:not(.open)::before {
+      content: "● shown";
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #ffffff;
+      background: #2e9e5b;
+      border-radius: 8px;
+      padding: 1px 5px;
+      order: 2;
+    }
+    .bb-accessories { display: flex; gap: 5px; }
+    .bb-accessories[hidden] { display: none; }
+
+    /* Hazard vs. auxiliary card hierarchy: the actual risk/forecast layer a
+       user is looking for (Predictions, Wind) is visually the loudest thing
+       in its group; everything else (climate predictors, historical
+       footprint, an external pressure index) is explanatory context and
+       recedes -- smaller, muted, tagged, so the eye lands on the hazard
+       layer first without reading every card's copy. */
+    .overlay-card-eyebrow {
+      display: block;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+
+    /* Keep the ribbon calm: opacity slider only on the selected card. */
+    .overlay-card:not(.active) .overlay-opacity-row { display: none; }
+    .overlay-card-copy { white-space: normal; }
+    details.layer-info-box > summary { cursor: pointer; font-weight: 700; font-size: 11px; color: #2b4a68; padding: 2px 0; }
+    details.layer-info-box[open] > summary { margin-bottom: 4px; }
+
+    .overlay-card.hazard-primary {
+      border: 1px solid rgba(211, 133, 43, 0.4);
+      background: rgba(255, 247, 233, 0.9);
+    }
+    .overlay-card.hazard-primary:hover { border-color: #d3852b; background: #fff1dc; }
+    .overlay-card.hazard-primary .overlay-card-eyebrow { color: #b96c19; }
+    .overlay-card.hazard-primary .overlay-card-title { font-size: 12.5px; }
+    .overlay-card.hazard-primary.active {
+      background: #173f69;
+      border-color: #173f69;
+    }
+    .overlay-card.hazard-primary.active .overlay-card-eyebrow { color: #f3b970; }
+
+    .overlay-card.hazard-auxiliary {
+      border-style: dashed;
+      background: rgba(244, 247, 250, 0.55);
+      opacity: 0.88;
+    }
+    .overlay-card.hazard-auxiliary .overlay-card-title { font-size: 10px; color: #5c7085; }
+    .overlay-card.hazard-auxiliary .overlay-card-copy { font-size: 9px; }
+    .overlay-card.hazard-auxiliary .overlay-card-eyebrow { color: #8fa0b3; }
+    .overlay-card.hazard-auxiliary:hover { opacity: 1; }
+    .overlay-card.hazard-auxiliary.active {
+      background: #3d5876;
+      border-color: #3d5876;
+      border-style: solid;
+      opacity: 1;
+    }
+    .overlay-card.hazard-auxiliary.active .overlay-card-eyebrow { color: #c3d2e2; }
+    /* Selected cards are dark: every text part must switch to a light colour. */
+    .overlay-card.active .overlay-card-title,
+    .overlay-card.hazard-auxiliary.active .overlay-card-title { color: #ffffff; }
+    .overlay-card.active .overlay-card-copy,
+    .overlay-card.hazard-auxiliary.active .overlay-card-copy { color: #d3e1f0; }
+    .overlay-card.active .overlay-card-copy a { color: #ffd9a3; }
+
+    .overlay-card {
+      min-width: 110px;
+      max-width: 168px;
+      padding: 3px 6px 4px;
+      border: 1px solid #e0e9f3;
+      border-radius: 6px;
+      background: rgba(248, 251, 255, 0.7);
+      color: #2b4a68;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .overlay-card:hover {
+      background: #eef5fd;
+      border-color: #a8c0dd;
+    }
+
+    .overlay-card.active {
+      background: #173f69;
+      border-color: #173f69;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(23, 63, 105, 0.18);
+    }
+
+    .overlay-card.coming-soon {
+      opacity: 0.72;
+    }
+
+    .overlay-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .overlay-card-title {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1px;
+    }
+
+    .overlay-card-copy {
+      display: block;
+      font-size: 9.5px;
+      line-height: 1.15;
+      color: #7488a0;
+    }
+
+    .overlay-card-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .overlay-tool-btn {
+      border: 1px solid #b9cfe7;
+      background: rgba(255, 255, 255, 0.95);
+      color: #173f69;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 5px 7px;
+      cursor: pointer;
+    }
+
+    #toggleOverlayBtn, #fitOverlayBtn {
+      border: 1px solid #b9cfe7;
+      background: #ffffff;
+      color: #173f69;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    #toggleOverlayBtn:hover, #fitOverlayBtn:hover { background: #eef3f7; }
+
+    .overlay-tool-btn.is-on {
+      background: #1f5a96;
+      border-color: #1f5a96;
+      color: #ffffff;
+    }
+
+    .overlay-card.active .overlay-tool-btn {
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .overlay-card.active .overlay-tool-btn:not(.is-on) {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    .overlay-tool-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .overlay-opacity-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(185, 207, 231, 0.7);
+      cursor: default;
+    }
+
+    .overlay-card.active .overlay-opacity-row {
+      border-top-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .overlay-tool-slider {
+      width: 100%;
+      accent-color: #1f5a96;
+    }
+
+    .overlay-card.active .overlay-tool-slider {
+      accent-color: #ffffff;
+    }
+
+    .overlay-tool-value {
+      min-width: 28px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .overlay-description {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #2f4b67;
+      line-height: 1.35;
+    }
+
+    .nested-panel {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px solid #d2deeb;
+      border-radius: 8px;
+      background: #f9fbfe;
+    }
+
+    .nested-panel[hidden] {
+      display: none;
+    }
+
+    .nested-title {
+      margin: 0 0 5px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #163b60;
+    }
+
+    .nested-grid {
+      display: grid;
+      gap: 5px;
+    }
+
+    .metric-box {
+      margin-top: 6px;
+      padding: 6px 8px;
+      border: 1px solid #d6e2ef;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .metric-title {
+      margin: 0 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #163b60;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 8px;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .metric-item strong {
+      display: block;
+      color: #163b60;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .confusion-matrix {
+      margin-top: 6px;
+      display: grid;
+      grid-template-columns: 72px repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .cm-head,
+    .cm-side,
+    .cm-cell {
+      border-radius: 5px;
+      padding: 5px 6px;
+      border: 1px solid #d6e2ef;
+      background: #fbfdff;
+    }
+
+    .cm-pct { color: #7488a0; font-size: 10px; }
+
+    .cm-head,
+    .cm-side {
+      font-weight: 700;
+      color: #163b60;
+      background: #f3f8fd;
+    }
+
+    .cm-cell strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: #163b60;
+    }
+
+    .cm-corner {
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .row {
+      margin-top: 5px;
+    }
+
+    .row input,
+    .row select,
+    .row button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px 6px;
+      font-size: 13px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .button-row button {
+      flex: 1;
+    }
+
+    .small {
+      font-size: 11px;
+      color: #555;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    /* Stefan Ebner's per-layer documentation (drought layers): what the
+       layer shows, how to read the pixel values, how to read the legend --
+       three short fields rather than one run-on paragraph, so each stays
+       scannable. */
+    .layer-info-box {
+      margin-top: 6px;
+      padding: 6px 8px;
+      border: 1px solid #d6e2ef;
+      border-radius: 8px;
+      background: #ffffff;
+      display: grid;
+      gap: 5px;
+    }
+
+    .layer-info-row strong {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #163b60;
+      margin-bottom: 1px;
+    }
+
+    .layer-info-row span {
+      display: block;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.35;
+    }
+
+    /* Model-level documentation (e.g. "this model has real held-out CV,
+       AUC 0.663") vs. the per-cutoff note below it (about the currently
+       selected threshold specifically) -- italic to read as "about the
+       model", not "about this number". */
+    #forecastModelNote {
+      font-style: italic;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    #forecastModelNote:empty { display: none; }
+
+    .legend-box[hidden] { display: none; }
+    .natura-key { display: flex; gap: 7px; align-items: center; font-size: 12px; }
+    .natura-swatch { flex: 0 0 18px; height: 12px; border: 1px solid #1b5e20; background: rgba(102, 187, 106, 0.35); border-radius: 2px; }
+    .legend-box {
+      margin-top: 5px;
+      padding: 5px 7px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .legend-bar {
+      position: relative;
+      overflow: hidden;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      /* Neutral placeholder only -- setLegendLabels() always sets an
+         explicit inline background (BARK_BEETLE_GRADIENT/WIND_GRADIENT/
+         DELTA_GRADIENT, built from buildGradientCss()) before this bar is
+         ever shown, so this value is never actually visible. It used to be
+         a THIRD hand-typed ramp copy that didn't match either JS ramp --
+         replaced with a plain placeholder so nothing here can drift again. */
+      background: #cfd8e3;
+    }
+
+    #legendThreshMarker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 2px solid #111;
+      display: none;
+      pointer-events: none;
+    }
+
+    #legendThreshMarker::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 420px;
+      transform: translateX(-2px);
+      background: rgba(120, 120, 120, 0.5);
+    }
+
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .risk-filter {
+      margin-top: 12px;
+    }
+
+    .risk-filter input[type="range"] {
+      width: 100%;
+      margin: 4px 0 2px;
+    }
+
+    .risk-filter #riskValue {
+      font-weight: 600;
+    }
+
+    .legend-swatches {
+      margin-top: 5px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .legend-swatch {
+      display: grid;
+      grid-template-columns: 14px 1fr;
+      gap: 5px;
+      align-items: center;
+      font-size: 12px;
+      color: #33485d;
+    }
+
+    .legend-swatch-color {
+      width: 14px;
+      height: 10px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      box-sizing: border-box;
+    }
+
+    .citation-box {
+      margin-top: 6px;
+      padding: 7px 8px;
+      border: 1px solid #d6e2ef;
+      border-radius: 8px;
+      background: #fbfdff;
+      font-size: 12px;
+      color: #2a4560;
+      line-height: 1.35;
+    }
+
+    .citation-title {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #123a62;
+    }
+
+    /* The legend/citation describe the top VISIBLE layer, which can differ
+       from whichever card's controls are currently focused/open above --
+       this makes that explicit instead of leaving it an unlabeled mismatch. */
+    .legend-for-layer {
+      font-weight: 400;
+      font-size: 11px;
+      color: #7488a0;
+      margin-left: 5px;
+    }
+
+    .citation-item {
+      margin: 0 0 8px;
+    }
+
+    .citation-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .citation-item a {
+      color: #0f3b73;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .citation-item a:hover {
+      text-decoration: underline;
+    }
+
+    .leaflet-tooltip.hex-tooltip {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #888;
+      color: #111;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      font-size: 12px;
+      padding: 4px 6px;
+    }
+
+    @media (max-width: 900px) {
+      .top-banner {
+        grid-template-columns: 1fr;
+      }
+
+      .banner-right {
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+
+      .ribbon-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .dss-pillar-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .dss-pillar-copy {
+        display: none;
+      }
+
+      .banner-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+      }
+      .top-banner { padding: 6px 12px; gap: 4px; }
+      .eu-note { font-size: 11px; }
+
+      .eu-note {
+        white-space: normal;
+      }
+
+      #app {
+        min-height: 0;
+      }
+    }
+
+    /* Desktop: the phone-only controls do not exist. */
+    #mobMenuBtn, .m-fab, .m-sheet-head, .dss-pillar-short { display: none; }
+
+    /* ---------------------------------------------------------------
+       PHONE LAYOUT (<= 700 px). One page, two layouts: the map fills the
+       screen, the four pillars become a bottom bar, the driver cards and
+       the inspector/legend open as bottom sheets, the header links hide
+       behind a menu button. Desktop CSS above is untouched. */
+    @media (max-width: 700px) {
+      :root { --bar: 56px; }
+      html, body { height: 100dvh; }
+      body {
+        display: flex; flex-direction: column; box-sizing: border-box;
+        overflow: hidden; padding-bottom: var(--bar);
+      }
+      .fold-gutter, .fold-gutter-v { display: none !important; }
+
+      /* header */
+      .top-banner { display: flex; align-items: center; gap: 8px; padding: 6px 10px; position: relative; }
+      .banner-left { flex: 1; grid-template-columns: auto minmax(0, 1fr); }
+      .banner-left a:nth-of-type(2) { display: none; }
+      .banner-logo { max-height: 30px; }
+      .banner-title h1 { font-size: 14px; }
+      #mobMenuBtn {
+        display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px;
+        border: 1px solid #b9cfe7; border-radius: 10px; background: #fff; color: #173f69;
+        font-size: 22px; line-height: 1; cursor: pointer;
+      }
+      .banner-right { display: none; }
+      body.m-menu .banner-right {
+        display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 1300;
+        padding: 8px 14px 14px; background: #f8fbff; border-bottom: 1px solid #c9d8ea;
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+      }
+      .banner-actions { flex-direction: column; align-items: flex-start; gap: 0; }
+      .banner-link { padding: 11px 2px; font-size: 15px; }
+      .eu-note { display: block; font-size: 11px; white-space: normal; }
+
+      /* pillars -> bottom bar; on/off shown by the (orange) pillar colour */
+      .dss-pillar-strip {
+        position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar); z-index: 1250;
+        grid-template-columns: repeat(4, 1fr); border: 0; border-top: 1px solid #0f2438;
+      }
+      .dss-pillar { flex-direction: column; justify-content: center; align-items: center; gap: 0; padding: 4px 2px; text-align: center; }
+      .dss-pillar-num, .dss-pillar-body, .dss-pillar-status { display: none; }
+      .dss-pillar-short { display: block; font-size: 12px; font-weight: 700; line-height: 1.15; color: #eef4fb; }
+      .dss-pillar.is-on .dss-pillar-short::after { content: " \2713"; }
+      .dss-pillar-detail.is-open {
+        position: fixed; left: 0; right: 0; bottom: var(--bar); z-index: 1240;
+        border-top: 1px solid #c9d8ea; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      /* map takes everything left */
+      #app { width: 100%; height: auto; flex: 1 1 auto; min-height: 0; }
+      #map { min-height: 0; }
+      .map-caption, .split-screen-control { display: none !important; }
+
+      /* bottom sheets: driver cards and inspector/legend */
+      .layer-ribbon, #panel {
+        position: fixed; left: 0; right: 0; bottom: var(--bar); z-index: 1230; box-sizing: border-box;
+        width: auto; max-height: 64dvh; overflow-y: auto; padding: 0 10px 12px;
+        border: 0; border-top: 1px solid #9fb6d1; border-radius: 14px 14px 0 0;
+        box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.22);
+        transform: translateY(115%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s;
+      }
+      body.m-layers .layer-ribbon, body.m-legend #panel { transform: none; visibility: visible; }
+      .m-sheet-head {
+        display: flex; align-items: center; justify-content: space-between;
+        position: sticky; top: 0; z-index: 5; margin: 0 -10px 4px; padding: 4px 10px 2px 14px;
+        background: inherit; font-weight: 700; font-size: 15px; color: #163b60;
+      }
+      .m-sheet-head button { width: 44px; height: 44px; border: 0; background: none; font-size: 28px; color: #163b60; cursor: pointer; }
+      .panel-title { display: none; }
+
+      .overlay-card-strip { flex-direction: column; overflow: visible; gap: 8px; }
+      .overlay-group { margin-right: 0; flex: none; width: 100%; box-sizing: border-box; }
+      .overlay-group-cards, .bb-accessories { flex-direction: column; }
+      .overlay-card { width: auto; }
+
+      /* floating openers */
+      .m-fab {
+        display: flex; align-items: center; position: fixed; bottom: calc(var(--bar) + 30px); z-index: 1220;
+        height: 42px; padding: 0 16px; border: 0; border-radius: 21px;
+        background: #173f69; color: #fff; font: 700 14px Arial, sans-serif; cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      }
+      #mobLayersBtn { left: 10px; }
+      #mobLegendBtn { left: 118px; }
+      body.m-layers .m-fab, body.m-legend .m-fab, body.m-menu .m-fab { display: none; }
+
+      /* thumb-sized targets (16 px selects stop iOS zooming in on focus) */
+      .overlay-tool-btn { min-height: 38px; padding: 8px 14px; font-size: 13px; }
+      .period-chip { padding: 9px 4px; font-size: 11px; }
+      .overlay-group-label { padding: 11px 10px; font-size: 13px; }
+      select { min-height: 42px; font-size: 16px; }
+      #toggleOverlayBtn, #fitOverlayBtn { min-height: 42px; font-size: 14px; }
+      .leaflet-touch .leaflet-bar a { width: 38px; height: 38px; line-height: 38px; }
+      .mini-popup .leaflet-popup-close-button { width: 36px; height: 36px; }
+    }
