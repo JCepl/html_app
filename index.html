@@ -15,7 +15,7 @@
     href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css"
   />
 
-  <link rel="stylesheet" href="app.css?v=dd482c6eff" />
+  <link rel="stylesheet" href="app.css?v=595d43be49" />
 </head>
 <body>
   <header class="top-banner">
@@ -394,6 +394,10 @@
           <div class="row">
             <select id="phenisPeriodSelector"></select>
           </div>
+          <div id="phenipsYearRow" hidden>
+            <div class="label">Year <span id="phenipsYearVal"></span></div>
+            <div class="row"><input type="range" id="phenipsYearSlider" min="1981" max="2024" step="1" value="2024" aria-label="Year" style="width:100%"></div>
+          </div>
           <div class="label">View</div>
           <div class="row">
             <select id="phenipsViewSelector">
@@ -569,6 +573,6 @@
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
-  <script src="app.js?v=45891e1167"></script>
+  <script src="app.js?v=3996dc930d"></script>
 </body>
 </html>

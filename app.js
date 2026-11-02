@@ -193,7 +193,7 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20261102-sharp";
+    const ASSET_VERSION = "20261102-series";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -690,6 +690,9 @@
       phenipsViewSelector: document.getElementById("phenipsViewSelector"),
       phenipsExpSelector: document.getElementById("phenipsExpSelector"),
       phenipsExpRow: document.getElementById("phenipsExpRow"),
+      phenipsYearRow: document.getElementById("phenipsYearRow"),
+      phenipsYearSlider: document.getElementById("phenipsYearSlider"),
+      phenipsYearVal: document.getElementById("phenipsYearVal"),
       phenipsNote: document.getElementById("phenipsNote"),
       forecastPanel: document.getElementById("forecastPanel"),
       forecastModelSelector: document.getElementById("forecastModelSelector"),
@@ -1146,6 +1149,10 @@
       DOM.phenipsViewSelector.querySelector('option[value="contrast"]').disabled = obs;
       DOM.phenipsViewSelector.querySelector('option[value="diff"]').textContent = obs ? "Change 2011–2024 vs. 1981–2010" : "Change vs. historical";
       DOM.phenipsExpRow.hidden = !obs || APP.currentPhenipsVar === "share";
+      DOM.phenipsYearRow.hidden = !obs || APP.currentPhenipsVar === "share" || APP.currentPhenipsView === "diff";
+      const yr = /^y\d{4}$/.test(APP.currentPhenisPeriod) ? Number(APP.currentPhenisPeriod.slice(1)) : (APP.phenipsLastYear || 2024);
+      DOM.phenipsYearSlider.value = yr;
+      DOM.phenipsYearVal.textContent = /^y\d{4}$/.test(APP.currentPhenisPeriod) ? String(yr) : "(pick a year)";
       DOM.phenipsViewSelector.disabled = obs && APP.currentPhenipsVar === "share";
       DOM.phenisPeriodSelector.disabled = obs && (APP.currentPhenipsVar === "share" || APP.currentPhenipsView === "diff");
       DOM.phenipsScenSelector.value = APP.currentPhenipsScen;
@@ -1753,7 +1760,7 @@
       if (id === "wind") return selectedText(DOM.windPeriodSelector);
       if (id === "bbtforecast") return String(APP.currentForecastPeriod || "").replace(/_/g, "–");
       if (id === "bbtpast") return "1985–2024";
-      if (id === "phenips") return (phenipsIsObs() ? "observed " : String(APP.currentPhenipsScen).toUpperCase().replace("RCP", "RCP ") + " · ") + selectedText(DOM.phenisPeriodSelector);
+      if (id === "phenips") return (phenipsIsObs() ? "observed " : String(APP.currentPhenipsScen).toUpperCase().replace("RCP", "RCP ") + " · ") + selectedText(DOM.phenisPeriodSelector).replace("Single year ", "");
       if (id === "bbtl" || id === "wildfire") return String(APP.currentRcp || "").toUpperCase().replace("RCP", "RCP ") + " · " + APP.currentYear;
       return "";
     }
@@ -2556,8 +2563,15 @@
         ? state.visibleOverlays.slice().reverse() : []);
       const asyncRows = [];
       let rows = "";
+      let phenipsChart = false;
       ids.forEach(function(id) {
         const info = computeClickValueInfo(state, latlng, id);
+        if (id === "phenips" && state.currentPhenipsScen === "obs" && state.currentPhenipsVar !== "share") {
+          rows += '<span class="map-popup-layer">' + info.label + ' · by year</span>'
+            + '<span class="map-popup-val phenips-chart" data-phenips-chart>Reading 44 years…</span>';
+          phenipsChart = true;
+          return;
+        }
         const wantsAsync = info.valueHtml == null && CLICK_VALUE_OVERLAYS.includes(id);
         if (!wantsAsync && info.valueHtml == null) return;
         rows += '<span class="map-popup-layer">' + info.label + '</span>'
@@ -2580,6 +2594,7 @@
         + 'Lat ' + latlng.lat.toFixed(3) + ', Lon ' + latlng.lng.toFixed(3) + '<br>'
         + rows
         + '<button type="button" class="risk-radar-btn">Hazard profile ⬡</button>'
+        + placeLinksHtml(latlng)
         + '</div></div>';
       const popup = L.popup({
         autoPan: true,
@@ -2605,6 +2620,72 @@
       if (btn) {
         btn.addEventListener("click", function() { openRadarChart(latlng, radarState); });
       }
+      if (phenipsChart) {
+        const slot = popupEl && popupEl.querySelector("[data-phenips-chart]");
+        phenipsSeriesAt(latlng, state).then(function(res) {
+          if (slot) slot.innerHTML = res ? phenipsChartSvg(res) : "No data at this point";
+        }).catch(function(err) { console.warn(err); if (slot) slot.textContent = "Could not read the yearly maps"; });
+      }
+    }
+
+    // Links that open the same place in other tools. Only the satellite link carries the coordinates;
+    // the others open the tool itself (none of them documents a coordinate link).
+    function placeLinksHtml(latlng) {
+      const sat = "https://www.google.com/maps/@" + latlng.lat.toFixed(5) + "," + latlng.lng.toFixed(5) + ",15z/data=!3m1!1e3";
+      const ch = latlng.lat > 45.8 && latlng.lat < 47.9 && latlng.lng > 5.9 && latlng.lng < 10.6;
+      const a = function(href, text, tip) { return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" title="' + tip + '">' + text + ' ↗</a>'; };
+      return '<div class="map-popup-links">Open this place elsewhere: '
+        + a(sat, "satellite view", "Satellite imagery centred on this point")
+        + ' · ' + a("https://www.seed4forest.org", "Seed4Forest", "BFW tools for tree species and seed-source advice (opens the tool; set the place there)")
+        + (ch ? ' · ' + a("https://www.tree-app.ch", "Tree app (CH)", "Swiss tree-species recommendation tool") : "")
+        + ' · ' + a("https://forest-fire.emergency.copernicus.eu", "EFFIS", "European Forest Fire Information System")
+        + ' · ' + a("https://drought.emergency.copernicus.eu", "drought observatory", "European Drought Observatory")
+        + '</div>';
+    }
+
+    // Yearly PHENIPS values at a point: read the 44 yearly map images at that pixel and invert the colour ramp.
+    async function phenipsSeriesAt(latlng, state) {
+      const man = await ensurePhenipsV5Manifest();
+      const v = state.currentPhenipsVar, e = state.currentPhenipsExp;
+      const base = "phenips_" + (v === "gdd" ? "dd" : "gen") + "_" + e;
+      const lay = man.layers[base + "_2000"];
+      const fn = makeColorToRiskFraction(buildRiskLut(lay.colours));
+      const years = []; for (let y = 1981; y <= 2024; y++) years.push(y);
+      const vals = await Promise.all(years.map(function(y) {
+        return cachedFetchImage("webmap_data/phenips_v5/" + base + "_" + y + ".webp?v=" + ASSET_VERSION).then(function(img) {
+          return sampleImageAt(img, PHENIPS_V5_BOUNDS, latlng, fn);
+        }).then(function(t) { return t == null ? null : lay.min + t * (lay.max - lay.min); });
+      }));
+      if (vals.every(function(x) { return x == null; })) return null;
+      return { years: years, vals: vals, unit: v === "gdd" ? "degree-days" : "generations", max: lay.max, dd: v === "gdd" };
+    }
+
+    function phenipsChartSvg(r) {
+      const W = 230, H = 96, L = 28, R = 4, T = 6, B = 16;
+      const ok = r.vals.filter(function(x) { return x != null; });
+      const hi = Math.max(r.max * 0.4, Math.max.apply(null, ok)), lo = 0;
+      const x = function(y) { return L + (y - 1981) / 43 * (W - L - R); };
+      const yy = function(val) { return T + (1 - (val - lo) / (hi - lo)) * (H - T - B); };
+      let d = "", pen = false;
+      r.vals.forEach(function(val, i) {
+        if (val == null) { pen = false; return; }
+        d += (pen ? "L" : "M") + x(r.years[i]).toFixed(1) + " " + yy(val).toFixed(1); pen = true;
+      });
+      const base = r.vals.slice(0, 30).filter(function(q) { return q != null; });
+      const mean = base.length ? base.reduce(function(a, b) { return a + b; }, 0) / base.length : null;
+      const f = function(q) { return r.dd ? Math.round(q) : q.toFixed(1); };
+      const dot = function(yr) {
+        const q = r.vals[yr - 1981];
+        return q == null ? "" : '<circle cx="' + x(yr).toFixed(1) + '" cy="' + yy(q).toFixed(1) + '" r="2.6" fill="#b0452a"/><text x="' + x(yr).toFixed(1) + '" y="' + (yy(q) - 4).toFixed(1) + '" font-size="8" text-anchor="middle" fill="#b0452a">' + yr + '</text>';
+      };
+      return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Yearly ' + r.unit + ' at this point, 1981 to 2024">'
+        + '<line x1="' + L + '" y1="' + yy(0) + '" x2="' + (W - R) + '" y2="' + yy(0) + '" stroke="#c9d8e8"/>'
+        + (mean != null ? '<line x1="' + L + '" y1="' + yy(mean).toFixed(1) + '" x2="' + (W - R) + '" y2="' + yy(mean).toFixed(1) + '" stroke="#7a8da3" stroke-dasharray="3 3"/>' : '')
+        + '<path d="' + d + '" fill="none" stroke="#244166" stroke-width="1.5"/>' + dot(2003) + dot(2018)
+        + '<text x="' + (L - 3) + '" y="' + (T + 6) + '" font-size="8" text-anchor="end" fill="#5a6b80">' + f(hi) + '</text>'
+        + '<text x="' + (L - 3) + '" y="' + (yy(0) + 3) + '" font-size="8" text-anchor="end" fill="#5a6b80">0</text>'
+        + [1981, 2000, 2024].map(function(yr) { return '<text x="' + x(yr) + '" y="' + (H - 3) + '" font-size="8" text-anchor="' + (yr === 2024 ? "end" : "middle") + '" fill="#5a6b80">' + yr + '</text>'; }).join("")
+        + '</svg><small>' + r.unit + ' per year (' + (APP.currentPhenipsExp === "sun" ? "sun-exposed" : "shaded") + '); dashed = mean 1981–2010. Approximate: read from the map colours.</small>';
     }
 
     // ====================================================================
@@ -4008,6 +4089,15 @@
       bindForecastSelector(DOM.forecastViewSelector, "currentForecastView");
       bindForecastSelector(DOM.forecastThresholdSelector, "currentForecastThreshold");
 
+      let yearTimer = null;
+      DOM.phenipsYearSlider.addEventListener("input", function() {
+        APP.phenipsLastYear = Number(DOM.phenipsYearSlider.value);
+        APP.currentPhenisPeriod = "y" + APP.phenipsLastYear;
+        DOM.phenipsYearVal.textContent = String(APP.phenipsLastYear);
+        DOM.phenisPeriodSelector.value = APP.currentPhenisPeriod;
+        clearTimeout(yearTimer);
+        yearTimer = setTimeout(function() { if (isOverlayVisible("phenips")) updatePhenipsLayer(); else setLegendLabels(); }, 150);
+      });
       [
         [DOM.phenipsScenSelector, "currentPhenipsScen"], [DOM.phenisPeriodSelector, "currentPhenisPeriod"],
         [DOM.phenipsVarSelector, "currentPhenipsVar"], [DOM.phenipsViewSelector, "currentPhenipsView"],

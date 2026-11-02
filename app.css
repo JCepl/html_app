@@ -1644,3 +1644,7 @@
     }
     #periodBadge[hidden] { display: none; }
     @media (max-width: 700px) { #periodBadge { bottom: calc(var(--bar, 56px) + 56px); font-size: 11px; } }
+
+    .map-popup-links { margin-top: 6px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; line-height: 1.5; color: #5a6b80; }
+    .map-popup-links a { color: #0f3b73; font-weight: 600; white-space: nowrap; }
+    .phenips-chart small { display: block; font-weight: 400; font-size: 9px; color: #5a6b80; line-height: 1.3; }
