@@ -1633,14 +1633,9 @@
       .mini-popup .leaflet-popup-close-button { width: 36px; height: 36px; }
     }
 
-    /* Period strip: active chip, play-through button, "what is shown" badge */
+    /* Period strip: active chip and "what is shown" badge */
     .period-chip.is-active { background: #2f5480; border-color: #2f5480; color: #fff; }
     .period-chip.is-active[data-jump-overlay]:hover { background: #2f5480; border-color: #2f5480; }
-    .period-play {
-      flex: 0 0 auto; width: 16px; padding: 0; border: 1px solid #c9d8e8; border-radius: 4px;
-      background: transparent; color: #8fa3b8; font-size: 8px; line-height: 1; cursor: pointer;
-    }
-    .period-play:hover, .period-play:focus-visible { color: #2f5480; border-color: #7fa878; outline: none; }
     #periodBadge {
       position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 800;
       max-width: calc(100% - 120px); padding: 4px 12px; border-radius: 999px;

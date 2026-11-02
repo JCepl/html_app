@@ -5,40 +5,76 @@
     "n_events_2yr": {
       "file": "drought/ref_n_events_2yr.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["0 events", "1 event", "2 events", "3 events"],
-        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#8c2d04"]
+        "labels": [
+          "0 events",
+          "1 event",
+          "2 events",
+          "3 events"
+        ],
+        "colors": [
+          "#F7F7F7",
+          "#fee391",
+          "#fe9929",
+          "#8c2d04"
+        ]
       }
     },
     "max_duration": {
       "file": "drought/ref_max_duration.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["No MYD", "2 years", "3 years", "4 years", "5 years"],
-        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#cc4c02", "#8c2d04"]
+        "labels": [
+          "No MYD",
+          "2 years",
+          "3 years",
+          "4 years",
+          "5 years"
+        ],
+        "colors": [
+          "#F7F7F7",
+          "#fee391",
+          "#fe9929",
+          "#cc4c02",
+          "#8c2d04"
+        ]
       }
     },
     "total_duration": {
       "file": "drought/ref_total_duration.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["No MYD", "2 years", "3 years", "4 years", "5 years", "6-7 years"],
-        "colors": ["#F7F7F7", "#fee391", "#fe9929", "#ec7014", "#cc4c02", "#8c2d04"]
+        "labels": [
+          "No MYD",
+          "2 years",
+          "3 years",
+          "4 years",
+          "5 years",
+          "6-7 years"
+        ],
+        "colors": [
+          "#F7F7F7",
+          "#fee391",
+          "#fe9929",
+          "#ec7014",
+          "#cc4c02",
+          "#8c2d04"
+        ]
       }
     }
   }

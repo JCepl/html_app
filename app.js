@@ -193,7 +193,7 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20261102-phenips-efda3";
+    const ASSET_VERSION = "20261102-sharp";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -876,6 +876,15 @@
       (LAYER_GHOSTS[overlayId] = LAYER_GHOSTS[overlayId] || []).push(g);
     }
 
+    // Crisp pixels when zoomed in past the image's own resolution (browsers otherwise smear them into a blur).
+    function sharpenImageLayer(layer) {
+      const el = layer && layer.getElement && layer.getElement(), map = layer && layer._map;
+      if (!el || !map || !el.naturalWidth) return;
+      const b = layer.getBounds();
+      const w = map.latLngToLayerPoint(b.getNorthEast()).x - map.latLngToLayerPoint(b.getSouthWest()).x;
+      el.style.imageRendering = (w / el.naturalWidth > 1.3) ? "pixelated" : "auto";
+    }
+
     function addImageOverlayLayer(overlayId, imagePath, bounds) {
       const target = getLayerOpacity(overlayId);
       const ghosts = LAYER_GHOSTS[overlayId] || [];
@@ -889,6 +898,13 @@
         pane: getOverlayPaneName(overlayId)
       }).addTo(APP.map);
       APP.layerInstances[overlayId] = layer;
+      layer.on("load", function() { sharpenImageLayer(layer); });
+      if (!APP.map._sharpenBound) {
+        APP.map._sharpenBound = true;
+        APP.map.on("zoomend", function() {
+          Object.keys(APP.layerInstances).forEach(function(k) { if (APP.layerInstances[k] && APP.layerInstances[k].getBounds && APP.layerInstances[k]._image) sharpenImageLayer(APP.layerInstances[k]); });
+        });
+      }
       if (fade) {
         const el = layer.getElement();
         let done = false;
@@ -1775,46 +1791,6 @@
       const per = periodTextFor(top);
       badge.textContent = ov.label + (per ? " · " + per : "");
       badge.hidden = false;
-    }
-
-    // ▶ steps one strip's chips in order (historic -> near -> later), then stops on the last.
-    let PLAYING = null;
-    function stopPlay() {
-      if (!PLAYING) return;
-      clearTimeout(PLAYING.timer);
-      PLAYING.btn.textContent = "▶";
-      PLAYING.btn.setAttribute("aria-label", "Play through the periods");
-      PLAYING = null;
-    }
-    function startPlay(btn, chips) {
-      stopPlay();
-      PLAYING = { btn: btn, timer: null };
-      btn.textContent = "❚❚";
-      btn.setAttribute("aria-label", "Stop");
-      let i = 0, prev = null;
-      const step = function() {
-        if (!PLAYING || PLAYING.btn !== btn) return;
-        if (i >= chips.length) { stopPlay(); return; }
-        const c = chips[i++];
-        if (prev && prev !== c.dataset.jumpOverlay) setLayerVisibilityFromRibbon(prev, false);
-        prev = c.dataset.jumpOverlay;
-        jumpToOverlayPeriod(c.dataset.jumpOverlay, c.dataset.jumpPeriod).catch(console.error);
-        PLAYING.timer = setTimeout(step, 2800);
-      };
-      step();
-    }
-    function initPeriodPlay() {
-      document.querySelectorAll(".period-strip").forEach(function(strip) {
-        const chips = Array.from(strip.querySelectorAll(".period-chip[data-jump-overlay]"));
-        if (chips.length < 2) return;
-        const btn = document.createElement("button");
-        btn.type = "button"; btn.className = "period-play"; btn.textContent = "▶";
-        btn.setAttribute("aria-label", "Play through the periods");
-        btn.title = "Play through historic → near future → later future";
-        btn.addEventListener("click", function() { if (PLAYING && PLAYING.btn === btn) stopPlay(); else startPlay(btn, chips); });
-        strip.appendChild(btn);
-        chips.forEach(function(c) { c.addEventListener("click", stopPlay); });
-      });
     }
 
     function setLegendLabelsCore() {
@@ -4167,7 +4143,6 @@
         });
       });
 
-      initPeriodPlay();
       // Period-strip chips with real coverage are click-to-jump links;
       // empty chips (no data-jump-overlay) stay plain and non-interactive.
       document.querySelectorAll(".period-chip[data-jump-overlay]").forEach(function(chip) {

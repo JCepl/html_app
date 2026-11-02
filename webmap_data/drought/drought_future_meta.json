@@ -5,53 +5,93 @@
     "2041_2070_ssp370": {
       "file": "drought/future_2041_2070_ssp370.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["Extreme drought hazard (< -2.0)", "High drought hazard (-2.0 to -1.5)", "Moderate drought hazard (-1.5 to -1.0)", "Low drought hazard (>= -1.0)"],
-        "colors": ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7"]
+        "labels": [
+          "Extreme drought hazard (< -2.0)",
+          "High drought hazard (-2.0 to -1.5)",
+          "Moderate drought hazard (-1.5 to -1.0)",
+          "Low drought hazard (>= -1.0)"
+        ],
+        "colors": [
+          "#B2182B",
+          "#EF8A62",
+          "#FDDBC7",
+          "#F7F7F7"
+        ]
       }
     },
     "2041_2070_ssp585": {
       "file": "drought/future_2041_2070_ssp585.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["Extreme drought hazard (< -2.0)", "High drought hazard (-2.0 to -1.5)", "Moderate drought hazard (-1.5 to -1.0)", "Low drought hazard (>= -1.0)"],
-        "colors": ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7"]
+        "labels": [
+          "Extreme drought hazard (< -2.0)",
+          "High drought hazard (-2.0 to -1.5)",
+          "Moderate drought hazard (-1.5 to -1.0)",
+          "Low drought hazard (>= -1.0)"
+        ],
+        "colors": [
+          "#B2182B",
+          "#EF8A62",
+          "#FDDBC7",
+          "#F7F7F7"
+        ]
       }
     },
     "2071_2100_ssp370": {
       "file": "drought/future_2071_2100_ssp370.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["Extreme drought hazard (< -2.0)", "High drought hazard (-2.0 to -1.5)", "Moderate drought hazard (-1.5 to -1.0)", "Low drought hazard (>= -1.0)"],
-        "colors": ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7"]
+        "labels": [
+          "Extreme drought hazard (< -2.0)",
+          "High drought hazard (-2.0 to -1.5)",
+          "Moderate drought hazard (-1.5 to -1.0)",
+          "Low drought hazard (>= -1.0)"
+        ],
+        "colors": [
+          "#B2182B",
+          "#EF8A62",
+          "#FDDBC7",
+          "#F7F7F7"
+        ]
       }
     },
     "2071_2100_ssp585": {
       "file": "drought/future_2071_2100_ssp585.png",
       "bounds": {
-        "south": 34.5015,
-        "west": -10.7001,
-        "north": 71.5999,
-        "east": 38.6022
+        "south": 34.500063854647934,
+        "west": -10.700139566049993,
+        "north": 71.59986046475001,
+        "east": 38.602232133558815
       },
       "legend": {
-        "labels": ["Extreme drought hazard (< -2.0)", "High drought hazard (-2.0 to -1.5)", "Moderate drought hazard (-1.5 to -1.0)", "Low drought hazard (>= -1.0)"],
-        "colors": ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7"]
+        "labels": [
+          "Extreme drought hazard (< -2.0)",
+          "High drought hazard (-2.0 to -1.5)",
+          "Moderate drought hazard (-1.5 to -1.0)",
+          "Low drought hazard (>= -1.0)"
+        ],
+        "colors": [
+          "#B2182B",
+          "#EF8A62",
+          "#FDDBC7",
+          "#F7F7F7"
+        ]
       }
     }
   }
