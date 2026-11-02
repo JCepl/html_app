@@ -1448,6 +1448,9 @@
     }
     #forecastModelNote:empty { display: none; }
 
+    .legend-box[hidden] { display: none; }
+    .natura-key { display: flex; gap: 7px; align-items: center; font-size: 12px; }
+    .natura-swatch { flex: 0 0 18px; height: 12px; border: 1px solid #1b5e20; background: rgba(102, 187, 106, 0.35); border-radius: 2px; }
     .legend-box {
       margin-top: 5px;
       padding: 5px 7px;
@@ -2158,6 +2161,14 @@
           <div class="small">Hides areas below this value on the displayed layer's own colour scale (wind's scale tops out at 50%). Applies to the wind, bark beetle forecast, and the three pressure-index layers (bark beetle, wildfire, wind).</div>
         </div>
 
+        <div id="naturaBox" class="legend-box" hidden>
+          <div class="legend-title">Natura 2000 sites</div>
+          <div class="natura-key"><span class="natura-swatch"></span>Protected site (SAC and SPA), 11,672 sites in the 7 project countries</div>
+          <div class="label" style="margin-top:6px;font-size:12px">Opacity <span id="naturaOpacityValue">100%</span></div>
+          <input type="range" id="naturaOpacity" min="0.2" max="1" step="0.05" value="1" style="width:100%" />
+          <div class="small">Click a site on the map to see its name, code and a link to the EEA page. Outlines are simplified (about 1 km). Source: European Environment Agency, Natura 2000 end-2024 release.</div>
+        </div>
+
         <div id="citationBox" class="citation-box">
           <p class="citation-title">Data source and citation <span class="legend-for-layer" id="citationForLayer">— Bark beetle pressure index</span></p>
           <p class="citation-item">
@@ -2235,6 +2246,7 @@
       // Natura 2000: fetched once (11MB, lazy) and cached here; each side
       // gets its own Leaflet layer built from the same cached GeoJSON.
       showNatura2000: false,
+      natura2000Opacity: 1,
       natura2000Data: null,
       natura2000LayerLeft: null,
       natura2000LayerRight: null,
@@ -5328,10 +5340,13 @@
         pane: "natura2000Pane",
         interactive: false,
         renderer: L.canvas({ pane: "natura2000Pane" }),
-        style: function() {
-          return { color: "#1b5e20", weight: 1, opacity: 0.55, fillColor: "#66bb6a", fillOpacity: 0.12 };
-        }
+        style: natura2000Style
       });
+    }
+
+    function natura2000Style() {
+      const k = APP.natura2000Opacity;
+      return { color: "#1b5e20", weight: 1, opacity: 0.55 * k, fillColor: "#66bb6a", fillOpacity: 0.12 * k };
     }
 
     function syncNatura2000Visibility() {
@@ -5346,6 +5361,8 @@
             m.removeLayer(APP[key]);
           }
         });
+      const naturaBox = document.getElementById("naturaBox");
+      if (naturaBox) naturaBox.hidden = !APP.showNatura2000;
       if (DOM.dssPillarNatura2000) DOM.dssPillarNatura2000.classList.toggle("is-on", APP.showNatura2000);
       if (DOM.dssPillarNatura2000Status) {
         DOM.dssPillarNatura2000Status.textContent = APP.showNatura2000 ? "Shown on map" : "Show on map";
@@ -6029,6 +6046,14 @@
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePilotActions(); }
         });
       }
+      const naturaSlider = document.getElementById("naturaOpacity");
+      if (naturaSlider) naturaSlider.addEventListener("input", function() {
+        APP.natura2000Opacity = Number(naturaSlider.value);
+        document.getElementById("naturaOpacityValue").textContent = Math.round(APP.natura2000Opacity * 100) + "%";
+        ["natura2000LayerLeft", "natura2000LayerRight"].forEach(function(key) {
+          if (APP[key]) APP[key].setStyle(natura2000Style);
+        });
+      });
       if (DOM.dssPillarNatura2000) {
         DOM.dssPillarNatura2000.addEventListener("click", toggleNatura2000);
         DOM.dssPillarNatura2000.addEventListener("keydown", function(e) {
