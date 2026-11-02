@@ -3298,7 +3298,7 @@
         body.classList.remove("m-menu");
         if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
       };
-      [[".layer-ribbon", "Disturbance driver layers", "layers"], ["#panel", "Map inspector and legend", "legend"]]
+      [[".layer-ribbon", "Layers", "layers"], ["#panel", "Map inspector and legend", "legend"]]
         .forEach(function(def) {
           const host = document.querySelector(def[0]);
           if (!host) return;
