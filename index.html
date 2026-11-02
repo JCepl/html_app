@@ -1639,30 +1639,105 @@
       }
     }
 
+    /* Desktop: the phone-only controls do not exist. */
+    #mobMenuBtn, .m-fab, .m-sheet-head, .dss-pillar-short { display: none; }
+
+    /* ---------------------------------------------------------------
+       PHONE LAYOUT (<= 700 px). One page, two layouts: the map fills the
+       screen, the four pillars become a bottom bar, the driver cards and
+       the inspector/legend open as bottom sheets, the header links hide
+       behind a menu button. Desktop CSS above is untouched. */
     @media (max-width: 700px) {
+      :root { --bar: 56px; }
+      html, body { height: 100dvh; }
       body {
-        overflow: auto;
+        display: flex; flex-direction: column; box-sizing: border-box;
+        overflow: hidden; padding-bottom: var(--bar);
+      }
+      .fold-gutter, .fold-gutter-v { display: none !important; }
+
+      /* header */
+      .top-banner { display: flex; align-items: center; gap: 8px; padding: 6px 10px; position: relative; }
+      .banner-left { flex: 1; grid-template-columns: auto minmax(0, 1fr); }
+      .banner-left a:nth-of-type(2) { display: none; }
+      .banner-logo { max-height: 30px; }
+      .banner-title h1 { font-size: 14px; }
+      #mobMenuBtn {
+        display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px;
+        border: 1px solid #b9cfe7; border-radius: 10px; background: #fff; color: #173f69;
+        font-size: 22px; line-height: 1; cursor: pointer;
+      }
+      .banner-right { display: none; }
+      body.m-menu .banner-right {
+        display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 1300;
+        padding: 8px 14px 14px; background: #f8fbff; border-bottom: 1px solid #c9d8ea;
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+      }
+      .banner-actions { flex-direction: column; align-items: flex-start; gap: 0; }
+      .banner-link { padding: 11px 2px; font-size: 15px; }
+      .eu-note { display: block; font-size: 11px; white-space: normal; }
+
+      /* pillars -> bottom bar; on/off shown by the (orange) pillar colour */
+      .dss-pillar-strip {
+        position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar); z-index: 1250;
+        grid-template-columns: repeat(4, 1fr); border: 0; border-top: 1px solid #0f2438;
+      }
+      .dss-pillar { flex-direction: column; justify-content: center; align-items: center; gap: 0; padding: 4px 2px; text-align: center; }
+      .dss-pillar-num, .dss-pillar-body, .dss-pillar-status { display: none; }
+      .dss-pillar-short { display: block; font-size: 12px; font-weight: 700; line-height: 1.15; color: #eef4fb; }
+      .dss-pillar.is-on .dss-pillar-short::after { content: " \2713"; }
+      .dss-pillar-detail.is-open {
+        position: fixed; left: 0; right: 0; bottom: var(--bar); z-index: 1240;
+        border-top: 1px solid #c9d8ea; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
       }
 
-      #app {
-        flex-direction: column;
-        height: auto;
-        min-height: 70vh;
-      }
+      /* map takes everything left */
+      #app { width: 100%; height: auto; flex: 1 1 auto; min-height: 0; }
+      #map { min-height: 0; }
+      .map-caption, .split-screen-control, .ui-comment { display: none !important; }
 
-      /* Phone: the map comes first and gets most of the screen; the
-         inspector panel follows below it. */
-      #panel {
-        order: 2;
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #ccc;
+      /* bottom sheets: driver cards and inspector/legend */
+      .layer-ribbon, #panel {
+        position: fixed; left: 0; right: 0; bottom: var(--bar); z-index: 1230; box-sizing: border-box;
+        width: auto; max-height: 64dvh; overflow-y: auto; padding: 0 10px 12px;
+        border: 0; border-top: 1px solid #9fb6d1; border-radius: 14px 14px 0 0;
+        box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.22);
+        transform: translateY(115%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s;
       }
+      body.m-layers .layer-ribbon, body.m-legend #panel { transform: none; visibility: visible; }
+      .m-sheet-head {
+        display: flex; align-items: center; justify-content: space-between;
+        position: sticky; top: 0; z-index: 5; margin: 0 -10px 4px; padding: 4px 10px 2px 14px;
+        background: inherit; font-weight: 700; font-size: 15px; color: #163b60;
+      }
+      .m-sheet-head button { width: 44px; height: 44px; border: 0; background: none; font-size: 28px; color: #163b60; cursor: pointer; }
+      .panel-title { display: none; }
 
-      #map {
-        order: 1;
-        min-height: 68vh;
+      .overlay-card-strip { flex-direction: column; overflow: visible; gap: 8px; }
+      .overlay-group { margin-right: 0; flex: none; width: 100%; box-sizing: border-box; }
+      .overlay-group-cards, .bb-accessories { flex-direction: column; }
+      .overlay-card { width: auto; }
+
+      /* floating openers */
+      .m-fab {
+        display: flex; align-items: center; position: fixed; bottom: calc(var(--bar) + 30px); z-index: 1220;
+        height: 42px; padding: 0 16px; border: 0; border-radius: 21px;
+        background: #173f69; color: #fff; font: 700 14px Arial, sans-serif; cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
       }
+      #mobLayersBtn { left: 10px; }
+      #mobLegendBtn { left: 118px; }
+      body.m-layers .m-fab, body.m-legend .m-fab, body.m-menu .m-fab { display: none; }
+
+      /* thumb-sized targets (16 px selects stop iOS zooming in on focus) */
+      .overlay-tool-btn { min-height: 38px; padding: 8px 14px; font-size: 13px; }
+      .period-chip { padding: 9px 4px; font-size: 11px; }
+      .overlay-group-label { padding: 11px 10px; font-size: 13px; }
+      select { min-height: 42px; font-size: 16px; }
+      #toggleOverlayBtn, #fitOverlayBtn { min-height: 42px; font-size: 14px; }
+      .leaflet-touch .leaflet-bar a { width: 38px; height: 38px; line-height: 38px; }
+      .mini-popup .leaflet-popup-close-button { width: 36px; height: 36px; }
     }
   </style>
 </head>
@@ -1679,6 +1754,7 @@
         <h1>RE-ENFORCE Decision Support System</h1>
       </div>
     </div>
+    <button id="mobMenuBtn" type="button" aria-label="Menu" aria-expanded="false">&#9776;</button>
     <div class="banner-right">
       <nav class="banner-actions" aria-label="Project links">
         <a class="banner-link" href="https://www.interreg-central.eu/projects/re-enforce/" target="_blank" rel="noopener noreferrer">About RE-ENFORCE</a>
@@ -1696,6 +1772,7 @@
     <div class="dss-pillar is-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
          title="Modelled indicators for the main drivers of forest disturbance (drought, fire, wind, bark beetle and ash dieback) -- susceptibility and/or hazard, depending on the driver; see each layer's own description. Click to show/hide the RE-ENFORCE driver maps on the map.">
       <span class="dss-pillar-num">1</span>
+      <span class="dss-pillar-short">Drivers</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Disturbance drivers</span>
         <span class="dss-pillar-copy">Drought, fire, wind, bark beetle &amp; ash dieback</span>
@@ -1705,6 +1782,7 @@
     <div class="dss-pillar is-toggle" id="dssPillarNatura2000" role="button" tabindex="0"
          title="All Natura 2000 protected-area boundaries (SAC + SPA) in the 7 project countries, 11,672 sites (EEA, 2024 release), simplified for fast loading. Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
       <span class="dss-pillar-num">2</span>
+      <span class="dss-pillar-short">Ecosystem</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Ecosystem services</span>
         <span class="dss-pillar-copy" id="dssPillarNatura2000Copy">All Natura 2000 sites; service layers in preparation</span>
@@ -1714,6 +1792,7 @@
     <div class="dss-pillar is-soon dss-pillar-detail-toggle" data-pillar="restoration" role="button" tabindex="0"
          title="Maps of delineated priority areas for restoration -- click for details.">
       <span class="dss-pillar-num">3</span>
+      <span class="dss-pillar-short">Restoration</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Restoration priorities</span>
         <span class="dss-pillar-copy">Delineated priority restoration areas</span>
@@ -1723,6 +1802,7 @@
     <div class="dss-pillar is-toggle" id="dssPillarPilotActions" role="button" tabindex="0"
          title="All 10 pins of RE-ENFORCE's 6 official Pilot Actions (PA1-PA6) are mapped, matching Stefan Ebner's (BFW) own overview map -- icons, locations and grouping. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
       <span class="dss-pillar-num">4</span>
+      <span class="dss-pillar-short">Pilot actions</span>
       <span class="dss-pillar-body">
         <span class="dss-pillar-title">Pilot Action recommendations</span>
         <span class="dss-pillar-copy" id="dssPillarPilotActionsCopy">10 pins, 6 Pilot Actions</span>
@@ -1947,6 +2027,8 @@
   <div class="fold-gutter" id="gutterMap"></div>
 
   <div id="app">
+    <button id="mobLayersBtn" class="m-fab" type="button">Layers</button>
+    <button id="mobLegendBtn" class="m-fab" type="button">Legend</button>
     <div id="panel">
       <h2 class="panel-title">Map inspector</h2>
 
@@ -3497,6 +3579,9 @@
         const isActive = button.dataset.overlay === APP.focusedOverlay;
         button.classList.toggle("active", isActive);
       });
+
+      const layersBtn = document.getElementById("mobLayersBtn");
+      if (layersBtn) layersBtn.textContent = APP.visibleOverlays.length ? "Layers \u00B7 " + APP.visibleOverlays.length : "Layers";
 
       DOM.overlayCardStrip.querySelectorAll(".bb-accessories").forEach(function(group) {
         const toggle = DOM.overlayCardStrip.querySelector('[data-toggle-target="' + group.id + '"]');
@@ -5086,7 +5171,11 @@
       "fold-drivers": { btn: "expandMapBtn", what: "driver panel", gutter: "gutterMap", name: "Disturbance drivers" },
       "fold-side": { btn: "foldSideBtn", what: "side panel", gutter: "gutterSide", side: true, name: "Map inspector" }
     };
+    // Phone layout (<= 700 px): panels are bottom sheets, so the desktop fold arrows do not apply.
+    const MOBILE_MQ = window.matchMedia("(max-width: 700px)");
+    function isMobileLayout() { return MOBILE_MQ.matches; }
     function setFold(cls, on) {
+      if (on && isMobileLayout()) return;
       document.body.classList.toggle(cls, on);
       const f = FOLDS[cls];
       const btn = document.getElementById(f.btn);
@@ -5128,12 +5217,50 @@
 
     document.addEventListener("keydown", function(e) {
       if (e.key === "Escape") {
+        document.body.classList.remove("m-menu", "m-layers", "m-legend");
         if (APP.map) APP.map.closePopup();
         if (APP.panels && APP.panels.right && APP.panels.right.map) APP.panels.right.map.closePopup();
         closeRadarChart();
       }
       if (e.key === "Escape" && Object.keys(FOLDS).some(function(c) { return document.body.classList.contains(c); })) setMapExpanded(false);
     });
+
+    function initMobileLayout() {
+      const body = document.body;
+      const menuBtn = document.getElementById("mobMenuBtn");
+      const sheet = function(name) {
+        body.classList.toggle("m-layers", name === "layers");
+        body.classList.toggle("m-legend", name === "legend");
+        body.classList.remove("m-menu");
+        if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+      };
+      [[".layer-ribbon", "Disturbance driver layers", "layers"], ["#panel", "Map inspector and legend", "legend"]]
+        .forEach(function(def) {
+          const host = document.querySelector(def[0]);
+          if (!host) return;
+          const head = document.createElement("div");
+          head.className = "m-sheet-head";
+          head.innerHTML = "<span></span><button type=\"button\" aria-label=\"Close\">&times;</button>";
+          head.firstChild.textContent = def[1];
+          head.lastChild.addEventListener("click", function() { sheet(null); });
+          host.insertBefore(head, host.firstChild);
+        });
+      if (menuBtn) menuBtn.addEventListener("click", function() {
+        const open = !body.classList.contains("m-menu");
+        sheet(null);
+        body.classList.toggle("m-menu", open);
+        menuBtn.setAttribute("aria-expanded", String(open));
+      });
+      document.getElementById("mobLayersBtn").addEventListener("click", function() { sheet("layers"); });
+      document.getElementById("mobLegendBtn").addEventListener("click", function() { sheet("legend"); });
+      if (DOM.shareBtn) DOM.shareBtn.addEventListener("click", function() { body.classList.remove("m-menu"); });
+      // Leaving the phone layout: forget phone-only state and any desktop folds that were skipped.
+      MOBILE_MQ.addEventListener("change", function() {
+        body.classList.remove("m-menu", "m-layers", "m-legend");
+        Object.keys(FOLDS).forEach(function(c) { body.classList.remove(c); });
+        refreshMapSize();
+      });
+    }
 
     function addSplitScreenControl() {
       const control = L.control({ position: "topright" });
@@ -6100,6 +6227,8 @@
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDriverRibbon(); }
         });
       }
+
+      initMobileLayout();
 
       // Any driver box's accessory layers stay collapsed until its header
       // strip is clicked (currently Bark beetle +3, Drought +1).
