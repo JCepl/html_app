@@ -15,7 +15,7 @@
     href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css"
   />
 
-  <link rel="stylesheet" href="app.css?v=595d43be49" />
+  <link rel="stylesheet" href="app.css?v=75ec0081fc" />
 </head>
 <body>
   <header class="top-banner">
@@ -46,8 +46,8 @@
     </div>
   </header>
 
-  <div class="dss-pillar-strip" aria-label="RE-ENFORCE DSS components">
-    <div class="dss-pillar is-toggle" id="dssPillarRiskDrivers" role="button" tabindex="0"
+  <div class="dss-pillar-strip" role="tablist" aria-label="RE-ENFORCE DSS components">
+    <div class="dss-pillar" id="dssPillarRiskDrivers" data-tab="drivers" role="tab" aria-selected="true" tabindex="0"
          title="Modelled indicators for the main drivers of forest disturbance (drought, fire, wind, bark beetle and ash dieback) -- susceptibility and/or hazard, depending on the driver; see each layer's own description. Click to show/hide the RE-ENFORCE driver maps on the map.">
       <span class="dss-pillar-num">1</span>
       <span class="dss-pillar-short">Drivers</span>
@@ -57,7 +57,7 @@
       </span>
       <span class="dss-pillar-status" id="dssPillarRiskDriversStatus">Show on map</span>
     </div>
-    <div class="dss-pillar is-toggle" id="dssPillarNatura2000" role="button" tabindex="0"
+    <div class="dss-pillar" id="dssPillarNatura2000" data-tab="ecosystem" role="tab" aria-selected="false" tabindex="0"
          title="All Natura 2000 protected-area boundaries (SAC + SPA) in the 7 project countries, 11,672 sites (EEA, 2024 release), simplified for fast loading. Click to show/hide them on the map. Other ecosystem-service maps are still coming.">
       <span class="dss-pillar-num">2</span>
       <span class="dss-pillar-short">Ecosystem</span>
@@ -67,7 +67,7 @@
       </span>
       <span class="dss-pillar-status" id="dssPillarNatura2000Status">Show on map</span>
     </div>
-    <div class="dss-pillar is-soon dss-pillar-detail-toggle" data-pillar="restoration" role="button" tabindex="0"
+    <div class="dss-pillar" id="dssPillarRestoration" data-tab="restoration" role="tab" aria-selected="false" tabindex="0"
          title="Maps of delineated priority areas for restoration -- click for details.">
       <span class="dss-pillar-num">3</span>
       <span class="dss-pillar-short">Restoration</span>
@@ -75,9 +75,9 @@
         <span class="dss-pillar-title">Restoration priorities</span>
         <span class="dss-pillar-copy">Delineated priority restoration areas</span>
       </span>
-      <span class="dss-pillar-status">Coming soon</span>
+      <span class="dss-pillar-status" id="dssPillarRestorationStatus">Preview</span>
     </div>
-    <div class="dss-pillar is-toggle" id="dssPillarPilotActions" role="button" tabindex="0"
+    <div class="dss-pillar" id="dssPillarPilotActions" data-tab="pilot" role="tab" aria-selected="false" tabindex="0"
          title="All 10 pins of RE-ENFORCE's 6 official Pilot Actions (PA1-PA6) are mapped, matching Stefan Ebner's (BFW) own overview map -- icons, locations and grouping. Click to show/hide them on the map. Full restoration recommendations per site are still coming.">
       <span class="dss-pillar-num">4</span>
       <span class="dss-pillar-short">Pilot actions</span>
@@ -89,7 +89,7 @@
     </div>
   </div>
 
-  <div class="dss-pillar-detail" id="dssPillarDetail"></div>
+  <div class="dss-pillar-detail on-map-strip" id="dssPillarDetail" aria-live="polite"></div>
 
   <div class="fold-gutter" id="gutterTop"></div>
 
@@ -298,6 +298,30 @@
         </div>
           </div>
         </div>
+      </div>
+      <div id="tabEcosystem" class="tab-panel" role="tabpanel" hidden>
+        <div class="tab-intro"><strong>Ecosystem services</strong> — what the forests deliver and where it is protected. Service layers (water, carbon, protection, recreation) are in preparation; Natura 2000 is available now.</div>
+        <div class="tab-cards">
+          <div class="tab-card"><span class="tab-card-eyebrow">Protected areas</span><span class="tab-card-title">Natura 2000 sites</span>
+            <span class="tab-card-copy">11,672 sites in the 7 project countries.</span>
+            <button class="overlay-tool-btn" type="button" id="tabNaturaBtn">Display</button></div>
+          <div class="tab-card is-empty"><span class="tab-card-eyebrow">In preparation</span><span class="tab-card-title">Service layers</span>
+            <span class="tab-card-copy">Preliminary layers from the project partners; shown here when final.</span></div>
+        </div>
+      </div>
+      <div id="tabRestoration" class="tab-panel" role="tabpanel" hidden>
+        <div class="tab-intro"><strong>Restoration priorities</strong> — planned maps of delineated priority areas, combining the disturbance-driver and ecosystem-service layers (D.2.2.1). Not built yet. Meanwhile, tree species and seed sources can be explored beside the map.</div>
+        <div class="tab-cards">
+          <div class="tab-card"><span class="tab-card-eyebrow">Seed for forest · BFW</span><span class="tab-card-title">Seed4Forest 2.0</span>
+            <span class="tab-card-copy">Suitable tree species, mixtures and seed sources for restoration, now and under RCP4.5/8.5.</span>
+            <button class="overlay-tool-btn" type="button" id="tabSeedBtn">Display</button></div>
+          <div class="tab-card is-empty"><span class="tab-card-eyebrow">Planned</span><span class="tab-card-title">Priority areas</span>
+            <span class="tab-card-copy">Where restoration should come first.</span></div>
+        </div>
+      </div>
+      <div id="tabPilot" class="tab-panel" role="tabpanel" hidden>
+        <div class="tab-intro"><strong>Pilot Action recommendations</strong> — the 6 official Pilot Actions (10 pins). Pick one to show its pins and zoom there.</div>
+        <div class="tab-cards" id="tabPilotCards"></div>
       </div>
     </div>
   </div>
@@ -562,6 +586,19 @@
     <div class="fold-gutter-v" id="gutterSide"></div>
     <div id="map"><div class="map-caption" id="mapCaptionLeft"></div><div id="periodBadge" hidden aria-live="polite"></div></div>
     <div id="map2"><div class="map-caption" id="mapCaptionRight"></div></div>
+    <aside id="seedPane" hidden aria-label="Seed4Forest 2.0 (BFW)">
+      <div class="seed-head">
+        <strong>Seed4Forest 2.0 <small>(BFW, external tool)</small></strong>
+        <button type="button" id="seedClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="seed-place">
+        Your place: <b id="seedPlace">—</b>
+        <button type="button" id="seedCopy">Copy</button>
+        <a id="seedOpen" href="https://app.seed4forest.org/" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a>
+      </div>
+      <div class="seed-note">The tool cannot be told where to look by a link: press Copy, then paste into its box “Enter location or coordinates” (or click the same spot on its map).</div>
+      <iframe id="seedFrame" title="Seed4Forest 2.0" referrerpolicy="no-referrer" allow="clipboard-write"></iframe>
+    </aside>
   </div>
 
   <script
@@ -573,6 +610,6 @@
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
-  <script src="app.js?v=3996dc930d"></script>
+  <script src="app.js?v=38c134a09a"></script>
 </body>
 </html>

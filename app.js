@@ -78,6 +78,9 @@
       // split screen never cross-adds a side's pins to the other map.
       leftMap: null,
       showPilotActions: false,
+      showSeed4Forest: false,
+      activeTab: "drivers",
+      lastClick: null,
       pilotLayerLeft: null,
       pilotLayerRight: null,
       // Natura 2000: fetched once (11MB, lazy) and cached here; each side
@@ -193,7 +196,7 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20261102-series";
+    const ASSET_VERSION = "20261102-tabs";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -734,6 +737,8 @@
       dssPillarNatura2000: document.getElementById("dssPillarNatura2000"),
       dssPillarNatura2000Status: document.getElementById("dssPillarNatura2000Status"),
       dssPillarDetail: document.getElementById("dssPillarDetail"),
+      dssPillarRestoration: document.getElementById("dssPillarRestoration"),
+      dssPillarRestorationStatus: document.getElementById("dssPillarRestorationStatus"),
       dssPillarRiskDrivers: document.getElementById("dssPillarRiskDrivers"),
       dssPillarRiskDriversStatus: document.getElementById("dssPillarRiskDriversStatus"),
       layerRibbon: document.querySelector(".layer-ribbon"),
@@ -1785,6 +1790,7 @@
     }
 
     function updatePeriodUi() {
+      if (typeof syncPillarStatuses === "function" && DOM.dssPillarDetail) syncPillarStatuses();
       document.querySelectorAll(".period-chip[data-jump-overlay]").forEach(function(chip) {
         const on = chipIsActive(chip);
         chip.classList.toggle("is-active", on);
@@ -2551,6 +2557,7 @@
 
     function openClickPopup(latlng, state, map) {
       track("map-click");
+      APP.lastClick = latlng; if (APP.showSeed4Forest) updateSeedPlace();
       state = state || APP;
       map = map || APP.map;
       const sites = natura2000SitesAt(latlng);
@@ -2636,7 +2643,7 @@
       const a = function(href, text, tip) { return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" title="' + tip + '">' + text + ' ↗</a>'; };
       return '<div class="map-popup-links">Open this place elsewhere: '
         + a(sat, "satellite view", "Satellite imagery centred on this point")
-        + ' · ' + a("https://www.seed4forest.org", "Seed4Forest", "BFW tools for tree species and seed-source advice (opens the tool; set the place there)")
+        + ' · ' + a("https://app.seed4forest.org/", "Seed4Forest", "BFW tool for tree species and seed sources (opens the tool; set the place there)")
         + (ch ? ' · ' + a("https://www.tree-app.ch", "Tree app (CH)", "Swiss tree-species recommendation tool") : "")
         + ' · ' + a("https://forest-fire.emergency.copernicus.eu", "EFFIS", "European Forest Fire Information System")
         + ' · ' + a("https://drought.emergency.copernicus.eu", "drought observatory", "European Drought Observatory")
@@ -3308,6 +3315,7 @@
         body.classList.toggle("m-menu", open);
         menuBtn.setAttribute("aria-expanded", String(open));
       });
+      APP.openLayersSheet = function() { sheet("layers"); };
       document.getElementById("mobLayersBtn").addEventListener("click", function() { sheet("layers"); });
       document.getElementById("mobLegendBtn").addEventListener("click", function() { sheet("legend"); });
       if (DOM.shareBtn) DOM.shareBtn.addEventListener("click", function() { body.classList.remove("m-menu"); });
@@ -3457,10 +3465,7 @@
           else if (m.hasLayer(group)) { m.removeLayer(group); }
         });
       if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.classList.toggle("is-on", APP.showPilotActions);
-      if (DOM.dssPillarPilotActions) DOM.dssPillarPilotActions.classList.toggle("is-on", APP.showPilotActions);
-      if (DOM.dssPillarPilotActionsStatus) {
-        DOM.dssPillarPilotActionsStatus.textContent = APP.showPilotActions ? "Shown on map" : "Show on map";
-      }
+      syncPillarStatuses();
     }
 
     function togglePilotActions() {
@@ -3507,16 +3512,13 @@
         });
       const naturaBox = document.getElementById("naturaBox");
       if (naturaBox) naturaBox.hidden = !APP.showNatura2000;
-      if (DOM.dssPillarNatura2000) DOM.dssPillarNatura2000.classList.toggle("is-on", APP.showNatura2000);
-      if (DOM.dssPillarNatura2000Status) {
-        DOM.dssPillarNatura2000Status.textContent = APP.showNatura2000 ? "Shown on map" : "Show on map";
-      }
+      syncPillarStatuses();
     }
 
     async function toggleNatura2000() {
       APP.showNatura2000 = !APP.showNatura2000;
       if (APP.showNatura2000 && !APP.natura2000Data) {
-        if (DOM.dssPillarNatura2000Status) DOM.dssPillarNatura2000Status.textContent = "Loading…";
+        const nb = document.getElementById("tabNaturaBtn"); if (nb) nb.textContent = "Loading…";
         try {
           const response = await fetch(NATURA2000_URL, { cache: "no-store" });
           if (!response.ok) throw new Error("HTTP " + response.status + " for " + NATURA2000_URL);
@@ -3524,56 +3526,176 @@
         } catch (error) {
           console.error(error);
           APP.showNatura2000 = false;
-          if (DOM.dssPillarNatura2000Status) DOM.dssPillarNatura2000Status.textContent = "Failed to load";
+          const nb2 = document.getElementById("tabNaturaBtn"); if (nb2) nb2.textContent = "Failed to load";
           return;
         }
       }
       syncNatura2000Visibility();
     }
 
-    // Pillar 3 (Restoration priorities) has no real layer yet -- clicking it
-    // reveals what's planned, inline in this same top strip (never a panel
-    // floating over the map, unlike the hazard radar). Wording matches
-    // D.3.1.1 (Report on Concept of Web-based DSS). Pillar 2 (Ecosystem
-    // services) graduated out of this -- it's a real toggle now (Natura 2000).
-    const DSS_PILLAR_DETAIL = {
-      restoration: "<strong>Restoration priorities</strong> — part of the RE-ENFORCE DSS concept "
-        + "(Deliverable 3.1.1) but not yet built in this app. Planned: maps of delineated "
-        + "priority areas for restoration, combining the risk-driver and ecosystem-service "
-        + "layers to highlight where restoration should be prioritised."
-    };
-
-    function toggleDssPillarDetail(toggleEl) {
-      const key = toggleEl.dataset.pillar;
-      const alreadyOpen = toggleEl.classList.contains("is-open");
-      document.querySelectorAll(".dss-pillar-detail-toggle.is-open").forEach(function(el) {
-        el.classList.remove("is-open");
-      });
-      if (alreadyOpen) {
-        DOM.dssPillarDetail.classList.remove("is-open");
-        return;
-      }
-      toggleEl.classList.add("is-open");
-      DOM.dssPillarDetail.innerHTML = DSS_PILLAR_DETAIL[key] || "";
-      DOM.dssPillarDetail.classList.add("is-open");
-    }
-
-    // Pillar 1 behaves like pillars 2 and 4: one click puts the RE-ENFORCE
-    // driver maps on the map, the next click takes them all off again.
+    // ====================================================================
+    // DSS TABS: the four numbered boxes switch the menu below them. The map keeps whatever is on;
+    // the "On the map now" strip lists every layer with a x to remove it, so nothing is hidden silently.
+    // ====================================================================
+    const TAB_PANELS = { drivers: "overlayCardStrip", ecosystem: "tabEcosystem", restoration: "tabRestoration", pilot: "tabPilot" };
+    const TAB_PILLARS = { drivers: "dssPillarRiskDrivers", ecosystem: "dssPillarNatura2000", restoration: "dssPillarRestoration", pilot: "dssPillarPilotActions" };
     const DRIVER_MAIN_LAYERS = ["droughtFuture", "fireWeather", "wind", "bbtforecast"];
     const DRIVER_ALL_LAYERS = DRIVER_MAIN_LAYERS.concat(["droughtRef", "wildfire", "windPressure", "bbtpast", "phenips", "bbtl"]);
-    function syncDriverPillar() {
-      const on = DRIVER_ALL_LAYERS.some(isOverlayVisible);
-      if (DOM.dssPillarRiskDrivers) DOM.dssPillarRiskDrivers.classList.toggle("is-on", on);
-      if (DOM.dssPillarRiskDriversStatus) DOM.dssPillarRiskDriversStatus.textContent = on ? "Shown on map" : "Show on map";
+    const ON_MAP_NAMES = {
+      droughtFuture: "Future drought", droughtRef: "Drought (past)", fireWeather: "Fire weather", wildfire: "Fire pressure",
+      wind: "Wind damage", windPressure: "Wind pressure", bbtforecast: "Beetle susceptibility", bbtl: "Beetle pressure",
+      bbtpast: "Past disturbance", phenips: "PHENIPS"
+    };
+
+    function setActiveTab(key) {
+      if (!TAB_PANELS[key]) key = "drivers";
+      APP.activeTab = key;
+      Object.keys(TAB_PANELS).forEach(function(k) {
+        const panel = document.getElementById(TAB_PANELS[k]), pillar = document.getElementById(TAB_PILLARS[k]);
+        if (panel) panel.hidden = (k !== key);
+        if (pillar) { pillar.classList.toggle("is-tab-active", k === key); pillar.setAttribute("aria-selected", k === key ? "true" : "false"); }
+      });
+      if (key === "pilot") buildPilotCards();
     }
-    function toggleDriverRibbon() {
-      if (DRIVER_ALL_LAYERS.some(isOverlayVisible)) {
-        DRIVER_ALL_LAYERS.filter(isOverlayVisible).forEach(function(id) { setLayerVisibilityFromRibbon(id, false); });
-      } else {
-        setLayerVisibilityFromRibbon("droughtFuture", true);
+
+    function tabLayerCounts() {
+      return {
+        drivers: DRIVER_ALL_LAYERS.filter(isOverlayVisible).length,
+        ecosystem: APP.showNatura2000 ? 1 : 0,
+        restoration: APP.showSeed4Forest ? 1 : 0,
+        pilot: APP.showPilotActions ? 1 : 0
+      };
+    }
+
+    function syncPillarStatuses() {
+      const counts = tabLayerCounts();
+      Object.keys(TAB_PILLARS).forEach(function(k) {
+        const pillar = document.getElementById(TAB_PILLARS[k]);
+        if (!pillar) return;
+        pillar.classList.toggle("has-layers", counts[k] > 0);
+        const st = pillar.querySelector(".dss-pillar-status");
+        if (!st) return;
+        st.textContent = counts[k] ? counts[k] + " on map" : (k === "restoration" ? "Preview" : "None on");
+      });
+      const set = function(id, on) { const b = document.getElementById(id); if (b) { b.textContent = on ? "Hide" : "Display"; b.classList.toggle("is-on", on); } };
+      set("tabNaturaBtn", APP.showNatura2000); set("tabSeedBtn", APP.showSeed4Forest);
+      const pins = document.getElementById("tabPilotAll"); if (pins) { pins.textContent = APP.showPilotActions ? "Hide all pins" : "Show all pins"; pins.classList.toggle("is-on", APP.showPilotActions); }
+      updateOnMapStrip();
+    }
+
+    function updateOnMapStrip() {
+      const strip = DOM.dssPillarDetail;
+      if (!strip) return;
+      const items = [];
+      APP.visibleOverlays.slice().reverse().forEach(function(id) {
+        items.push({ label: ON_MAP_NAMES[id] || (OVERLAY_CATALOG[id] && OVERLAY_CATALOG[id].label) || id, title: periodTextFor(id), kind: "overlay", id: id });
+      });
+      if (APP.showNatura2000) items.push({ label: "Natura 2000", kind: "natura" });
+      if (APP.showPilotActions) items.push({ label: "Pilot pins", kind: "pins" });
+      if (APP.showSeed4Forest) items.push({ label: "Seed4Forest", kind: "seed" });
+      strip.innerHTML = '<span class="on-map-label">On the map now:</span>'
+        + (items.length ? items.map(function(it, i) {
+            return '<span class="on-map-chip"' + (it.title ? ' title="' + it.title + '"' : "") + '>' + it.label
+              + '<button type="button" data-onmap-remove="' + i + '" aria-label="Remove ' + it.label + '">&times;</button></span>';
+          }).join("") + (items.length > 1 ? '<button type="button" class="on-map-clear" data-onmap-clear>clear all</button>' : "")
+          : '<span class="on-map-none">nothing — pick a layer in a tab below</span>');
+      strip._items = items;
+    }
+
+    function removeOnMapItem(it) {
+      if (it.kind === "overlay") setLayerVisibilityFromRibbon(it.id, false);
+      else if (it.kind === "natura") toggleNatura2000();
+      else if (it.kind === "pins") togglePilotActions();
+      else if (it.kind === "seed") setSeedPane(false);
+    }
+
+    // Seed4Forest 2.0 (BFW) beside the map. The tool opens at its own default view: it takes no
+    // coordinates from a link, so the place is shown here to copy or to click again over there.
+    function seedPlaceText() {
+      const c = APP.lastClick || (APP.map && APP.map.getCenter());
+      return c ? c.lat.toFixed(4) + ", " + c.lng.toFixed(4) : "—";
+    }
+    function updateSeedPlace() {
+      const el = document.getElementById("seedPlace");
+      if (el) el.textContent = seedPlaceText() + (APP.lastClick ? "" : " (map centre)");
+    }
+    function setSeedPane(on) {
+      APP.showSeed4Forest = !!on;
+      const pane = document.getElementById("seedPane"), frame = document.getElementById("seedFrame"), app = document.getElementById("app");
+      if (!pane) return;
+      if (on) {
+        if (!frame.getAttribute("src")) frame.setAttribute("src", "https://app.seed4forest.org/");
+        updateSeedPlace();
+        track("seed4forest-open");
       }
-      syncDriverPillar();
+      pane.hidden = !on;
+      app.classList.toggle("seed-on", !!on);
+      syncPillarStatuses();
+      refreshMapSize();
+      if (APP.map) setTimeout(function() { APP.map.invalidateSize(); }, 50);
+    }
+
+    function buildPilotCards() {
+      const host = document.getElementById("tabPilotCards");
+      if (!host || host.dataset.built) return;
+      host.dataset.built = "1";
+      const groups = {};
+      PILOT_ACTIONS.forEach(function(p) { (groups[p.pa] = groups[p.pa] || []).push(p); });
+      host.innerHTML = '<div class="tab-card"><span class="tab-card-eyebrow">All pins</span><span class="tab-card-title">Pilot Actions</span>'
+        + '<span class="tab-card-copy">PA-1 to PA-6, ' + PILOT_ACTIONS.length + ' pins.</span>'
+        + '<button class="overlay-tool-btn" type="button" id="tabPilotAll">Show all pins</button></div>'
+        + Object.keys(groups).sort().map(function(pa) {
+            const g = groups[pa], countries = Array.from(new Set(g.map(function(p) { return p.country; }))).join(", ");
+            return '<div class="tab-card is-clickable" role="button" tabindex="0" data-pa="' + pa + '"><span class="tab-card-eyebrow">' + pa + '</span>'
+              + '<span class="tab-card-title">' + g[0].type.replace(/\s*\(.*$/, "") + '</span>'
+              + '<span class="tab-card-copy">' + countries + ' · ' + g.length + (g.length > 1 ? ' pins' : ' pin') + '</span></div>';
+          }).join("");
+      const focusPa = function(pa) {
+        const g = groups[pa]; if (!g) return;
+        if (!APP.showPilotActions) togglePilotActions();
+        const b = L.latLngBounds(g.map(function(p) { return [p.lat, p.lng]; }));
+        if (g.length > 1 && b.getSouthWest().distanceTo(b.getNorthEast()) > 500) APP.map.fitBounds(b.pad(0.4), { maxZoom: 9 });
+        else APP.map.setView(b.getCenter(), 9);
+      };
+      host.addEventListener("click", function(e) {
+        const card = e.target.closest("[data-pa]"); if (card) focusPa(card.dataset.pa);
+        if (e.target.id === "tabPilotAll") togglePilotActions();
+      });
+      host.addEventListener("keydown", function(e) {
+        const card = e.target.closest && e.target.closest("[data-pa]");
+        if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); focusPa(card.dataset.pa); }
+      });
+      syncPillarStatuses();
+    }
+
+    function syncDriverPillar() { syncPillarStatuses(); }
+
+    function initDssTabs() {
+      document.querySelectorAll(".dss-pillar[data-tab]").forEach(function(pillar) {
+        const pick = function() {
+          setActiveTab(pillar.dataset.tab);
+          if (isMobileLayout() && APP.openLayersSheet) APP.openLayersSheet();
+        };
+        pillar.addEventListener("click", pick);
+        pillar.addEventListener("keydown", function(e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+      });
+      DOM.dssPillarDetail.addEventListener("click", function(e) {
+        const rm = e.target.closest("[data-onmap-remove]");
+        if (rm) { removeOnMapItem(DOM.dssPillarDetail._items[Number(rm.dataset.onmapRemove)]); return; }
+        if (e.target.closest("[data-onmap-clear]")) DOM.dssPillarDetail._items.slice().forEach(removeOnMapItem);
+      });
+      const tn = document.getElementById("tabNaturaBtn"); if (tn) tn.addEventListener("click", toggleNatura2000);
+      const ts = document.getElementById("tabSeedBtn"); if (ts) ts.addEventListener("click", function() { setSeedPane(!APP.showSeed4Forest); });
+      const sc = document.getElementById("seedClose"); if (sc) sc.addEventListener("click", function() { setSeedPane(false); });
+      const cp = document.getElementById("seedCopy");
+      if (cp) cp.addEventListener("click", function() {
+        const txt = seedPlaceText();
+        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function() { cp.textContent = "Copied"; }, function() { window.prompt("Copy this place:", txt); });
+        setTimeout(function() { cp.textContent = "Copy"; }, 1500);
+      });
+      APP.map.on("moveend", function() { if (APP.showSeed4Forest && !APP.lastClick) updateSeedPlace(); });
+      setActiveTab(APP.activeTab);
+      syncPillarStatuses();
     }
 
     // Bark-beetle event-catalogue markers -- same simple pattern as
@@ -3882,7 +4004,7 @@
     const SHARE_FIELDS = [
       ["fm", "currentForecastModel"], ["fp", "currentForecastPeriod"], ["fv", "currentForecastView"],
       ["ft", "currentForecastThreshold"], ["ps", "currentPhenipsScen"], ["pp", "currentPhenisPeriod"],
-      ["pv", "currentPhenipsVar"], ["pw", "currentPhenipsView"], ["pe", "currentPhenipsExp"], ["wp", "currentWindPeriod"],
+      ["pv", "currentPhenipsVar"], ["pw", "currentPhenipsView"], ["pe", "currentPhenipsExp"], ["tb", "activeTab"], ["wp", "currentWindPeriod"],
       ["wg", "currentWindGcm"], ["dp", "currentDroughtFuturePeriod"], ["dm", "currentDroughtRefMetric"],
       ["fw", "currentFireView"], ["fs", "currentFireScen"], ["rc", "currentRcp"]
     ];
@@ -4175,46 +4297,8 @@
       applySimpleView();
       if (DOM.splitBtn) DOM.splitBtn.addEventListener("click", toggleSplit);
       if (DOM.pilotActionsBtn) DOM.pilotActionsBtn.addEventListener("click", togglePilotActions);
-      if (DOM.dssPillarPilotActions) {
-        DOM.dssPillarPilotActions.addEventListener("click", togglePilotActions);
-        DOM.dssPillarPilotActions.addEventListener("keydown", function(e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePilotActions(); }
-        });
-      }
-      const naturaSlider = document.getElementById("naturaOpacity");
-      if (naturaSlider) naturaSlider.addEventListener("input", function() {
-        APP.natura2000Opacity = Number(naturaSlider.value);
-        document.getElementById("naturaOpacityValue").textContent = Math.round(APP.natura2000Opacity * 100) + "%";
-        ["natura2000LayerLeft", "natura2000LayerRight"].forEach(function(key) {
-          if (APP[key]) APP[key].setStyle(natura2000Style);
-        });
-      });
-      if (DOM.dssPillarNatura2000) {
-        DOM.dssPillarNatura2000.addEventListener("click", toggleNatura2000);
-        DOM.dssPillarNatura2000.addEventListener("keydown", function(e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleNatura2000(); }
-        });
-      }
-      document.querySelectorAll(".dss-pillar:not(.dss-pillar-detail-toggle)").forEach(function(pillar) {
-        pillar.addEventListener("click", function() {
-          document.querySelectorAll(".dss-pillar-detail-toggle.is-open").forEach(function(el) { el.classList.remove("is-open"); });
-          DOM.dssPillarDetail.classList.remove("is-open");
-        });
-      });
-      document.querySelectorAll(".dss-pillar-detail-toggle").forEach(function(toggleEl) {
-        toggleEl.addEventListener("click", function() { toggleDssPillarDetail(toggleEl); });
-        toggleEl.addEventListener("keydown", function(e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDssPillarDetail(toggleEl); }
-        });
-      });
-      if (DOM.dssPillarRiskDrivers) {
-        DOM.dssPillarRiskDrivers.addEventListener("click", toggleDriverRibbon);
-        DOM.dssPillarRiskDrivers.addEventListener("keydown", function(e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDriverRibbon(); }
-        });
-      }
-
       initMobileLayout();
+      initDssTabs();
       initSiteSettings();
 
       // Any driver box's accessory layers stay collapsed until its header

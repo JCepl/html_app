@@ -1648,3 +1648,65 @@
     .map-popup-links { margin-top: 6px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; line-height: 1.5; color: #5a6b80; }
     .map-popup-links a { color: #0f3b73; font-weight: 600; white-space: nowrap; }
     .phenips-chart small { display: block; font-weight: 400; font-size: 9px; color: #5a6b80; line-height: 1.3; }
+
+    /* ---- DSS tabs, "On the map now" strip, tab panels, Seed4Forest side window ---- */
+    .dss-pillar[data-tab] { cursor: pointer; }
+    .dss-pillar[data-tab]:hover { background: #24507c; }
+    .dss-pillar[data-tab]:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+    .dss-pillar[data-tab].is-tab-active { background: #d3852b; }
+    .dss-pillar[data-tab].is-tab-active .dss-pillar-num { background: rgba(255,255,255,0.28); color: #fff; }
+    .dss-pillar[data-tab].is-tab-active .dss-pillar-title { color: #fff; }
+    .dss-pillar[data-tab].is-tab-active .dss-pillar-copy { color: rgba(255,255,255,0.88); }
+    .dss-pillar[data-tab].is-tab-active .dss-pillar-status { color: #fff; border-color: rgba(255,255,255,0.7); }
+    .dss-pillar[data-tab].has-layers:not(.is-tab-active) .dss-pillar-status { color: #fff; border-color: #d3852b; background: rgba(211,133,43,0.35); }
+
+    .dss-pillar-detail.on-map-strip {
+      max-height: 40px; padding: 4px 14px; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
+      overflow-x: auto; border-bottom: 1px solid #c9d8ea; white-space: nowrap;
+    }
+    .on-map-label { font-size: 11px; font-weight: 700; color: #244166; margin-right: 2px; }
+    .on-map-none { font-size: 11px; color: #6d7f94; }
+    .on-map-chip {
+      display: inline-flex; align-items: center; gap: 5px; padding: 2px 4px 2px 9px; border-radius: 999px;
+      background: #fff; border: 1px solid #b9cbe0; font-size: 11px; font-weight: 600; color: #1d3b5f;
+    }
+    .on-map-chip button { border: 0; background: #e6eef7; border-radius: 50%; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 12px; color: #244166; cursor: pointer; }
+    .on-map-chip button:hover { background: #d3852b; color: #fff; }
+    .on-map-clear { border: 0; background: none; font-size: 11px; color: #5a6b80; text-decoration: underline; cursor: pointer; }
+
+    .tab-panel { padding: 2px 2px 6px; }
+    .tab-panel[hidden] { display: none; }
+    .tab-intro { font-size: 12px; line-height: 1.4; color: #2b4a68; margin: 2px 0 6px; max-width: 920px; }
+    .tab-intro strong { color: #163b60; }
+    .tab-cards { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tab-card {
+      display: flex; flex-direction: column; gap: 2px; min-width: 150px; max-width: 230px; padding: 5px 8px 6px;
+      border: 1px solid #e0e9f3; border-radius: 6px; background: rgba(248,251,255,0.85); color: #2b4a68; text-align: left;
+    }
+    .tab-card.is-empty { border-style: dashed; background: transparent; color: #8798ab; }
+    .tab-card.is-clickable { cursor: pointer; }
+    .tab-card.is-clickable:hover { background: #fff; border-color: #7fa878; }
+    .tab-card-eyebrow { font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #b06a12; }
+    .tab-card-title { font-size: 13px; font-weight: 700; color: #163b60; }
+    .tab-card.is-empty .tab-card-title { color: #8798ab; }
+    .tab-card-copy { font-size: 11px; line-height: 1.3; }
+    .tab-card .overlay-tool-btn { align-self: flex-start; margin-top: 3px; }
+    .tab-card .overlay-tool-btn.is-on { background: #2f5480; color: #fff; border-color: #2f5480; }
+
+    #seedPane { display: none; flex: 0 0 42%; min-width: 0; flex-direction: column; background: #f4f8fc; border-left: 2px solid #29465b; }
+    #app.seed-on #seedPane { display: flex; }
+    #seedPane[hidden] { display: none !important; }
+    .seed-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #29465b; color: #fff; font-size: 13px; }
+    .seed-head small { font-weight: 400; opacity: 0.8; }
+    .seed-head button { border: 0; background: none; color: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
+    .seed-place { padding: 5px 10px; font-size: 12px; color: #244166; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .seed-place button { border: 1px solid #9fb6d1; background: #fff; border-radius: 6px; font-size: 11px; padding: 1px 8px; cursor: pointer; }
+    .seed-place a { margin-left: auto; font-size: 11px; color: #0f3b73; font-weight: 600; }
+    .seed-note { padding: 0 10px 5px; font-size: 10.5px; color: #5a6b80; line-height: 1.35; }
+    #seedFrame { flex: 1; width: 100%; border: 0; background: #fff; min-height: 0; }
+    @media (max-width: 700px) {
+      .dss-pillar-detail.on-map-strip { max-height: 0; padding: 0; border: 0; overflow: hidden; }
+      .dss-pillar[data-tab].is-tab-active .dss-pillar-short { text-decoration: underline; text-underline-offset: 3px; }
+      #app.seed-on #seedPane { position: fixed; left: 0; right: 0; top: 0; bottom: var(--bar); z-index: 1245; }
+    }
+    #overlayCardStrip[hidden] { display: none !important; }
