@@ -1,0 +1,25 @@
+{
+ "image": "efda_v3/efda_v3_wbb_hit_years.webp",
+ "bounds": {
+  "south": 34.4780906013644,
+  "west": -10.6989350338635,
+  "north": 71.4273485377882,
+  "east": 38.60060775861583
+ },
+ "legend": {
+  "gradient": [
+   "#fff4d6",
+   "#fdd99b",
+   "#fdb462",
+   "#f4874b",
+   "#d9533a",
+   "#a62a2a",
+   "#6b0f1a"
+  ],
+  "labels": [
+   "0 years (transparent)",
+   "10 years or more"
+  ]
+ },
+ "source": "EFDA v3.0 (Landsat 1985-2024), agent 'wind / bark beetle complex', 1 km: number of years with share > 1%"
+}

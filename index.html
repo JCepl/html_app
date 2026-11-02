@@ -221,7 +221,7 @@
                title="Show 3 more bark beetle layers (past disturbance, PHENIPS climate, pressure index) -- for context, not model forecasts"
                aria-expanded="false">Bark beetle <span class="bb-toggle-count">+3</span></div>
           <div class="period-strip" title="Data coverage by time period">
-            <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2023 -- click to view">Historic</span>
+            <span class="period-chip" data-jump-overlay="bbtpast" title="Past disturbance, 1985-2024 -- click to view">Historic</span>
             <span class="period-chip" data-jump-overlay="bbtl" data-jump-period="near" title="Bark Beetle Pressure, from 2030 (the validated forecast model itself has no near-future run -- reference and end-century only) -- click to view pressure">Near future</span>
             <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Susceptibility index, end of century -- click to view">Later future</span>
           </div>
@@ -242,12 +242,12 @@
                 <div class="bb-accessories" id="bbAccessories" hidden>
         <div class="overlay-card hazard-auxiliary" data-overlay="bbtpast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past forest disturbance</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>Past wind / bark-beetle disturbance</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtpast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Past forest disturbance, all causes.</span>
+          <span class="overlay-card-copy">Years with disturbance 1985–2024 (EFDA v3) and documented outbreaks.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtpast" />
             <span class="overlay-tool-value" data-opacity-value="bbtpast">0.85</span>
@@ -255,12 +255,12 @@
         </div>
         <div class="overlay-card hazard-auxiliary" data-overlay="phenips">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>PHENIPS climate</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">For context</span>PHENIPS degree-days &amp; generations</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="phenips">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Beetle generations per year.</span>
+          <span class="overlay-card-copy">Beetle development: degree-days and generations per year, 1981–2024 and projections.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="phenips" />
             <span class="overlay-tool-value" data-opacity-value="phenips">0.85</span>
@@ -363,30 +363,36 @@
         </div>
 
         <div id="phenipsPanel" class="nested-panel" hidden>
-          <p class="nested-title">PHENIPS Climate Controls</p>
-          <div class="label">Scenario</div>
+          <p class="nested-title">PHENIPS Controls</p>
+          <div class="label">Data</div>
           <div class="row">
             <select id="phenipsScenSelector">
-              <option value="rcp85">RCP 8.5 — high emissions</option>
-              <option value="rcp45">RCP 4.5 — intermediate</option>
-              <option value="rcp26">RCP 2.6 — mitigation</option>
-            </select>
-          </div>
-          <div class="label">Period</div>
-          <div class="row">
-            <select id="phenisPeriodSelector">
-              <option value="hist">Historical 1985–2005</option>
-              <option value="near">Near-future 2005–2040</option>
-              <option value="mid">Mid-century 2041–2070</option>
-              <option value="end">End-century 2071–2100</option>
+              <option value="obs">Observed climate 1981–2024 (new)</option>
+              <option value="rcp85">Projection RCP 8.5 — high emissions</option>
+              <option value="rcp45">Projection RCP 4.5 — intermediate</option>
+              <option value="rcp26">Projection RCP 2.6 — mitigation</option>
             </select>
           </div>
           <div class="label">Variable</div>
           <div class="row">
             <select id="phenipsVarSelector">
-              <option value="gdd">GDD (bark °C·days)</option>
+              <option value="gdd">Degree-days (bark °C·days)</option>
               <option value="gen">Generations / year</option>
+              <option value="share">Years with ≥ 1 generation (share)</option>
             </select>
+          </div>
+          <div id="phenipsExpRow">
+            <div class="label">Exposure</div>
+            <div class="row">
+              <select id="phenipsExpSelector">
+                <option value="shade">Shaded stand</option>
+                <option value="sun">Sun-exposed</option>
+              </select>
+            </div>
+          </div>
+          <div class="label">Period</div>
+          <div class="row">
+            <select id="phenisPeriodSelector"></select>
           </div>
           <div class="label">View</div>
           <div class="row">
@@ -396,7 +402,7 @@
               <option value="contrast">Now vs. near-future contrast</option>
             </select>
           </div>
-          <div class="small">Ensemble mean · 3 GCMs · RCP8.5 · bark-temp corrected (Baier et al. 2007) · max 3 generations (photoperiod-gated)</div>
+          <div class="small" id="phenipsNote"></div>
         </div>
 
         <div id="windPanel" class="nested-panel" hidden>
@@ -563,6 +569,6 @@
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
-  <script src="app.js?v=1ce8f80b0f"></script>
+  <script src="app.js?v=55d8aa7123"></script>
 </body>
 </html>
