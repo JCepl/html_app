@@ -2201,7 +2201,6 @@
 
   <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
-  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
   <script>
@@ -4089,27 +4088,59 @@
         || "Unknown";
     }
 
+    // --- Small geometry helpers (replace the 600 KB Turf.js; only these two
+    // questions were ever asked of it) ----------------------------------------
+    // GeoJSON Polygon / MultiPolygon -> list of polygons, each a list of rings.
+    function geometryPolygons(geometry) {
+      if (!geometry) return [];
+      if (geometry.type === "Polygon") return [geometry.coordinates];
+      if (geometry.type === "MultiPolygon") return geometry.coordinates;
+      return [];
+    }
+
+    // Even-odd ray casting, so holes (rings after the first) count as outside.
+    function pointInRing(x, y, ring) {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+
+    function pointInFeature(lng, lat, feature) {
+      return geometryPolygons(feature && feature.geometry).some(function(rings) {
+        let n = 0;
+        for (let k = 0; k < rings.length; k++) if (pointInRing(lng, lat, rings[k])) n++;
+        return n % 2 === 1;
+      });
+    }
+
+    // True if any polygon part of the feature has a bounding box that overlaps
+    // the window [xmin, ymin, xmax, ymax] (a cheap test; good enough to drop
+    // countries far outside the map extent).
+    function featureTouchesWindow(feature, xmin, ymin, xmax, ymax) {
+      return geometryPolygons(feature && feature.geometry).some(function(rings) {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        rings[0].forEach(function(c) {
+          if (c[0] < x0) x0 = c[0]; if (c[0] > x1) x1 = c[0];
+          if (c[1] < y0) y0 = c[1]; if (c[1] > y1) y1 = c[1];
+        });
+        return x0 <= xmax && x1 >= xmin && y0 <= ymax && y1 >= ymin;
+      });
+    }
+
     function getMapExtentCountryGeojson(geojson) {
       if (!geojson || !geojson.features) {
         return geojson;
       }
 
-      const bboxFeature = turf.bboxPolygon([
-        MAP_META.bbox.xmin,
-        MAP_META.bbox.ymin,
-        MAP_META.bbox.xmax,
-        MAP_META.bbox.ymax
-      ]);
+      const b = MAP_META.bbox;
 
       return {
         type: "FeatureCollection",
         features: geojson.features.filter(function(feature) {
-          try {
-            return turf.booleanIntersects(feature, bboxFeature);
-          } catch (error) {
-            console.error("Country bbox filter failed:", error);
-            return false;
-          }
+          return featureTouchesWindow(feature, b.xmin, b.ymin, b.xmax, b.ymax);
         })
       };
     }
@@ -4326,16 +4357,8 @@
     function findContainingFeature(geojson, latlng) {
       if (!geojson || !geojson.features) return null;
 
-      const pt = turf.point([latlng.lng, latlng.lat]);
-
       for (const feature of geojson.features) {
-        try {
-          if (turf.booleanPointInPolygon(pt, feature)) {
-            return feature;
-          }
-        } catch (error) {
-          console.error("Point-in-polygon failed:", error);
-        }
+        if (pointInFeature(latlng.lng, latlng.lat, feature)) return feature;
       }
 
       return null;
@@ -4455,9 +4478,8 @@
     // Every Natura 2000 site under the click (SAC and SPA often overlap).
     function natura2000SitesAt(latlng) {
       if (!APP.showNatura2000 || !APP.natura2000Data) return [];
-      const pt = turf.point([latlng.lng, latlng.lat]);
       return APP.natura2000Data.features.filter(function(f) {
-        try { return turf.booleanPointInPolygon(pt, f); } catch (e) { return false; }
+        return pointInFeature(latlng.lng, latlng.lat, f);
       });
     }
 
