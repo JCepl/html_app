@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
 source("webmap_data/color_scales.R")
 
 # --- configuration ----------------------------------------------------------
-src_dir   <- "/Users/jaroslavcepl/REENFOCE_LOCAL_MODEL_WIEN/Tommaso"
+src_dir   <- "/Volumes/Extreme SSD/RE-ENFORCE_COMPLETE_2026-10-26/RE-ENFORCE_BB_model/Tommaso"
 out_dir   <- "webmap_data/wind"
 max_dim   <- 8000          # target longest side in pixels for the web PNG
 risk_cap  <- 0.5           # saturate the color ramp at this probability
@@ -53,11 +53,12 @@ for (p in periods) {
   r <- rast(in_tif)
 
   # Downsample on the native grid first (cheap, windowed read) so we never
-  # reproject the full 2.9-billion-cell raster. Use max so high-risk pixels
-  # survive aggregation.
+  # reproject the full 2.9-billion-cell raster. Use the block mean: max took the
+  # worst of ~11x11 native cells and turned most of Europe red (median 0.21, p95
+  # 0.43 natively).
   fact <- ceiling(max(ncol(r), nrow(r)) / max_dim)
   if (fact > 1) {
-    r <- aggregate(r, fact = fact, fun = "max", na.rm = TRUE)
+    r <- aggregate(r, fact = fact, fun = "mean", na.rm = TRUE)
   }
 
   # Reproject the small raster to Web Mercator so the imageOverlay aligns with
@@ -69,7 +70,7 @@ for (p in periods) {
   # wide latitude span) -- re-aggregate so every PNG stays comparably sized.
   fact2 <- ceiling(max(ncol(r), nrow(r)) / max_dim)
   if (fact2 > 1) {
-    r <- aggregate(r, fact = fact2, fun = "max", na.rm = TRUE)
+    r <- aggregate(r, fact = fact2, fun = "mean", na.rm = TRUE)
   }
   merc_ext <- ext(r)
 
