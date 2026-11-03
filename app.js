@@ -3470,14 +3470,14 @@
       clearTimeout(locateNote.t); if (text) locateNote.t = setTimeout(function() { el.hidden = true; }, 7000);
     }
 
-    function locateMe(offBtn) {
-      if (!navigator.geolocation) { locateNote("This browser cannot give a location."); return; }
-      track("locate");
-      locateNote("Asking for your location…");
+    function locateMe(offBtn, auto) {
+      if (!navigator.geolocation) { if (!auto) locateNote("This browser cannot give a location."); return; }
+      track(auto ? "locate-auto" : "locate");
+      if (!auto) locateNote("Asking for your location…");
       navigator.geolocation.getCurrentPosition(function(pos) {
         const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
         locateNote("");
-        if (!L.latLngBounds(MAP_SOFT_BOUNDS).contains(latlng)) { locateNote("Your location is outside the area this map covers."); return; }
+        if (!L.latLngBounds(MAP_SOFT_BOUNDS).contains(latlng)) { if (!auto) locateNote("Your location is outside the area this map covers."); return; }
         clearMyLocation(offBtn);
         const acc = pos.coords.accuracy;
         if (isFinite(acc) && acc < 5000) APP.myLocationRing = L.circle(latlng, { radius: acc, color: "#c4731c", weight: 1, fillColor: "#c4731c", fillOpacity: 0.08, interactive: false }).addTo(APP.map);
@@ -3488,12 +3488,33 @@
         APP.myLocationPin.on("click", function() { openClickPopup(latlng, APP, APP.map); });
         if (offBtn) offBtn.hidden = false;
         APP.map.setView(latlng, Math.max(APP.map.getZoom(), 9));
+        if (auto) { locateNote("Your position is marked on the map. Press × under the crosshair to remove it."); return; }
         updatePanelFromClick(latlng);
         openClickPopup(latlng, APP, APP.map);
       }, function(err) {
+        if (auto) return;   // a refusal at start is silent; the button stays available
         locateNote(err.code === 1 ? "Location permission was denied. Allow it in your browser's site settings to use this button."
           : err.code === 3 ? "Finding your location took too long. Try again." : "Your location is not available right now.");
       }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 });
+    }
+
+    // At start: show where you are. Asks once per browser; if the browser already allows it, marks the position on every visit.
+    // A shared link keeps its own view and is never moved.
+    function autoLocateOnce() {
+      if (location.hash.length > 1 || !navigator.geolocation) return;
+      const off = document.querySelector(".locate-off");
+      let asked = false;
+      try { asked = localStorage.getItem("locateAsked") === "1"; } catch (e) { /* storage blocked: treat as not asked */ }
+      const ask = function() {
+        try { localStorage.setItem("locateAsked", "1"); } catch (e) { /* ignore */ }
+        locateMe(off, true);
+      };
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then(function(r) {
+          if (r.state === "granted") locateMe(off, true);
+          else if (r.state === "prompt" && !asked) ask();
+        }, function() { if (!asked) ask(); });
+      } else if (!asked) ask();
     }
 
     function addSplitScreenControl() {
@@ -4152,6 +4173,7 @@
 
       addLocateControl();
       attachMapClick(APP.map, "left");
+      setTimeout(autoLocateOnce, 600);   // after the map has settled
 
       setLegendLabels();
       initControls();
