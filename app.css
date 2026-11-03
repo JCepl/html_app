@@ -924,6 +924,14 @@
       background: transparent;
       color: #a9b6c4;
     }
+    .period-chip small {
+      display: block;
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      opacity: 0.85;
+    }
     .period-chip[data-jump-overlay] {
       cursor: pointer;
     }
