@@ -1,0 +1,18 @@
+{
+  "image": "delta_from_near.png",
+  "bounds": {
+    "south": 34.54201979574424,
+    "west": -10.549108972524644,
+    "north": 71.53606825061246,
+    "east": 38.46074471693017
+  },
+  "dimensions": {
+    "width": 1553,
+    "height": 2131
+  },
+  "source": "Final model P1C4 (16 predictors), SSP5-8.5, CHELSA-CMIP6 MPI-ESM1-2-HR, year replay (approximate 3 km build); period minus 1981-2010",
+  "value_range": {
+    "min": -0.3,
+    "max": 0.3
+  }
+}

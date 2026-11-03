@@ -24,6 +24,23 @@
     0.9
   ],
   "models": {
+    "p1c4_ssp585": {
+      "metrics_file": "webmap_data/forecast_bundle/p1c4_ssp585/metrics_confusion.json",
+      "label": "Final model (P1C4), SSP5-8.5",
+      "scenarios": [
+        "ssp585"
+      ],
+      "periods": [
+        "1981_2010",
+        "2011_2040",
+        "2041_2070",
+        "2071_2100"
+      ],
+      "value_max": 0.8,
+      "change_cap": 0.3,
+      "flag_threshold": 0.5,
+      "default": true
+    },
     "chelsa_mpi_ssp585": {
       "metrics_file": "webmap_data/forecast_bundle/chelsa_mpi_ssp585/metrics_confusion.json",
       "label": "CHELSA / MPI-ESM1-2-HR (SSP5-8.5)",
@@ -3602,6 +3619,61 @@
         "0.5": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2041_2070/risk_visible_t50.tif",
         "0.25": "webmap_data/forecast_bundle/chelsa_v41_a41_ssp585/2041_2070/risk_visible_t25.tif"
       }
+    },
+    "p1c4_ssp585::1981_2010": {
+      "model": "p1c4_ssp585",
+      "period": "1981_2010",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA-CMIP6 MPI-ESM1-2-HR"
+      ],
+      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/1981_2010/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/1981_2010/risk_visible_t50.tif"
+      }
+    },
+    "p1c4_ssp585::2011_2040": {
+      "model": "p1c4_ssp585",
+      "period": "2011_2040",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA-CMIP6 MPI-ESM1-2-HR"
+      ],
+      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2011_2040/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2011_2040/risk_visible_t50.tif"
+      },
+      "delta_from_near_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2011_2040/delta_from_near.tif"
+    },
+    "p1c4_ssp585::2041_2070": {
+      "model": "p1c4_ssp585",
+      "period": "2041_2070",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA-CMIP6 MPI-ESM1-2-HR"
+      ],
+      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2041_2070/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2041_2070/risk_visible_t50.tif"
+      },
+      "delta_from_near_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2041_2070/delta_from_near.tif"
+    },
+    "p1c4_ssp585::2071_2100": {
+      "model": "p1c4_ssp585",
+      "period": "2071_2100",
+      "scenario": "ssp585",
+      "gcms": [
+        "CHELSA-CMIP6 MPI-ESM1-2-HR"
+      ],
+      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2071_2100/probability_ensemble_mean.tif",
+      "threshold_visible_tifs": {
+        "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2071_2100/risk_visible_t50.tif"
+      },
+      "delta_from_near_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2071_2100/delta_from_near.tif"
     }
   }
 }

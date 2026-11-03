@@ -70,6 +70,12 @@
       tag.addEventListener("load", function() { track(isMobileLayout() ? "visit-phone" : "visit-desktop"); });
     }
 
+    // Final bark-beetle model (P1C4, SSP5-8.5): its own sequential ramp (light to dark) over 0..P1C4_CAP, flag at 0.5.
+    // The ramp equals SEQ in webmap_data/build_p1c4_bundle.py; keep them in step.
+    const P1C4_MODEL = "p1c4_ssp585", P1C4_CAP = 0.8, P1C4_FLAG = 0.5;
+    const P1C4_RAMP = ["#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"];
+    const EXTRAP_RAMP = ["#f0f0f0", "#c7c7c7", "#9f9f9f", "#767676", "#4e4e4e", "#252525"];
+
     const APP = {
       map: null,
       // Stable reference to the original (left) Leaflet map instance, set
@@ -142,10 +148,10 @@
       currentPhenipsExp: "shade",
       phenipsV5: null,
       phenipsData: null,
-      currentForecastModel: "chelsa_v41_b41lat_ssp585",
+      currentForecastModel: P1C4_MODEL,
       currentForecastPeriod: "2041_2070",
       currentForecastView: "probability",
-      currentForecastThreshold: "0.75",
+      currentForecastThreshold: "0.5",
       currentWindPeriod: "near",
       currentWindGcm: "mpi",
       currentDroughtFuturePeriod: "2041_2070_ssp370",
@@ -196,7 +202,7 @@
     // so the top of the wind legend (t=1) corresponds to p=0.5.
     const WIND_RISK_CAP = 0.5;
     // Bump to bust browser cache when overlay PNGs are regenerated.
-    const ASSET_VERSION = "20261102-tabs";
+    const ASSET_VERSION = "20261103-p1c4";
 
     // Unified risk palette, shared by every hazard/probability layer (bark
     // beetle history/forecast, wind, PHENIPS, CHELSA): Spectral, sampled
@@ -222,6 +228,10 @@
     const BARK_BEETLE_RAMP = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598",
                        "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
     const BARK_BEETLE_GRADIENT = buildGradientCss(BARK_BEETLE_RAMP);
+    const P1C4_GRADIENT = buildGradientCss(P1C4_RAMP);
+    const EXTRAP_GRADIENT = buildGradientCss(EXTRAP_RAMP);
+    const isP1c4 = function(model) { return (model || APP.currentForecastModel) === P1C4_MODEL; };
+    const P1C4_CLASSES = [[0.25, "low"], [P1C4_FLAG, "moderate"], [Infinity, "flagged, 0.5 or more"]];
 
     // Every vector hex ("pressure index") layer -- bark beetle, wildfire,
     // wind -- shares one code path (styling, click sampling, RCP/year
@@ -237,7 +247,7 @@
     // earlier version of this also capped the far-future/end-of-century
     // options, which is wrong -- the whole point of a climate-impact DSS is
     // showing what changes by end of century). See applySimpleView().
-    const SIMPLE_VIEW_DEFAULT_FORECAST_MODEL = "chelsa_v41_b41lat_ssp585";
+    const SIMPLE_VIEW_DEFAULT_FORECAST_MODEL = P1C4_MODEL;
 
     // Wind's own scale (Tommaso's QGIS rendering) -- see WIND_RAMP in
     // webmap_data/color_scales.R. An independent copy: historically this and
@@ -326,6 +336,8 @@
     const colorToRiskFraction = makeColorToRiskFraction(BARK_BEETLE_LUT);
     const WIND_LUT = buildRiskLut(WIND_RAMP);
     const colorToWindFraction = makeColorToRiskFraction(WIND_LUT);
+    const colorToP1c4Fraction = makeColorToRiskFraction(buildRiskLut(P1C4_RAMP));
+    const colorToExtrapFraction = makeColorToRiskFraction(buildRiskLut(EXTRAP_RAMP));
 
     // The drought future-classes layer uses its own 4-colour classified
     // palette (see export_drought_overlay.R fut_colors), unrelated to either
@@ -380,7 +392,8 @@
         const m = OVERLAY_CATALOG[overlayId].meta;
         return (m && m.valueRange) ? Number(m.valueRange.zmax) : 1;
       }
-      return 1; // bbtforecast probability is already 0..1
+      if (overlayId === "bbtforecast" && isP1c4()) return P1C4_CAP;
+      return 1; // earlier bbtforecast models: probability-like 0..1
     }
 
     // Convert the slider's absolute probability threshold into a colour-scale
@@ -392,13 +405,15 @@
 
     // The slider only filters the layer that is actually on top (the one the
     // legend and slider range describe); stacked layers underneath render full.
+    // Views drawn on their own colour scale (change, share of years, extrapolation): the hide-below slider does not apply.
+    const FORECAST_UNFILTERED_VIEWS = ["delta", "share05", "extrapolation"];
     function effectiveRiskFraction(overlayId) {
       if (overlayId !== getTopVisibleOverlayId()) return 0;
       // The delta view is colored with a diverging (blue/white/red) ramp, not
       // the shared Spectral risk ramp the slider's color reversal assumes --
       // thresholding it would reverse-match delta colors against the wrong
       // LUT. Never mask it; it's not a "risk" surface to begin with.
-      if (overlayId === "bbtforecast" && APP.currentForecastView === "delta") return 0;
+      if (overlayId === "bbtforecast" && FORECAST_UNFILTERED_VIEWS.includes(APP.currentForecastView)) return 0;
       return riskFractionFor(overlayId);
     }
 
@@ -416,7 +431,7 @@
         // beetle's -- loadThresholdedImage's default colorFractionFn is the
         // bark-beetle LUT, so wind must explicitly pass its own or the
         // threshold mask reverse-matches wind's pixels against the wrong ramp.
-        const colorFn = overlayId === "wind" ? colorToWindFraction : undefined;
+        const colorFn = overlayId === "wind" ? colorToWindFraction : (overlayId === "bbtforecast" && isP1c4()) ? colorToP1c4Fraction : undefined;
         loadThresholdedImage(url, fraction, place, function() { place(url); }, colorFn);
       } else {
         place(url);
@@ -450,7 +465,7 @@
     // Wind probability saturates at 0.5, so its slider caps at 50%; the beetle
     // layers are full 0..1 probability and run to 100%.
     function updateRiskSliderRange(topOverlayId) {
-      const max = topOverlayId === "wind" ? 49 : 100;
+      const max = topOverlayId === "wind" ? 49 : (topOverlayId === "bbtforecast" && isP1c4()) ? 79 : 100;
       if (Number(DOM.riskSlider.max) !== max) {
         DOM.riskSlider.max = max;
         if (Number(DOM.riskSlider.value) > max) {
@@ -467,7 +482,7 @@
     // nothing, so it is removed there instead of sitting on the panel idle.
     function riskFilterApplies(topOverlayId) {
       if (topOverlayId === "wind") return true;
-      if (topOverlayId === "bbtforecast") return APP.currentForecastView !== "delta";
+      if (topOverlayId === "bbtforecast") return !FORECAST_UNFILTERED_VIEWS.includes(APP.currentForecastView);
       return HEX_OVERLAY_IDS.includes(topOverlayId);
     }
     function syncRiskFilterBox(topOverlayId) {
@@ -516,7 +531,7 @@
       },
       bbtforecast: {
         label: "Bark beetle susceptibility",
-        description: "Susceptibility index of documented bark-beetle and wind disturbance in spruce (0 low - 1 high), calibrated but not an annual attack probability. This is an earlier model version; the final model maps follow. Future maps are a climate shift on today's fixed forest geography, not a forecast. The share of cells where the future climate lies outside the model's training range (extrapolation) is not yet available for this earlier version and will be shown with the final maps.",
+        description: "Susceptibility of Norway spruce forest to bark-beetle and wind disturbance, learnt from documented outbreak events (223 events: the EFI DFDE database plus a literature search) overlaid with the European Forest Disturbance Atlas, 1985–2024. Boosted trees on 16 predictors: terrain, climate normals and 4-year climate memory (autumn precipitation, beetle generations from PHENIPS, evaporative demand against precipitation, multi-year drought run length). Future climate: CHELSA-CMIP6 MPI-ESM1-2-HR, SSP5-8.5 only so far (SSP1-2.6 and SSP3-7.0 to follow); each future year replays an observed 1981–2010 year shifted to the future monthly mean, so year-to-year variability is today's. Validation: AUC 0.87 with a region and a period both held out, 0.82 trained to 2014 and tested on 2017–2024. Shown only where the Norway spruce probability is at least 0.2, the model's domain. Share of all land cells (not only spruce areas) with hazard of 0.5 or more (the flag): about 6.1% in 1981–2010, 6.7% in 2011–2040, 7.9% in 2041–2070 and 9.4% in 2071–2100. The value is a susceptibility index, a ranking calibrated at the sample prevalence: not an annual attack probability and not a forecast of single years. Future maps are a climate shift on today's fixed spruce area, not a forecast of where forest will be.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -702,6 +717,10 @@
       forecastPeriodSelector: document.getElementById("forecastPeriodSelector"),
       forecastViewSelector: document.getElementById("forecastViewSelector"),
       forecastViewDeltaOption: document.getElementById("forecastViewDeltaOption"),
+      forecastViewShareOption: document.getElementById("forecastViewShareOption"),
+      forecastViewExtrapOption: document.getElementById("forecastViewExtrapOption"),
+      legendFlagMarker: document.getElementById("legendFlagMarker"),
+      legendFlagNote: document.getElementById("legendFlagNote"),
       forecastThresholdSelector: document.getElementById("forecastThresholdSelector"),
       forecastMetricsGrid: document.getElementById("forecastMetricsGrid"),
       forecastConfusionMatrix: document.getElementById("forecastConfusionMatrix"),
@@ -962,6 +981,8 @@
     function getForecastOverlayPaths(entry) {
       const tifPath = APP.currentForecastView === "probability" ? entry.ensemble_probability_tif
         : APP.currentForecastView === "delta" ? entry.delta_from_near_tif
+        : APP.currentForecastView === "share05" ? entry.share05_tif
+        : APP.currentForecastView === "extrapolation" ? entry.extrapolation_tif
         : entry.threshold_visible_tifs[APP.currentForecastThreshold];
 
       if (!tifPath) {
@@ -1608,14 +1629,14 @@
       } else if (overlayId === "wildfire" || overlayId === "bbtl") {
         APP.currentYear = period === "near" ? 2030 : 2100;
       } else if (overlayId === "bbtforecast") {
-        // "Later future" is the only jumpable bbtforecast slot -- the
-        // flagship model has no near-future run (see period-strip audit).
-        // Periods run chronological reference -> end, so the last entry for
-        // whatever model is currently selected is end-century.
+        // The final model has all three slots: historic 1981-2010, near 2041-2070, later 2071-2100.
+        // (2011-2040 is reachable from the period selector.) The chips always show the final model.
         try {
           const manifest = await ensureForecastManifestLoaded();
-          const periods = (manifest.models[APP.currentForecastModel] && manifest.models[APP.currentForecastModel].periods) || manifest.periods || [];
-          if (periods.length) APP.currentForecastPeriod = periods[periods.length - 1];
+          APP.currentForecastModel = P1C4_MODEL;
+          const periods = (manifest.models[P1C4_MODEL] && manifest.models[P1C4_MODEL].periods) || [];
+          const want = period === "historical" ? periods[0] : period === "near" ? "2041_2070" : periods[periods.length - 1];
+          if (want && periods.includes(want)) APP.currentForecastPeriod = want;
         } catch (error) {
           console.error(error);
         }
@@ -1680,6 +1701,21 @@
       if (!modelSupportsDelta && APP.currentForecastView === "delta") {
         APP.currentForecastView = "probability";
       }
+      // Extra views of the final model: share of years >= 0.5 and the extrapolation share (only when delivered).
+      const hasField = function(field) {
+        return periods.some(function(p) { const e = manifest.entries[APP.currentForecastModel + "::" + p]; return e && e[field]; });
+      };
+      const finalModel = isP1c4();
+      if (DOM.forecastViewShareOption) DOM.forecastViewShareOption.disabled = !hasField("share05_tif");
+      if (DOM.forecastViewExtrapOption) DOM.forecastViewExtrapOption.disabled = !hasField("extrapolation_tif");
+      if (DOM.forecastViewDeltaOption) DOM.forecastViewDeltaOption.textContent = finalModel ? "Change vs 1981–2010 (index points)" : "Δ % change vs. current (2011–2040)";
+      const thrOpt = DOM.forecastViewSelector.querySelector('option[value="threshold"]');
+      if (thrOpt) thrOpt.textContent = finalModel ? "Flagged areas (hazard 0.5 or more)" : "High-susceptibility areas (above cut-off)";
+      const probOpt = DOM.forecastViewSelector.querySelector('option[value="probability"]');
+      if (probOpt) probOpt.textContent = finalModel ? "Susceptibility index (0–0.8 scale)" : "Susceptibility index (0–1)";
+      [["share05", DOM.forecastViewShareOption], ["extrapolation", DOM.forecastViewExtrapOption]].forEach(function(pair) {
+        if (APP.currentForecastView === pair[0] && pair[1] && pair[1].disabled) APP.currentForecastView = "probability";
+      });
 
       // The per-cutoff note (below, for the currently selected threshold) can
       // be misleadingly generic when NA -- this model-level note is the real,
@@ -1691,13 +1727,11 @@
 
       const manifestModels = manifest.models || {};
       populateSelectOptions(DOM.forecastModelSelector, modelKeys, APP.currentForecastModel, function(value) {
-        if (manifestModels[value] && manifestModels[value].label) {
-          return manifestModels[value].label;
-        }
-        return value.toUpperCase();
+        const base = manifestModels[value] && manifestModels[value].label ? manifestModels[value].label : value.toUpperCase();
+        return value === P1C4_MODEL ? base : base + " (earlier model version)";
       });
       populateSelectOptions(DOM.forecastPeriodSelector, periods, APP.currentForecastPeriod, function(value) {
-        const labels = { "1981_2010": "Reference (1981-2010)", "2011_2040": "Near future (2011-2040)", "2041_2070": "Mid century (2041-2070)", "2071_2100": "End century (2071-2100)", "1983_2010": "Reference (1983-2010)", "reference_1984_2010": "Reference (1984-2010)", "future_2071_2100": "End century (2071-2100)" };
+        const labels = { "1981_2010": "Historic (1981-2010)", "2011_2040": "Recent (2011-2040)", "2041_2070": "Near future (2041-2070)", "2071_2100": "Later future, end of century (2071-2100)", "1983_2010": "Reference (1983-2010)", "reference_1984_2010": "Reference (1984-2010)", "future_2071_2100": "End century (2071-2100)" };
         return labels[value] || value.replace("_", "-");
       });
       populateSelectOptions(DOM.forecastThresholdSelector, thresholds, APP.currentForecastThreshold, function(value) {
@@ -1711,7 +1745,13 @@
         return Number(item.cutoff) === cutoff;
       });
 
-      renderForecastPerformance(row, cutoff, metrics.auc);
+      if (metrics.grid_items) {
+        renderForecastMetricsGrid(metrics.grid_items);
+        renderForecastConfusionMatrix(null);
+        DOM.forecastMetricsNote.textContent = metrics.validation_note || "";
+      } else {
+        renderForecastPerformance(row, cutoff, metrics.auc);
+      }
     }
 
     function renderLegendSwatches(items) {
@@ -1782,9 +1822,10 @@
       if (id === "bbtl") return APP.currentYear === 2030;
       if (id === "wildfire") return APP.currentYear === (p === "near" ? 2030 : 2100);
       if (id === "bbtforecast") {
-        const m = APP.forecastManifest, e = m && m.models && m.models[APP.currentForecastModel];
-        const per = (e && e.periods) || (m && m.periods) || [];
-        return !per.length || APP.currentForecastPeriod === per[per.length - 1];
+        const m = APP.forecastManifest, e = m && m.models && m.models[P1C4_MODEL];
+        const per = (e && e.periods) || [];
+        if (!per.length || !isP1c4()) return false;
+        return APP.currentForecastPeriod === (p === "historical" ? per[0] : p === "near" ? "2041_2070" : per[per.length - 1]);
       }
       return true; // single-slot chips (Historic of droughtRef / bbtpast): shown = active
     }
@@ -1820,6 +1861,8 @@
       const topOverlayId = getTopVisibleOverlayId();
       const overlay = getVisibleOverlay();
       renderLegendSwatches([]);
+      if (DOM.legendFlagMarker) DOM.legendFlagMarker.style.display = "none";
+      if (DOM.legendFlagNote) DOM.legendFlagNote.hidden = true;
       DOM.legendBar.style.display = "block";
       DOM.legendBar.style.background = BARK_BEETLE_GRADIENT;
       DOM.legendMin.parentElement.style.display = "";
@@ -1955,6 +1998,27 @@
         DOM.legendBar.style.background = WIND_GRADIENT;
         DOM.legendMin.textContent = "0 — low";
         DOM.legendMax.textContent = "≥ 0.5 — high";
+        return;
+      }
+
+      if (topOverlayId === "bbtforecast" && isP1c4()) {
+        const v = APP.currentForecastView;
+        DOM.legendBar.style.display = "block";
+        if (v === "delta") {
+          DOM.legendBar.style.background = DELTA_GRADIENT;
+          DOM.legendMin.textContent = "−0.3 (fall)"; DOM.legendMax.textContent = "+0.3 (rise)";
+        } else if (v === "share05") {
+          DOM.legendBar.style.background = P1C4_GRADIENT;
+          DOM.legendMin.textContent = "0 — no year"; DOM.legendMax.textContent = "1 — every year";
+        } else if (v === "extrapolation") {
+          DOM.legendBar.style.background = EXTRAP_GRADIENT;
+          DOM.legendMin.textContent = "0 — inside training range"; DOM.legendMax.textContent = "1 — outside";
+        } else {
+          DOM.legendBar.style.background = P1C4_GRADIENT;
+          DOM.legendMin.textContent = "0"; DOM.legendMax.textContent = P1C4_CAP.toFixed(1);
+          if (DOM.legendFlagMarker) { DOM.legendFlagMarker.style.left = (P1C4_FLAG / P1C4_CAP * 100) + "%"; DOM.legendFlagMarker.style.display = "block"; }
+          if (DOM.legendFlagNote) DOM.legendFlagNote.hidden = false;
+        }
         return;
       }
 
@@ -2308,6 +2372,7 @@
       setStatus("Loading bark beetle forecast...");
 
       try {
+        await ensureForecastManifestLoaded(); // a deep link can draw the layer before any panel has asked for the manifest
         await hydrateForecastControls();
         const entry = getForecastEntry();
         if (!entry) {
@@ -2316,7 +2381,9 @@
 
         const overlayPaths = getForecastOverlayPaths(entry);
         if (!overlayPaths) {
-          throw new Error("Forecast raster missing for current selection");
+          setStatus(APP.currentForecastView === "delta" ? "No change map for the reference period: it is the baseline." : "This view is not available for the selected period.");
+          clearOverlayLayer("bbtforecast");
+          return;
         }
 
         const response = await fetch(overlayPaths.metaPath, { cache: "no-store" });
@@ -2637,11 +2704,30 @@
 
     // Links that open the same place in other tools. Only the satellite link carries the coordinates;
     // the others open the tool itself (none of them documents a coordinate link).
+    // Seed4Forest's location box reads "longitude, latitude" (tested: it offers that reading first, and
+    // "latitude, longitude" would be taken the wrong way round); then Enter and "Confirm Location".
+    function seedCoordText(ll) { return ll.lng.toFixed(5) + ", " + ll.lat.toFixed(5); }
+    function copyText(txt, done) {
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(done, function() { window.prompt("Copy this place:", txt); });
+    }
+    document.addEventListener("click", function(e) {
+      const b = e.target.closest && e.target.closest(".seed-copy-btn");
+      if (!b) return;
+      e.preventDefault();
+      track("seed4forest-copy");
+      copyText(b.dataset.coords, function() {
+        const old = b.dataset.label || b.textContent; b.dataset.label = old; b.textContent = "Copied ✓";
+        setTimeout(function() { b.textContent = old; }, 1800);
+      });
+    }, true);  // capture: Leaflet popups stop clicks from bubbling
+
     function placeLinksHtml(latlng) {
       const sat = "https://www.google.com/maps/@" + latlng.lat.toFixed(5) + "," + latlng.lng.toFixed(5) + ",15z/data=!3m1!1e3";
       const ch = latlng.lat > 45.8 && latlng.lat < 47.9 && latlng.lng > 5.9 && latlng.lng < 10.6;
       const a = function(href, text, tip) { return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" title="' + tip + '">' + text + ' ↗</a>'; };
-      return '<div class="map-popup-links">Open this place elsewhere: '
+      return '<div class="map-popup-seed"><button type="button" class="seed-copy-btn" data-coords="' + seedCoordText(latlng) + '" title="Copies ' + seedCoordText(latlng) + '">Copy place for Seed4Forest</button>'
+        + '<span>Paste into its “Enter location or coordinates” box, press Enter, then Confirm Location.</span></div>'
+        + '<div class="map-popup-links">Open this place elsewhere: '
         + a(sat, "satellite view", "Satellite imagery centred on this point")
         + ' · ' + a("https://app.seed4forest.org/", "Seed4Forest", "BFW tool for tree species and seed sources (opens the tool; set the place there)")
         + (ch ? ' · ' + a("https://www.tree-app.ch", "Tree app (CH)", "Swiss tree-species recommendation tool") : "")
@@ -2852,6 +2938,10 @@
         let overlayMeta;
         try { overlayMeta = await cachedFetchJson(metaPath); } catch (e) { return null; }
         const img = await cachedFetchImage(imagePath);
+        if (state.currentForecastModel === P1C4_MODEL) {
+          const f = await sampleImageAt(img, overlayMeta.bounds, latlng, colorToP1c4Fraction);
+          return f == null ? null : f * P1C4_CAP;
+        }
         return await sampleImageAt(img, overlayMeta.bounds, latlng); // already 0..1
       }
 
@@ -2953,6 +3043,19 @@
     const WIND_CLASSES = [[0.25, "low"], [0.5, "moderate"], [Infinity, "high"]];
     const classOf = function(table, v) { return table.find(function(row) { return v < row[0]; })[1]; };
 
+    // Share-valued extra layers of the final model at a point (0..1): "extrapolation" (greys) or "share05" (hazard ramp).
+    async function sampleForecastExtra(latlng, state, kind) {
+      try { await ensureForecastManifestLoaded(); } catch (e) { return null; }
+      const entry = APP.forecastManifest.entries[state.currentForecastModel + "::" + state.currentForecastPeriod];
+      const tif = entry && entry[kind + "_tif"];
+      if (!tif) return null;
+      try {
+        const meta = await cachedFetchJson(tif.replace(/\.tif$/i, "_meta.json"));
+        const img = await cachedFetchImage(tif.replace(/\.tif$/i, ".png") + "?v=" + ASSET_VERSION);
+        return await sampleImageAt(img, meta.bounds, latlng, kind === "extrapolation" ? colorToExtrapFraction : colorToP1c4Fraction);
+      } catch (e) { return null; }
+    }
+
     async function describeClickValue(overlayId, latlng, state) {
       if (overlayId === "wind") {
         const v = await sampleRasterOverlayFor("wind", latlng, state);
@@ -2960,7 +3063,13 @@
       }
       if (overlayId === "bbtforecast") {
         const v = await sampleRasterOverlayFor("bbtforecast", latlng, state);
-        return v == null ? null : "Susceptibility index " + v.toFixed(2) + " (" + classOf(BB_CLASSES, v) + ")";
+        if (v == null) return null;
+        if (state.currentForecastModel !== P1C4_MODEL) return "Susceptibility index " + v.toFixed(2) + " (" + classOf(BB_CLASSES, v) + ")";
+        // Final model: the extrapolation share and the share of years at or above 0.5 sit beside the hazard when delivered
+        const [ex, sh] = await Promise.all([sampleForecastExtra(latlng, state, "extrapolation"), sampleForecastExtra(latlng, state, "share05")]);
+        return "Susceptibility index " + v.toFixed(2) + " (" + classOf(P1C4_CLASSES, v) + ")"
+          + (sh == null ? "" : "; 0.5 or more in " + Math.round(sh * 100) + "% of years")
+          + (ex == null ? "" : "; " + Math.round(ex * 100) + "% of climate predictors outside the training range");
       }
       const c = await readLegendClass(overlayId, latlng, state, false);
       return c ? c.label : null;
@@ -2996,8 +3105,8 @@
       ]);
       const fromClass = function(c) { return c ? (c.count - c.index) / c.count : null; };
       return [
-        { id: "bbtl", label: "Bark beetle", value: bb == null ? null : Math.min(1, bb),
-          text: bb == null ? null : "susceptibility index " + bb.toFixed(2) + " (" + classOf(BB_CLASSES, bb) + ")" },
+        { id: "bbtl", label: "Bark beetle", value: bb == null ? null : Math.min(1, bb / (state.currentForecastModel === P1C4_MODEL ? P1C4_CAP : 1)),
+          text: bb == null ? null : "susceptibility index " + bb.toFixed(2) + " (" + classOf(state.currentForecastModel === P1C4_MODEL ? P1C4_CLASSES : BB_CLASSES, bb) + ")" },
         { id: "wind", label: "Wind", value: wind == null ? null : Math.min(1, wind / 0.5),
           text: wind == null ? null : "damage probability " + wind.toFixed(2) + " (" + classOf(WIND_CLASSES, wind) + ")" },
         { id: "fire", label: "Fire", value: fire ? (fire.index + 1) / fire.count : null,
@@ -3327,6 +3436,66 @@
       });
     }
 
+    // "Show my location": asks the browser for the position (it stays in the browser, nothing is sent), drops a pin,
+    // zooms in and opens the usual readout for that spot. The pin stays until removed with the small x button.
+    const LOCATE_PIN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40"><path d="M15 39C15 39 2 24 2 14.5a13 13 0 0 1 26 0C28 24 15 39 15 39z" fill="#c4731c" stroke="#fff" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>';
+    function addLocateControl() {
+      const control = L.control({ position: "topleft" });
+      control.onAdd = function() {
+        const bar = L.DomUtil.create("div", "leaflet-bar locate-control");
+        L.DomEvent.disableClickPropagation(bar);
+        const go = L.DomUtil.create("a", "locate-go", bar);
+        go.href = "#"; go.setAttribute("role", "button"); go.setAttribute("aria-label", "Show my location");
+        go.title = "Show my location (your position stays in your browser)";
+        go.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#173F69" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.8" fill="#173F69"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>';
+        const off = L.DomUtil.create("a", "locate-off", bar);
+        off.href = "#"; off.setAttribute("role", "button"); off.setAttribute("aria-label", "Remove my location pin"); off.title = "Remove my location pin"; off.textContent = "×"; off.hidden = true;
+        L.DomEvent.on(go, "click", function(e) { L.DomEvent.preventDefault(e); locateMe(off); });
+        L.DomEvent.on(off, "click", function(e) { L.DomEvent.preventDefault(e); clearMyLocation(off); });
+        return bar;
+      };
+      control.addTo(APP.map);
+    }
+
+    function clearMyLocation(offBtn) {
+      ["myLocationPin", "myLocationRing"].forEach(function(k) { if (APP[k]) { APP.map.removeLayer(APP[k]); APP[k] = null; } });
+      if (offBtn) offBtn.hidden = true;
+    }
+
+    // Short message on the map (setStatus only logs to the console)
+    function locateNote(text) {
+      let el = document.getElementById("locateNote");
+      if (!el) { el = document.createElement("div"); el.id = "locateNote"; el.setAttribute("role", "status"); document.getElementById("map").appendChild(el); }
+      el.textContent = text; el.hidden = !text;
+      clearTimeout(locateNote.t); if (text) locateNote.t = setTimeout(function() { el.hidden = true; }, 7000);
+    }
+
+    function locateMe(offBtn) {
+      if (!navigator.geolocation) { locateNote("This browser cannot give a location."); return; }
+      track("locate");
+      locateNote("Asking for your location…");
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+        locateNote("");
+        if (!L.latLngBounds(MAP_SOFT_BOUNDS).contains(latlng)) { locateNote("Your location is outside the area this map covers."); return; }
+        clearMyLocation(offBtn);
+        const acc = pos.coords.accuracy;
+        if (isFinite(acc) && acc < 5000) APP.myLocationRing = L.circle(latlng, { radius: acc, color: "#c4731c", weight: 1, fillColor: "#c4731c", fillOpacity: 0.08, interactive: false }).addTo(APP.map);
+        APP.myLocationPin = L.marker(latlng, {
+          icon: L.divIcon({ className: "my-location-pin", html: LOCATE_PIN_SVG, iconSize: [30, 40], iconAnchor: [15, 39] }),
+          title: "You are here", keyboard: false
+        }).addTo(APP.map);
+        APP.myLocationPin.on("click", function() { openClickPopup(latlng, APP, APP.map); });
+        if (offBtn) offBtn.hidden = false;
+        APP.map.setView(latlng, Math.max(APP.map.getZoom(), 9));
+        updatePanelFromClick(latlng);
+        openClickPopup(latlng, APP, APP.map);
+      }, function(err) {
+        locateNote(err.code === 1 ? "Location permission was denied. Allow it in your browser's site settings to use this button."
+          : err.code === 3 ? "Finding your location took too long. Try again." : "Your location is not available right now.");
+      }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 });
+    }
+
     function addSplitScreenControl() {
       const control = L.control({ position: "topright" });
       control.onAdd = function() {
@@ -3613,7 +3782,7 @@
     // coordinates from a link, so the place is shown here to copy or to click again over there.
     function seedPlaceText() {
       const c = APP.lastClick || (APP.map && APP.map.getCenter());
-      return c ? c.lat.toFixed(4) + ", " + c.lng.toFixed(4) : "—";
+      return c ? seedCoordText(c) : "—";
     }
     function updateSeedPlace() {
       const el = document.getElementById("seedPlace");
@@ -3689,9 +3858,8 @@
       const sc = document.getElementById("seedClose"); if (sc) sc.addEventListener("click", function() { setSeedPane(false); });
       const cp = document.getElementById("seedCopy");
       if (cp) cp.addEventListener("click", function() {
-        const txt = seedPlaceText();
-        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function() { cp.textContent = "Copied"; }, function() { window.prompt("Copy this place:", txt); });
-        setTimeout(function() { cp.textContent = "Copy"; }, 1500);
+        copyText(seedPlaceText(), function() { cp.textContent = "Copied ✓"; });
+        setTimeout(function() { cp.textContent = "Copy"; }, 1800);
       });
       APP.map.on("moveend", function() { if (APP.showSeed4Forest && !APP.lastClick) updateSeedPlace(); });
       setActiveTab(APP.activeTab);
@@ -3982,6 +4150,7 @@
         }).addTo(APP.map);
       }
 
+      addLocateControl();
       attachMapClick(APP.map, "left");
 
       setLegendLabels();

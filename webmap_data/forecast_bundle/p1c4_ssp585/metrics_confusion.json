@@ -1,0 +1,30 @@
+{
+  "model": "p1c4_ssp585",
+  "auc": 0.87,
+  "notes": "Final bark-beetle model: boosted trees on 16 predictors (terrain, climate normals and 4-year climate memory), learnt from 223 documented outbreak events overlaid with the European Forest Disturbance Atlas, 1985-2024. AUC 0.87 with a region and a period both held out; 0.82 trained to 2014 and tested on 2017-2024. The layer is a susceptibility index, a ranking calibrated at the sample prevalence, not an annual attack probability and not a forecast of single years. One climate model (MPI-ESM1-2-HR), SSP5-8.5; SSP1-2.6 and SSP3-7.0 to follow.",
+  "aggregate_by_cutoff": [
+    {
+      "cutoff": "0.5",
+      "precision": "NA",
+      "recall": "NA",
+      "specificity": "NA",
+      "F1": "NA",
+      "red_fraction": "NA"
+    }
+  ],
+  "grid_items": [
+    {
+      "label": "AUC, region and period held out",
+      "value": "0.87"
+    },
+    {
+      "label": "AUC, trained to 2014, tested 2017–2024",
+      "value": "0.82"
+    },
+    {
+      "label": "Flag threshold",
+      "value": "0.5"
+    }
+  ],
+  "validation_note": "Case-control samples: precision and recall do not describe real prevalence, so they are not shown. The index ranks where disturbance is more likely over the long term; it does not track single years."
+}
