@@ -2726,7 +2726,7 @@
       const ch = latlng.lat > 45.8 && latlng.lat < 47.9 && latlng.lng > 5.9 && latlng.lng < 10.6;
       const a = function(href, text, tip) { return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" title="' + tip + '">' + text + ' ↗</a>'; };
       return '<div class="map-popup-seed"><button type="button" class="seed-copy-btn" data-coords="' + seedCoordText(latlng) + '" title="Copies ' + seedCoordText(latlng) + '">Copy place for Seed4Forest</button>'
-        + '<span>Paste into its “Enter location or coordinates” box, press Enter, then Confirm Location.</span></div>'
+        + '<span>Paste in its location box, press Enter, then Confirm Location.</span></div>'
         + '<div class="map-popup-links">Open this place elsewhere: '
         + a(sat, "satellite view", "Satellite imagery centred on this point")
         + ' · ' + a("https://app.seed4forest.org/", "Seed4Forest", "BFW tool for tree species and seed sources (opens the tool; set the place there)")
@@ -3438,7 +3438,6 @@
 
     // "Show my location": asks the browser for the position (it stays in the browser, nothing is sent), drops a pin,
     // zooms in and opens the usual readout for that spot. The pin stays until removed with the small x button.
-    const LOCATE_PIN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40"><path d="M15 39C15 39 2 24 2 14.5a13 13 0 0 1 26 0C28 24 15 39 15 39z" fill="#c4731c" stroke="#fff" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#fff"/></svg>';
     function addLocateControl() {
       const control = L.control({ position: "topleft" });
       control.onAdd = function() {
@@ -3480,15 +3479,12 @@
         if (!L.latLngBounds(MAP_SOFT_BOUNDS).contains(latlng)) { if (!auto) locateNote("Your location is outside the area this map covers."); return; }
         clearMyLocation(offBtn);
         const acc = pos.coords.accuracy;
-        if (isFinite(acc) && acc < 5000) APP.myLocationRing = L.circle(latlng, { radius: acc, color: "#c4731c", weight: 1, fillColor: "#c4731c", fillOpacity: 0.08, interactive: false }).addTo(APP.map);
-        APP.myLocationPin = L.marker(latlng, {
-          icon: L.divIcon({ className: "my-location-pin", html: LOCATE_PIN_SVG, iconSize: [30, 40], iconAnchor: [15, 39] }),
-          title: "You are here", keyboard: false
-        }).addTo(APP.map);
+        if (isFinite(acc) && acc < 5000) APP.myLocationRing = L.circle(latlng, { radius: acc, color: "#1a73e8", weight: 1, fillColor: "#1a73e8", fillOpacity: 0.1, interactive: false }).addTo(APP.map);
+        APP.myLocationPin = L.circleMarker(latlng, { radius: 8, color: "#ffffff", weight: 3, fillColor: "#1a73e8", fillOpacity: 1, className: "my-location-dot" }).addTo(APP.map);
         APP.myLocationPin.on("click", function() { openClickPopup(latlng, APP, APP.map); });
         if (offBtn) offBtn.hidden = false;
-        APP.map.setView(latlng, Math.max(APP.map.getZoom(), 9));
-        if (auto) { locateNote("Your position is marked on the map. Press × under the crosshair to remove it."); return; }
+        if (!auto) APP.map.panTo(latlng);   // never zoom
+        if (auto) { locateNote("Blue dot: your position. × removes it."); return; }
         updatePanelFromClick(latlng);
         openClickPopup(latlng, APP, APP.map);
       }, function(err) {

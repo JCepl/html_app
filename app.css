@@ -1735,7 +1735,7 @@
 .locate-control a:hover { background: #f4f4f4; }
 .locate-control .locate-off { font-size: 20px; line-height: 1; color: #5b6b7c; border-top: 1px solid #ccc; }
 .locate-control .locate-off[hidden] { display: none; }
-.my-location-pin { background: none; border: 0; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35)); }
+.my-location-dot { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45)); }
 #locateNote { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 1200; max-width: min(92%, 460px); padding: 8px 14px; border-radius: 8px; background: #173f69; color: #fff; font-size: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
 #locateNote[hidden] { display: none; }
 
