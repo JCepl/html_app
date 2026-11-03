@@ -126,7 +126,7 @@
       activeSide: "left",
       panels: { left: null, right: null },
       // `visibleOverlays` controls what is drawn. The last item is drawn on top.
-      visibleOverlays: ["droughtFuture"],
+      visibleOverlays: [],   // nothing on at start; the card of focusedOverlay is just the one shown in the panel
       // `focusedOverlay` controls which settings are shown in the left panel.
       focusedOverlay: "droughtFuture",
       layerOpacity: {
@@ -174,7 +174,7 @@
         wildfire: 0,
         windPressure: 0
       },
-      overlayVisible: true,
+      overlayVisible: false,
       // One cached GeoJSON per hex overlay (see HEX_OVERLAY_IDS) -- keyed so
       // two hex layers can be visible/cached at once without fighting over
       // a single slot.
@@ -1852,8 +1852,8 @@
         syncRiskFilterBox(null);
         renderLegendSwatches([]);
         DOM.legendBar.style.display = "none";
-        DOM.legendMin.textContent = "NA";
-        DOM.legendMax.textContent = "NA";
+        DOM.legendMin.textContent = "No layer on yet";
+        DOM.legendMax.textContent = "";
         if (DOM.legendForLayer) DOM.legendForLayer.textContent = "";
         return;
       }
@@ -2628,7 +2628,7 @@
       state = state || APP;
       map = map || APP.map;
       const sites = natura2000SitesAt(latlng);
-      if (!state.overlayVisible && !sites.length) return;
+      // With nothing switched on the popup still opens: place, copy-for-Seed4Forest and the links
       const countryFeature = findContainingFeature(APP.countryGeojson, latlng);
       const countryName = countryFeature ? getCountryName(countryFeature) : "—";
       // One row per layer that is switched on, so a click on one pixel reads
@@ -4251,8 +4251,8 @@
         APP.visibleOverlays = asked.filter(function(id) {
           return OVERLAY_CATALOG[id] && OVERLAY_CATALOG[id].available;
         });
-        // A link naming only layers that no longer exist opens the default map, not a blank one.
-        if (asked.length && !APP.visibleOverlays.length) APP.visibleOverlays = ["droughtFuture"];
+        // A link naming only layers that no longer exist opens the default (empty) map.
+        if (asked.length && !APP.visibleOverlays.length) APP.visibleOverlays = [];
         syncOverlayVisibilityFlag();
         syncCatalogueEventsFromPastDisturbance();
       }
