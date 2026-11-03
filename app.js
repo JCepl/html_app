@@ -2672,10 +2672,11 @@
         + '</div></div>';
       const popup = L.popup({
         autoPan: true,
-        autoPanPadding: [20, 20],
+        autoPanPaddingTopLeft: [12, isMobileLayout() ? 64 : 20],
+        autoPanPaddingBottomRight: [12, isMobileLayout() ? 130 : 20],
         closeButton: true,
         className: "mini-popup",
-        maxWidth: 260,
+        maxWidth: isMobileLayout() ? Math.min(340, window.innerWidth - 28) : 260,
         offset: [0, -4]
       }).setLatLng(latlng).setContent(html).openOn(map);
 
@@ -3406,6 +3407,11 @@
         body.classList.toggle("m-legend", name === "legend");
         body.classList.remove("m-menu");
         if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+        if (name === "legend") requestAnimationFrame(function() {
+          const p = document.getElementById("panel"), box = p && p.querySelector(".legend-box"), card = box && box.closest(".panel-card");
+          const head = p && p.querySelector(".m-sheet-head");
+          if (card) p.scrollTop += card.getBoundingClientRect().top - p.getBoundingClientRect().top - (head ? head.offsetHeight : 0) - 6;
+        });
       };
       [[".layer-ribbon", "Layers", "layers"], ["#panel", "Map inspector and legend", "legend"]]
         .forEach(function(def) {
@@ -3458,6 +3464,7 @@
 
     function clearMyLocation(offBtn) {
       ["myLocationPin", "myLocationRing"].forEach(function(k) { if (APP[k]) { APP.map.removeLayer(APP[k]); APP[k] = null; } });
+      APP.myLatLng = null;
       if (offBtn) offBtn.hidden = true;
     }
 
@@ -3478,6 +3485,7 @@
         locateNote("");
         if (!L.latLngBounds(MAP_SOFT_BOUNDS).contains(latlng)) { if (!auto) locateNote("Your location is outside the area this map covers."); return; }
         clearMyLocation(offBtn);
+        APP.myLatLng = latlng;
         const acc = pos.coords.accuracy;
         if (isFinite(acc) && acc < 5000) APP.myLocationRing = L.circle(latlng, { radius: acc, color: "#1a73e8", weight: 1, fillColor: "#1a73e8", fillOpacity: 0.1, interactive: false }).addTo(APP.map);
         APP.myLocationPin = L.circleMarker(latlng, { radius: 8, color: "#ffffff", weight: 3, fillColor: "#1a73e8", fillOpacity: 1, className: "my-location-dot" }).addTo(APP.map);
@@ -3742,6 +3750,8 @@
         if (pillar) { pillar.classList.toggle("is-tab-active", k === key); pillar.setAttribute("aria-selected", k === key ? "true" : "false"); }
       });
       if (key === "pilot") buildPilotCards();
+      const t = document.querySelector(".layer-ribbon .m-sheet-head span");
+      if (t) t.textContent = { drivers: "Disturbance drivers", ecosystem: "Ecosystem services", restoration: "Restoration priorities", pilot: "Pilot actions" }[key];
     }
 
     function tabLayerCounts() {
@@ -3798,12 +3808,12 @@
     // Seed4Forest 2.0 (BFW) beside the map. The tool opens at its own default view: it takes no
     // coordinates from a link, so the place is shown here to copy or to click again over there.
     function seedPlaceText() {
-      const c = APP.lastClick || (APP.map && APP.map.getCenter());
+      const c = APP.lastClick || APP.myLatLng || (APP.map && APP.map.getCenter());
       return c ? seedCoordText(c) : "—";
     }
     function updateSeedPlace() {
       const el = document.getElementById("seedPlace");
-      if (el) el.textContent = seedPlaceText() + (APP.lastClick ? "" : " (map centre)");
+      if (el) el.textContent = seedPlaceText() + (APP.lastClick ? "" : APP.myLatLng ? " (your position)" : " (map centre)");
     }
     function setSeedPane(on) {
       APP.showSeed4Forest = !!on;
