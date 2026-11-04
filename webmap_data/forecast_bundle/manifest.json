@@ -3627,7 +3627,7 @@
       "gcms": [
         "CHELSA-CMIP6 MPI-ESM1-2-HR"
       ],
-      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "note": "Hazard for spruce forest from bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/1981_2010/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
         "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/1981_2010/risk_visible_t50.tif"
@@ -3640,7 +3640,7 @@
       "gcms": [
         "CHELSA-CMIP6 MPI-ESM1-2-HR"
       ],
-      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "note": "Hazard for spruce forest from bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2011_2040/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
         "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2011_2040/risk_visible_t50.tif"
@@ -3654,7 +3654,7 @@
       "gcms": [
         "CHELSA-CMIP6 MPI-ESM1-2-HR"
       ],
-      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "note": "Hazard for spruce forest from bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2041_2070/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
         "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2041_2070/risk_visible_t50.tif"
@@ -3668,7 +3668,7 @@
       "gcms": [
         "CHELSA-CMIP6 MPI-ESM1-2-HR"
       ],
-      "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+      "note": "Hazard for spruce forest from bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
       "ensemble_probability_tif": "webmap_data/forecast_bundle/p1c4_ssp585/2071_2100/probability_ensemble_mean.tif",
       "threshold_visible_tifs": {
         "0.5": "webmap_data/forecast_bundle/p1c4_ssp585/2071_2100/risk_visible_t50.tif"

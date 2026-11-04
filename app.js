@@ -530,8 +530,8 @@
         meta: null
       },
       bbtforecast: {
-        label: "Bark beetle susceptibility",
-        description: "Susceptibility of Norway spruce forest to bark-beetle and wind disturbance, learnt from documented outbreak events (223 events: the EFI DFDE database plus a literature search) overlaid with the European Forest Disturbance Atlas, 1985–2024. Boosted trees on 16 predictors: terrain, climate normals and 4-year climate memory (autumn precipitation, beetle generations from PHENIPS, evaporative demand against precipitation, multi-year drought run length). Future climate: CHELSA-CMIP6 MPI-ESM1-2-HR, SSP5-8.5 only so far (SSP1-2.6 and SSP3-7.0 to follow); each future year replays an observed 1981–2010 year shifted to the future monthly mean, so year-to-year variability is today's. Validation: AUC 0.87 with a region and a period both held out, 0.82 trained to 2014 and tested on 2017–2024. Shown only where the Norway spruce probability is at least 0.2, the model's domain. Share of all land cells (not only spruce areas) with hazard of 0.5 or more (the flag): about 6.1% in 1981–2010, 6.7% in 2011–2040, 7.9% in 2041–2070 and 9.4% in 2071–2100. The value is a susceptibility index, a ranking calibrated at the sample prevalence: not an annual attack probability and not a forecast of single years. Future maps are a climate shift on today's fixed spruce area, not a forecast of where forest will be.",
+        label: "Bark beetle hazard",
+        description: "Hazard for Norway spruce forest from bark-beetle and wind disturbance, learnt from documented outbreak events (223 events: the EFI DFDE database plus a literature search) overlaid with the European Forest Disturbance Atlas, 1985–2024. Boosted trees on 16 predictors: terrain, climate normals and 4-year climate memory (autumn precipitation, beetle generations from PHENIPS, evaporative demand against precipitation, multi-year drought run length). Future climate: CHELSA-CMIP6 MPI-ESM1-2-HR, SSP5-8.5 only so far (SSP1-2.6 and SSP3-7.0 to follow); each future year replays an observed 1981–2010 year shifted to the future monthly mean, so year-to-year variability is today's. Validation: AUC 0.87 with a region and a period both held out, 0.82 trained to 2014 and tested on 2017–2024. Shown only where the Norway spruce probability is at least 0.2, the model's domain. Share of all land cells (not only spruce areas) with hazard of 0.5 or more (the flag): about 6.1% in 1981–2010, 6.7% in 2011–2040, 7.9% in 2041–2070 and 9.4% in 2071–2100. The value is a susceptibility index, a ranking calibrated at the sample prevalence: not an annual attack probability and not a forecast of single years. Future maps are a climate shift on today's fixed spruce area, not a forecast of where forest will be.",
         available: true,
         usesRcp: false,
         usesYear: false,
@@ -1710,9 +1710,9 @@
       if (DOM.forecastViewExtrapOption) DOM.forecastViewExtrapOption.disabled = !hasField("extrapolation_tif");
       if (DOM.forecastViewDeltaOption) DOM.forecastViewDeltaOption.textContent = finalModel ? "Change vs 1981–2010 (index points)" : "Δ % change vs. current (2011–2040)";
       const thrOpt = DOM.forecastViewSelector.querySelector('option[value="threshold"]');
-      if (thrOpt) thrOpt.textContent = finalModel ? "Flagged areas (hazard 0.5 or more)" : "High-susceptibility areas (above cut-off)";
+      if (thrOpt) thrOpt.textContent = finalModel ? "Flagged areas (hazard 0.5 or more)" : "High-hazard areas (above cut-off)";
       const probOpt = DOM.forecastViewSelector.querySelector('option[value="probability"]');
-      if (probOpt) probOpt.textContent = finalModel ? "Susceptibility index (0–0.8 scale)" : "Susceptibility index (0–1)";
+      if (probOpt) probOpt.textContent = finalModel ? "Hazard (0–0.8 scale)" : "Hazard (0–1)";
       [["share05", DOM.forecastViewShareOption], ["extrapolation", DOM.forecastViewExtrapOption]].forEach(function(pair) {
         if (APP.currentForecastView === pair[0] && pair[1] && pair[1].disabled) APP.currentForecastView = "probability";
       });
@@ -3065,10 +3065,10 @@
       if (overlayId === "bbtforecast") {
         const v = await sampleRasterOverlayFor("bbtforecast", latlng, state);
         if (v == null) return null;
-        if (state.currentForecastModel !== P1C4_MODEL) return "Susceptibility index " + v.toFixed(2) + " (" + classOf(BB_CLASSES, v) + ")";
+        if (state.currentForecastModel !== P1C4_MODEL) return "Hazard " + v.toFixed(2) + " (" + classOf(BB_CLASSES, v) + ")";
         // Final model: the extrapolation share and the share of years at or above 0.5 sit beside the hazard when delivered
         const [ex, sh] = await Promise.all([sampleForecastExtra(latlng, state, "extrapolation"), sampleForecastExtra(latlng, state, "share05")]);
-        return "Susceptibility index " + v.toFixed(2) + " (" + classOf(P1C4_CLASSES, v) + ")"
+        return "Hazard " + v.toFixed(2) + " (" + classOf(P1C4_CLASSES, v) + ")"
           + (sh == null ? "" : "; 0.5 or more in " + Math.round(sh * 100) + "% of years")
           + (ex == null ? "" : "; " + Math.round(ex * 100) + "% of climate predictors outside the training range");
       }
@@ -3107,7 +3107,7 @@
       const fromClass = function(c) { return c ? (c.count - c.index) / c.count : null; };
       return [
         { id: "bbtl", label: "Bark beetle", value: bb == null ? null : Math.min(1, bb / (state.currentForecastModel === P1C4_MODEL ? P1C4_CAP : 1)),
-          text: bb == null ? null : "susceptibility index " + bb.toFixed(2) + " (" + classOf(state.currentForecastModel === P1C4_MODEL ? P1C4_CLASSES : BB_CLASSES, bb) + ")" },
+          text: bb == null ? null : "hazard " + bb.toFixed(2) + " (" + classOf(state.currentForecastModel === P1C4_MODEL ? P1C4_CLASSES : BB_CLASSES, bb) + ")" },
         { id: "wind", label: "Wind", value: wind == null ? null : Math.min(1, wind / 0.5),
           text: wind == null ? null : "damage probability " + wind.toFixed(2) + " (" + classOf(WIND_CLASSES, wind) + ")" },
         { id: "fire", label: "Fire", value: fire ? (fire.index + 1) / fire.count : null,
@@ -3737,7 +3737,7 @@
     const DRIVER_ALL_LAYERS = DRIVER_MAIN_LAYERS.concat(["droughtRef", "wildfire", "windPressure", "bbtpast", "phenips", "bbtl"]);
     const ON_MAP_NAMES = {
       droughtFuture: "Future drought", droughtRef: "Drought (past)", fireWeather: "Fire weather", wildfire: "Fire pressure",
-      wind: "Wind damage", windPressure: "Wind pressure", bbtforecast: "Beetle susceptibility", bbtl: "Beetle pressure",
+      wind: "Wind damage", windPressure: "Wind pressure", bbtforecast: "Beetle hazard", bbtl: "Beetle pressure",
       bbtpast: "Past disturbance", phenips: "PHENIPS"
     };
 

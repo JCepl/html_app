@@ -234,19 +234,19 @@
                title="Show 3 more bark beetle layers (past disturbance, PHENIPS climate, pressure index) -- for context, not model forecasts"
                aria-expanded="false">Bark beetle <span class="bb-toggle-count">+3</span></div>
           <div class="period-strip" title="Data coverage by time period">
-            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="historical" title="Susceptibility index, 1981–2010 -- click to view"><span class="pc-l">Historic</span><small>1981–2010</small></span>
-            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="near" title="Susceptibility index, 2041–2070 -- click to view"><span class="pc-l">Near future</span><small>2041–2070</small></span>
-            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Susceptibility index, 2071–2100 (end of century) -- click to view"><span class="pc-l">Later future</span><small>2071–2100</small></span>
+            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="historical" title="Bark-beetle hazard, 1981–2010 -- click to view"><span class="pc-l">Historic</span><small>1981–2010</small></span>
+            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="near" title="Bark-beetle hazard, 2041–2070 -- click to view"><span class="pc-l">Near future</span><small>2041–2070</small></span>
+            <span class="period-chip" data-jump-overlay="bbtforecast" data-jump-period="far" title="Bark-beetle hazard, 2071–2100 (end of century) -- click to view"><span class="pc-l">Later future</span><small>2071–2100</small></span>
           </div>
           <div class="overlay-group-cards bb-grid">
         <div class="overlay-card hazard-primary" data-overlay="bbtforecast">
           <span class="overlay-card-head">
-            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Final model</span>Susceptibility index</span>
+            <span class="overlay-card-title"><span class="overlay-card-eyebrow">Final model</span>Bark-beetle hazard</span>
             <span class="overlay-card-tools">
               <button class="overlay-tool-btn" type="button" data-toggle-overlay="bbtforecast">Display</button>
             </span>
           </span>
-          <span class="overlay-card-copy">Susceptibility of spruce forest to bark-beetle and wind disturbance, 1981–2100.</span>
+          <span class="overlay-card-copy">Hazard for spruce forest from bark-beetle and wind disturbance, 1981–2100.</span>
           <span class="overlay-opacity-row">
             <input class="overlay-tool-slider" type="range" min="0" max="1" step="0.05" value="0.85" data-opacity-overlay="bbtforecast" />
             <span class="overlay-tool-value" data-opacity-value="bbtforecast">0.85</span>
@@ -359,7 +359,7 @@
         </div>
 
         <div id="forecastPanel" class="nested-panel" hidden>
-          <p class="nested-title">Bark beetle susceptibility index</p>
+          <p class="nested-title">Bark beetle hazard</p>
           <div class="nested-grid">
             <div id="forecastModelField">
               <div class="label">Model</div>
@@ -377,8 +377,8 @@
               <div class="label">View</div>
               <div class="row">
                 <select id="forecastViewSelector">
-                  <option value="threshold">High-susceptibility areas (above cut-off)</option>
-                  <option value="probability">Susceptibility index (0&ndash;1)</option>
+                  <option value="threshold">High-hazard areas (above cut-off)</option>
+                  <option value="probability">Hazard (0&ndash;1)</option>
                   <option value="delta" id="forecastViewDeltaOption">Change vs 1981–2010 (index points)</option>
                   <option value="share05" id="forecastViewShareOption" disabled>Share of years with hazard 0.5 or more</option>
                   <option value="extrapolation" id="forecastViewExtrapOption" disabled>Climate outside the training range (share)</option>
@@ -626,6 +626,6 @@
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
-  <script src="app.js?v=a0f72e8d05"></script>
+  <script src="app.js?v=eefb5982d2"></script>
 </body>
 </html>

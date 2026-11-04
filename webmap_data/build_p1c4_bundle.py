@@ -137,7 +137,7 @@ def main():
         land = np.isfinite(a)
         stats[key] = {"mean": float(np.nanmean(a)), "flag_share": float((a[land] >= 0.5).mean())}
         entry = {"model": MODEL, "period": key, "scenario": "ssp585", "gcms": ["CHELSA-CMIP6 MPI-ESM1-2-HR"],
-                 "note": "Susceptibility index of spruce forest to bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
+                 "note": "Hazard for spruce forest from bark-beetle and wind disturbance: a ranking calibrated at the sample prevalence, not an annual probability.",
                  "ensemble_probability_tif": stem + "probability_ensemble_mean.tif",
                  "threshold_visible_tifs": {"0.5": stem + "risk_visible_t50.tif"}}
         ch = find(args.src, "hazard_change", tag)
