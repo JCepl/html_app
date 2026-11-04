@@ -3,6 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    /* Phones get the desktop layout, scaled to fit (pinch to zoom the panels).
+       Add ?phone=1 to the address to get the compact phone layout instead. */
+    (function() {
+      try {
+        var small = Math.min(screen.width, screen.height) < 600;
+        if (small && !/[?&]phone=1/.test(location.search)) {
+          document.querySelector('meta[name="viewport"]').setAttribute("content", "width=1000, user-scalable=yes");
+        }
+      } catch (e) {}
+    })();
+  </script>
   <title>RE-ENFORCE Decision Support System</title>
 
   <link
@@ -613,6 +625,6 @@
   <script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
   <script src="webmap_data/map_meta.js"></script>
 
-  <script src="app.js?v=d756ec2a81"></script>
+  <script src="app.js?v=a0f72e8d05"></script>
 </body>
 </html>

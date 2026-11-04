@@ -67,7 +67,7 @@
         else if (t.classList.contains("dss-pillar")) track("pillar-" + (t.id || t.dataset.pillar || "x"));
         else track("click-" + t.id);
       }, true);  // capture: the cards stop clicks from bubbling
-      tag.addEventListener("load", function() { track(isMobileLayout() ? "visit-phone" : "visit-desktop"); });
+      tag.addEventListener("load", function() { track(Math.min(screen.width, screen.height) < 600 ? "visit-phone" : "visit-desktop"); });
     }
 
     // Final bark-beetle model (P1C4, SSP5-8.5): its own sequential ramp (light to dark) over 0..P1C4_CAP, flag at 0.5.
