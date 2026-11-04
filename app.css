@@ -1799,3 +1799,29 @@
       display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
     }
     .overlay-card { padding: 2px 6px 3px; }
+
+    /* Easier to press: slightly roomier top pane; fold arrows get their own
+       thin rows/column even when the panel is open, so they never overlap. */
+    .top-banner { padding: 6px 12px; }
+    .banner-logo { max-height: 34px; }
+    .banner-title h1 { font-size: 14px; }
+    .banner-link { padding: 7px 4px; font-size: 13px; }
+    .banner-actions { gap: 2px 8px; }
+    .dss-pillar { padding: 8px 10px; }
+    .period-chip { padding: 4px 2px; font-size: 9px; }
+    .period-chip small { font-size: 9.5px; }
+    .overlay-card { padding: 4px 7px 5px; }
+    .overlay-card .overlay-card-actions button, .overlay-card button { min-height: 28px; }
+    .fold-gutter {
+      height: 22px; display: flex; align-items: center; justify-content: flex-end; padding: 0 22px;
+      background: linear-gradient(180deg, #e3edf8, #d6e4f3); border-bottom: 1px solid #c3d4e6;
+    }
+    .fold-gutter .menu-toggle-tab { position: static; transform: none; }
+    body.fold-top #gutterTop, body.fold-drivers #gutterMap { justify-content: space-between; padding: 0 22px 0 14px; }
+    .fold-gutter-v {
+      flex: 0 0 20px; width: 20px; display: flex; flex-direction: column; align-items: center; padding-top: 12px;
+      background: linear-gradient(90deg, #e3edf8, #d6e4f3); border-right: 1px solid #c3d4e6;
+    }
+    .fold-gutter-v .menu-toggle-tab { position: static; transform: none; }
+    .menu-toggle-tab.is-side { width: 18px; }
+    body.fold-top .fold-gutter#gutterTop { border-top: 0; }
