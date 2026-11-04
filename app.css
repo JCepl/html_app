@@ -1660,7 +1660,8 @@
       background: rgba(255,255,255,0.92); color: #1d3b5f; font-size: 12px; font-weight: 600;
       box-shadow: 0 1px 4px rgba(0,0,0,0.25); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    #periodBadge[hidden] { display: none; }
+    /* The on-map badge was removed (the active period chip and the legend say the same). */
+    #periodBadge, #periodBadge[hidden] { display: none !important; }
     @media (max-width: 700px) { #periodBadge { bottom: calc(var(--bar, 56px) + 56px); font-size: 11px; } }
 
     .map-popup-links { margin-top: 6px; padding-top: 4px; border-top: 1px solid #e1e9f2; font-size: 10px; line-height: 1.5; color: #5a6b80; }
