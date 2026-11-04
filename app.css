@@ -1825,3 +1825,13 @@
     .fold-gutter-v .menu-toggle-tab { position: static; transform: none; }
     .menu-toggle-tab.is-side { width: 18px; }
     body.fold-top .fold-gutter#gutterTop { border-top: 0; }
+
+    /* Phones (desktop layout scaled to fit): make the top panels much larger so they can be read and pressed.
+       zoom grows the panel contents; the map below is untouched. */
+    html.is-phone .top-banner, html.is-phone .dss-pillar-strip, html.is-phone .layer-ribbon { zoom: 2; }
+    html.is-phone .dss-pillar-strip { grid-template-columns: 1fr 1fr; }
+    html.is-phone .dss-pillar-copy { display: none; }
+    html.is-phone .top-banner { grid-template-columns: 1fr; }
+    html.is-phone .banner-actions { flex-wrap: wrap; justify-content: flex-start; }
+    html.is-phone .banner-right { justify-content: flex-start; }
+    html.is-phone .layer-ribbon { max-height: 330px; }

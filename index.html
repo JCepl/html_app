@@ -11,6 +11,7 @@
         var small = Math.min(screen.width, screen.height) < 600;
         if (small && !/[?&]phone=1/.test(location.search)) {
           document.querySelector('meta[name="viewport"]').setAttribute("content", "width=1000, user-scalable=yes");
+          document.documentElement.classList.add("is-phone");
         }
       } catch (e) {}
     })();
@@ -27,7 +28,7 @@
     href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css"
   />
 
-  <link rel="stylesheet" href="app.css?v=0a0c10713b" />
+  <link rel="stylesheet" href="app.css?v=7821809f65" />
 </head>
 <body>
   <header class="top-banner">
